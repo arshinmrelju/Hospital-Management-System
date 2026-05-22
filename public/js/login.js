@@ -1,67 +1,5 @@
-/* =========================================
-   LOGIN.JS – Authentication logic
-   ========================================= */
-
 'use strict';
 
-const DEMO_USERS = {
-  admin: {
-    email: 'admin@wellness.com',
-    password: 'admin123',
-    name: 'Dr. Sarah Mitchell',
-    title: 'Chief Surgeon',
-    role: 'Admin',
-    redirect: 'admin-dashboard.html'
-  },
-  doctor: {
-    email: 'doctor@wellness.com',
-    password: 'doctor123',
-    name: 'Dr. Julian Vance',
-    title: 'Cardiologist',
-    role: 'Doctor',
-    redirect: 'doctor-dashboard.html'
-  },
-  staff: {
-    email: 'staff@wellness.com',
-    password: 'staff123',
-    name: 'Nurse Priya Kapoor',
-    title: 'Head Nurse',
-    role: 'Staff', // Acts as Reception/Frontdesk
-    redirect: 'reception-dashboard.html'
-  },
-  pharmacy: {
-    email: 'pharmacy@wellness.com',
-    password: 'pharmacy123',
-    name: 'Pharmacist Arshin Ahmad',
-    title: 'Head Pharmacist',
-    role: 'Pharmacist',
-    redirect: 'pharmacy-dashboard.html'
-  },
-  lab: {
-    email: 'lab@wellness.com',
-    password: 'lab123',
-    name: 'Lab Tech Samuel Ross',
-    title: 'Senior Specimen Pathologist',
-    role: 'Lab Tech',
-    redirect: 'lab-dashboard.html'
-  }
-};
-
-let selectedRole = 'admin';
-
-/* --- Role Toggle --- */
-document.querySelectorAll('.role-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    selectedRole = btn.dataset.role;
-    // Pre-fill email hint
-    const emailInput = document.getElementById('email');
-    if (emailInput) emailInput.placeholder = `${selectedRole}@wellness.com`;
-  });
-});
-
-/* --- Password Toggle --- */
 const pwInput = document.getElementById('password');
 const pwIcon = document.getElementById('pwIcon');
 document.getElementById('togglePw')?.addEventListener('click', () => {
@@ -70,7 +8,6 @@ document.getElementById('togglePw')?.addEventListener('click', () => {
   pwIcon.textContent = isText ? 'visibility' : 'visibility_off';
 });
 
-/* --- Login Form --- */
 document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = document.getElementById('email').value.trim();
@@ -78,44 +15,43 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
   const btn = document.getElementById('loginBtn');
   const errorMsg = document.getElementById('errorMsg');
 
-  // Animate button
   btn.classList.add('loading');
   errorMsg.classList.remove('visible');
 
-  // Simulate network delay
-  await new Promise(r => setTimeout(r, 900));
+  try {
+    const auth = window.HMS_AUTH;
+    if (!auth) throw new Error('Auth system not initialized');
 
-  // Check credentials
-  let matchedUser = null;
-  for (const [, user] of Object.entries(DEMO_USERS)) {
-    if (user.email === email && user.password === password) {
-      matchedUser = user;
-      break;
-    }
-  }
+    const userProfile = await auth.login(email, password);
+    const sessionData = {
+      uid: userProfile.uid,
+      email: userProfile.email,
+      name: userProfile.name || email.split('@')[0],
+      title: userProfile.title || '',
+      role: userProfile.role || 'Staff',
+      redirect: auth.getRedirect(userProfile.role)
+    };
+    auth.setSession(sessionData);
 
-  // Also accept by role if matching
-  if (!matchedUser) {
-    const roleUser = DEMO_USERS[selectedRole];
-    if (roleUser && roleUser.password === password) {
-      matchedUser = roleUser;
-    }
-  }
-
-  btn.classList.remove('loading');
-
-  if (matchedUser) {
-    localStorage.setItem('hms_user', JSON.stringify(matchedUser));
-    // Success animation
     btn.innerHTML = '<span class="material-icons-round">check_circle</span><span class="btn-text">Authenticated!</span>';
     btn.style.background = '#10B981';
-    setTimeout(() => {
-      location.href = matchedUser.redirect;
-    }, 700);
-  } else {
-    errorMsg.innerHTML = '<span class="material-icons-round">error</span> Invalid credentials. Try the demo buttons below.';
+    setTimeout(() => { location.href = sessionData.redirect; }, 700);
+  } catch (err) {
+    btn.classList.remove('loading');
+    let message = 'Invalid credentials. Please try again.';
+    if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+      message = 'Invalid email or password.';
+    } else if (err.code === 'auth/too-many-requests') {
+      message = 'Too many attempts. Account temporarily locked.';
+    } else if (err.code === 'auth/invalid-email') {
+      message = 'Please enter a valid email address.';
+    } else if (err.code === 'auth/network-request-failed') {
+      message = 'Network error. Check your connection.';
+    } else {
+      message = err.message || 'Login failed.';
+    }
+    errorMsg.innerHTML = `<span class="material-icons-round">error</span> ${message.replace(/[<>&"']/g, '')}`;
     errorMsg.classList.add('visible');
-    // Shake animation
     const form = document.getElementById('loginForm');
     form.style.animation = 'none';
     void form.offsetWidth;
@@ -123,35 +59,14 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
   }
 });
 
-/* --- Quick Demo Login --- */
-function quickLogin(role) {
-  const user = DEMO_USERS[role];
-  if (!user) return;
-  document.getElementById('email').value = user.email;
-  document.getElementById('password').value = user.password;
-  // Trigger the correct role button
-  document.querySelectorAll('.role-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.role === role);
-  });
-  selectedRole = role;
-  // Auto-submit after a brief delay
-  setTimeout(() => document.getElementById('loginForm').dispatchEvent(new Event('submit')), 300);
-}
-
-/* --- Shake keyframe --- */
 const style = document.createElement('style');
-style.textContent = `@keyframes shake {
-  0%,100%{transform:translateX(0)}
-  20%,60%{transform:translateX(-8px)}
-  40%,80%{transform:translateX(8px)}
-}`;
+style.textContent = '@keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)} }';
 document.head.appendChild(style);
 
-/* --- Redirect if already logged in --- */
-const existing = localStorage.getItem('hms_user');
+const existing = sessionStorage.getItem('hms_session');
 if (existing) {
   try {
     const u = JSON.parse(existing);
     if (u && u.redirect) location.href = u.redirect;
-  } catch(_) {}
+  } catch (_) { }
 }

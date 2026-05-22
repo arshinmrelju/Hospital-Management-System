@@ -5,59 +5,14 @@
 
 'use strict';
 
-/* --- Mock OPD Queue Data --- */
-const today = new Date().toISOString().split('T')[0];
-const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-const threeDaysAgo = new Date(Date.now() - 3 * 86400000).toISOString().split('T')[0];
-const lastMonth = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
-
-let OPD_QUEUE = [
-  { token: 1, name: 'Rajan Mehta', age: '54M', doctor: 'Dr. Julian Vance', complaint: 'Chest pain, shortness of breath', status: 'urgent', time: '08:40 AM', timestamp: `${today}T08:40:00` },
-  { token: 2, name: 'Shalini Rao', age: '31F', doctor: 'Dr. Priya Nair', complaint: 'Fever, body aches', status: 'checked-in', time: '08:55 AM', timestamp: `${today}T08:55:00` },
-  { token: 3, name: 'Arvind Gupta', age: '67M', doctor: 'Dr. Julian Vance', complaint: 'Follow-up – diabetes management', status: 'waiting', time: '09:05 AM', timestamp: `${today}T09:05:00` },
-  { token: 4, name: 'Meera Iyer', age: '43F', doctor: 'Dr. Kavita Singh', complaint: 'Migraine headache', status: 'waiting', time: '09:10 AM', timestamp: `${today}T09:10:00` },
-  { token: 5, name: 'Suresh Babu', age: '59M', doctor: 'Dr. Julian Vance', complaint: 'Knee joint pain', status: 'waiting', time: '09:20 AM', timestamp: `${today}T09:20:00` },
-  { token: 6, name: 'Ananya Sharma', age: '29F', doctor: 'Dr. Priya Nair', complaint: 'Pregnancy check-up', status: 'checked-in', time: '09:30 AM', timestamp: `${today}T09:30:00` },
-  { token: 7, name: 'Vikram Pillai', age: '45M', doctor: 'Dr. Arjun Mehta', complaint: 'Post-surgery follow-up', status: 'waiting', time: '09:35 AM', timestamp: `${today}T09:35:00` },
-  // Yesterday's records
-  { token: 8, name: 'Harish Kumar', age: '48M', doctor: 'Dr. Kavita Singh', complaint: 'Hypertension checkup', status: 'checked-in', time: '04:15 PM', timestamp: `${yesterday}T16:15:00` },
-  { token: 9, name: 'Leela Nair', age: '60F', doctor: 'Dr. Priya Nair', complaint: 'Vertigo & dizziness', status: 'checked-in', time: '05:30 PM', timestamp: `${yesterday}T17:30:00` },
-  // Last 7 Days records
-  { token: 10, name: 'Devendra Joshi', age: '36M', doctor: 'Dr. Arjun Mehta', complaint: 'Acute bronchitis', status: 'checked-in', time: '11:00 AM', timestamp: `${threeDaysAgo}T11:00:00` },
-  // This Month / Last Month records
-  { token: 11, name: 'Sita Ramaswamy', age: '72F', doctor: 'Dr. Julian Vance', complaint: 'Gastroenteritis', status: 'checked-in', time: '10:30 AM', timestamp: `${lastMonth}T10:30:00` }
-];
-
+let OPD_QUEUE = [];
 let filteredOpdQueue = null;
 
-/* --- Mock Doctor Schedule --- */
-const DOCTOR_SCHEDULE = [
-  { name: 'Dr. Julian Vance', dept: 'Cardiology', initials: 'JV', slots: [{ time: '9–11 AM', type: 'booked' }, { time: '11–1 PM', type: 'booked' }, { time: '2–4 PM', type: 'free' }] },
-  { name: 'Dr. Kavita Singh', dept: 'Neurology', initials: 'KS', slots: [{ time: '9–11 AM', type: 'free' }, { time: '11–1 PM', type: 'booked' }, { time: '2–3 PM', type: 'break' }] },
-  { name: 'Dr. Priya Nair', dept: 'Pediatrics', initials: 'PN', slots: [{ time: '9–11 AM', type: 'booked' }, { time: '11–12 PM', type: 'break' }, { time: '2–4 PM', type: 'free' }] },
-  { name: 'Dr. Arjun Mehta', dept: 'Orthopedics', initials: 'AM', slots: [{ time: '9–11 AM', type: 'free' }, { time: '11–1 PM', type: 'booked' }, { time: '3–5 PM', type: 'free' }] },
-  { name: 'Dr. Sunita Rao', dept: 'Gynecology', initials: 'SR', slots: [{ time: '9–10 AM', type: 'booked' }, { time: '10–12 PM', type: 'free' }, { time: '2–4 PM', type: 'booked' }] },
-];
+/* --- Doctor Schedule (empty, to be loaded from Firestore) --- */
+let DOCTOR_SCHEDULE = [];
 
-/* --- Bed Allocation Data by Ward --- */
-const WARDS = {
-  general: generateBeds(84, { occupied: 56, reserved: 6, maintenance: 2 }),
-  icu: generateBeds(20, { occupied: 16, reserved: 2, maintenance: 1 }),
-  maternity: generateBeds(32, { occupied: 20, reserved: 8, maintenance: 1 }),
-  surgery: generateBeds(24, { occupied: 18, reserved: 4, maintenance: 0 })
-};
-
-function generateBeds(total, counts) {
-  const beds = [];
-  for (let i = 1; i <= total; i++) {
-    let status = 'available';
-    if (i <= counts.occupied) status = 'occupied';
-    else if (i <= counts.occupied + counts.reserved) status = 'reserved';
-    else if (i <= counts.occupied + counts.reserved + counts.maintenance) status = 'maintenance';
-    beds.push({ num: i, status });
-  }
-  return beds;
-}
+/* --- Bed Allocation Data by Ward (empty, to be loaded from Firestore) --- */
+let WARDS = {};
 
 let currentWard = 'general';
 
@@ -311,24 +266,5 @@ document.addEventListener('DOMContentLoaded', () => {
   const dateEl = document.getElementById('apptDate');
   if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
 
-  // Simulate a new patient arriving every 40 seconds
-  setInterval(() => {
-    const names = ['Rahul Sharma', 'Deepa Menon', 'Arun Kumar', 'Geetha Pillai', 'Joseph Thomas'];
-    const doctors = ['Dr. Julian Vance', 'Dr. Kavita Singh', 'Dr. Priya Nair'];
-    const complaints = ['Fever', 'Headache', 'Joint pain', 'Follow-up', 'General checkup'];
-    const token = OPD_QUEUE.length + 1;
-    const name = names[Math.floor(Math.random() * names.length)];
-    OPD_QUEUE.push({
-      token,
-      name,
-      age: `${Math.floor(Math.random() * 50) + 18}${Math.random() > 0.5 ? 'M' : 'F'}`,
-      doctor: doctors[Math.floor(Math.random() * doctors.length)],
-      complaint: complaints[Math.floor(Math.random() * complaints.length)],
-      status: 'waiting',
-      time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-      timestamp: new Date().toISOString()
-    });
-    renderOpdQueue();
-    toast(`New walk-in: ${name} (Token #${token})`, 'info', 'person_add');
-  }, 40000);
+  // New patient arrivals will come from Firestore
 });

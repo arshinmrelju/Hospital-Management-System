@@ -4,31 +4,9 @@
 'use strict';
 HMS.requireAuth();
 
-const LAB_ORDERS = [
-  {id:'LAB001',patient:'Arthur Pendragon',type:'CBC',doctor:'Dr. Vance',time:'08:30',status:'ready',priority:'Routine'},
-  {id:'LAB002',patient:'Sarah Mitchell',type:'Lipid Panel',doctor:'Dr. Mitchell',time:'09:00',status:'processing',priority:'Routine'},
-  {id:'LAB003',patient:'Rajan Kapoor',type:'BMP',doctor:'Dr. Lee',time:'09:30',status:'critical',priority:'STAT (Emergency)'},
-  {id:'LAB004',patient:'Jordan Xiao',type:'Urinalysis',doctor:'Dr. Patel',time:'10:00',status:'ordered',priority:'Routine'},
-  {id:'LAB005',patient:'Mary Gates',type:'LFT',doctor:'Dr. Iyer',time:'10:30',status:'processing',priority:'Urgent'},
-  {id:'LAB006',patient:'Alex Johnson',type:'X-Ray / Imaging',doctor:'Dr. Lee',time:'11:00',status:'ready',priority:'Routine'},
-  {id:'LAB007',patient:'Ananya Sharma',type:'Thyroid Function',doctor:'Dr. Mitchell',time:'11:30',status:'ordered',priority:'Routine'},
-  {id:'LAB008',patient:'Carlos Mendez',type:'Culture & Sensitivity',doctor:'Dr. Vance',time:'12:00',status:'critical',priority:'STAT (Emergency)'},
-];
-
-const LAB_RESULTS = [
-  {id:'LAB001',patient:'Arthur Pendragon',type:'CBC',values:[{name:'WBC',val:'11.2 K/μL',ref:'4.0–10.5',flag:'high'},{name:'RBC',val:'4.5 M/μL',ref:'4.2–5.4',flag:'normal'},{name:'HGB',val:'13.8 g/dL',ref:'12–17',flag:'normal'},{name:'HCT',val:'41%',ref:'37–52%',flag:'normal'}]},
-  {id:'LAB003',patient:'Rajan Kapoor',type:'BMP',values:[{name:'Sodium',val:'142 mEq/L',ref:'136–145',flag:'normal'},{name:'Potassium',val:'6.1 mEq/L',ref:'3.5–5.1',flag:'high'},{name:'Creatinine',val:'1.8 mg/dL',ref:'0.7–1.3',flag:'high'},{name:'Glucose',val:'98 mg/dL',ref:'70–100',flag:'normal'}]},
-  {id:'LAB006',patient:'Alex Johnson',type:'Thyroid',values:[{name:'TSH',val:'5.8 mIU/L',ref:'0.4–4.0',flag:'high'},{name:'T4',val:'1.1 ng/dL',ref:'0.8–1.8',flag:'normal'},{name:'T3',val:'2.9 pg/mL',ref:'2.3–4.1',flag:'normal'}]},
-];
-
-const PATIENTS_DB = [
-  { name: 'Sarah Mitchell', phone: '+91 9876000011', id: 'P001' },
-  { name: 'Rajan Kapoor', phone: '+91 9876000021', id: 'P003' },
-  { name: 'Alex Johnson', phone: '+91 9876000031', id: 'P004' },
-  { name: 'Mary Gates', phone: '+91 9876000041', id: 'P005' },
-  { name: 'Jordan Xiao', phone: '+91 9876000051', id: 'P006' },
-  { name: 'Arthur Pendragon', phone: '+91 9876000061', id: 'P007' }
-];
+const LAB_ORDERS = [];
+const LAB_RESULTS = [];
+const PATIENTS_DB = [];
 
 let labStatusFilter = 'all';
 

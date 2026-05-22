@@ -5,37 +5,10 @@
 
 'use strict';
 
-/* --- Mock Specimen Data --- */
-const today = new Date().toISOString().split('T')[0];
-const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-const threeDaysAgo = new Date(Date.now() - 3 * 86400000).toISOString().split('T')[0];
-const lastMonth = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
-
-let SPECIMENS = [
-  { id: 'SPC-1101', patient: 'Rajan Mehta', age: 54, test: 'Complete Blood Count', sample: 'Venous Blood', doctor: 'Dr. Julian Vance', status: 'queued', time: '08:45 AM', timestamp: `${today}T08:45:00`, critical: false },
-  { id: 'SPC-1102', patient: 'Priya Nambiar', age: 34, test: 'Thyroid Profile', sample: 'Venous Blood', doctor: 'Dr. Kavita Singh', status: 'processing', time: '09:00 AM', timestamp: `${today}T09:00:00`, critical: false },
-  { id: 'SPC-1103', patient: 'Suresh Babu', age: 67, test: 'Kidney Function Test', sample: 'Venous Blood', doctor: 'Dr. Julian Vance', status: 'critical', time: '09:15 AM', timestamp: `${today}T09:15:00`, critical: true },
-  { id: 'SPC-1104', patient: 'Ananya Sharma', age: 29, test: 'Blood Glucose', sample: 'Capillary Blood', doctor: 'Dr. Priya Nair', status: 'queued', time: '09:30 AM', timestamp: `${today}T09:30:00`, critical: false },
-  { id: 'SPC-1105', patient: 'Vikram Pillai', age: 45, test: 'Lipid Panel', sample: 'Venous Blood', doctor: 'Dr. Julian Vance', status: 'processing', time: '09:45 AM', timestamp: `${today}T09:45:00`, critical: false },
-  { id: 'SPC-1106', patient: 'Meera Iyer', age: 38, test: 'Liver Function Test', sample: 'Venous Blood', doctor: 'Dr. Kavita Singh', status: 'queued', time: '10:00 AM', timestamp: `${today}T10:00:00`, critical: false },
-  { id: 'SPC-1107', patient: 'Kavitha Menon', age: 52, test: 'Urine Routine', sample: 'Urine', doctor: 'Dr. Priya Nair', status: 'critical', time: '10:05 AM', timestamp: `${today}T10:05:00`, critical: true },
-  // Yesterday's records
-  { id: 'SPC-1099', patient: 'Harish Kumar', age: 48, test: 'Complete Blood Count', sample: 'Venous Blood', doctor: 'Dr. Kavita Singh', status: 'complete', time: '04:15 PM', timestamp: `${yesterday}T16:15:00`, critical: false },
-  { id: 'SPC-1100', patient: 'Leela Nair', age: 60, test: 'Urine Routine', sample: 'Urine', doctor: 'Dr. Priya Nair', status: 'complete', time: '05:30 PM', timestamp: `${yesterday}T17:30:00`, critical: false },
-  // Last 7 Days records
-  { id: 'SPC-1093', patient: 'Devendra Joshi', age: 36, test: 'Lipid Panel', sample: 'Venous Blood', doctor: 'Dr. Arjun Mehta', status: 'complete', time: '11:00 AM', timestamp: `${threeDaysAgo}T11:00:00`, critical: false },
-  // This Month / Last Month records
-  { id: 'SPC-1090', patient: 'Sita Ramaswamy', age: 72, test: 'Thyroid Profile', sample: 'Venous Blood', doctor: 'Dr. Julian Vance', status: 'complete', time: '10:30 AM', timestamp: `${lastMonth}T10:30:00`, critical: false }
-];
-
+let SPECIMENS = [];
 let filteredSpecimens = null;
 
-const COMPLETED_RESULTS = [
-  { id: 'SPC-1095', patient: 'Rahul Kumar', test: 'Complete Blood Count', status: 'Normal', time: '07:30 AM', doctor: 'Dr. Julian Vance' },
-  { id: 'SPC-1096', patient: 'Deepa Nair', test: 'Blood Glucose', status: 'Elevated', time: '07:50 AM', doctor: 'Dr. Kavita Singh' },
-  { id: 'SPC-1097', patient: 'Arun Joseph', test: 'Lipid Panel', status: 'Normal', time: '08:10 AM', doctor: 'Dr. Priya Nair' },
-  { id: 'SPC-1098', patient: 'Lakshmi Devi', test: 'Thyroid Profile', status: 'Normal', time: '08:25 AM', doctor: 'Dr. Julian Vance' },
-];
+const COMPLETED_RESULTS = [];
 
 let activeSpecimenId = null;
 let isScanning = false;
@@ -189,83 +162,9 @@ function selectSpecimen(id) {
   }
 }
 
-/* --- Run Scan Animation --- */
+/* --- Run Scan (placeholder) --- */
 function runScan() {
-  if (isScanning) return;
-  if (!activeSpecimenId) {
-    toast('Please select a specimen from the queue first!', 'warning');
-    return;
-  }
-
-  isScanning = true;
-  const btn = document.getElementById('scanBtn');
-  if (btn) {
-    btn.innerHTML = '<span class="material-icons-round">hourglass_empty</span> SCANNING...';
-    btn.style.opacity = '0.7';
-    btn.disabled = true;
-  }
-
-  document.getElementById('scanStatus').textContent = 'SCANNING IN PROGRESS...';
-  document.getElementById('scanStatus').className = 'value';
-
-  const phases = [
-    () => {
-      document.getElementById('scanWBC').textContent = (Math.random() * 5 + 4).toFixed(1) + ' ×10³/µL';
-    },
-    () => {
-      document.getElementById('scanRBC').textContent = (Math.random() * 1 + 4.5).toFixed(2) + ' ×10⁶/µL';
-    },
-    () => {
-      const hgb = (Math.random() * 4 + 11);
-      const el = document.getElementById('scanHgb');
-      el.textContent = hgb.toFixed(1) + ' g/dL';
-      el.className = hgb < 12 ? 'value alert' : 'value normal';
-    },
-    () => {
-      const plt = Math.round(Math.random() * 200 + 150);
-      const el = document.getElementById('scanPlatelet');
-      el.textContent = plt + ' ×10³/µL';
-      el.className = plt < 150 ? 'value alert' : 'value normal';
-    }
-  ];
-
-  phases.forEach((fn, i) => setTimeout(fn, (i + 1) * 600));
-
-  setTimeout(() => {
-    const spc = SPECIMENS.find(s => s.id === activeSpecimenId);
-    const hasCritical = spc?.critical;
-    const statusEl = document.getElementById('scanStatus');
-    statusEl.textContent = hasCritical ? 'CRITICAL VALUES DETECTED!' : 'ANALYSIS COMPLETE – NORMAL';
-    statusEl.className = hasCritical ? 'value alert' : 'value normal';
-
-    if (btn) {
-      btn.innerHTML = '<span class="material-icons-round">document_scanner</span> RUN SCAN';
-      btn.style.opacity = '1';
-      btn.disabled = false;
-    }
-    isScanning = false;
-
-    // Update specimen status
-    if (spc) {
-      spc.status = hasCritical ? 'critical' : 'complete';
-      renderSpecimenQueue();
-    }
-
-    // Move to completed
-    if (spc && !COMPLETED_RESULTS.find(r => r.id === spc.id)) {
-      COMPLETED_RESULTS.unshift({
-        id: spc.id,
-        patient: spc.patient,
-        test: spc.test,
-        status: hasCritical ? 'Elevated' : 'Normal',
-        time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-        doctor: spc.doctor
-      });
-      renderResults();
-    }
-
-    toast(hasCritical ? `⚠ Critical findings for ${spc?.patient}! Review immediately.` : `Scan complete for ${spc?.patient} – Normal.`, hasCritical ? 'error' : 'success');
-  }, phases.length * 600 + 400);
+  toast('Scanner hardware not connected. Please connect a scanner device to use this feature.', 'warning', 'document_scanner');
 }
 
 /* --- Clear Scanner --- */

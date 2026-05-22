@@ -1,0 +1,134 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: check if the user is authenticated
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // Helper: get the user's role from Firestore user profiles
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    // Helper: check if user has a specific role
+    function hasRole(role) {
+      return isAuth() && getUserRole() == role;
+    }
+
+    function hasAnyRole(roles) {
+      return isAuth() && getUserRole() in roles;
+    }
+
+    // === USERS COLLECTION ===
+    // Users can read their own profile; admins can read all
+    match /users/{userId} {
+      allow read: if isAuth() && (request.auth.uid == userId || hasRole('Admin'));
+      allow create: if isAuth() && hasRole('Admin');
+      allow update: if isAuth() && (request.auth.uid == userId || hasRole('Admin'));
+      allow delete: if isAuth() && hasRole('Admin');
+    }
+
+    // === PATIENTS COLLECTION ===
+    // Medical/Admin staff can CRUD; patients can read their own (future)
+    match /patients/{patientId} {
+      allow read: if isAuth() && hasAnyRole(['Admin', 'Doctor', 'Staff', 'Pharmacist', 'Lab Tech']);
+      allow create: if isAuth() && hasAnyRole(['Admin', 'Doctor', 'Staff']);
+      allow update: if isAuth() && hasAnyRole(['Admin', 'Doctor', 'Staff']);
+      allow delete: if isAuth() && hasRole('Admin');
+    }
+
+    // === APPOINTMENTS COLLECTION ===
+    match /appointments/{appointmentId} {
+      allow read: if isAuth() && hasAnyRole(['Admin', 'Doctor', 'Staff']);
+      allow create: if isAuth() && hasAnyRole(['Admin', 'Doctor', 'Staff']);
+      allow update: if isAuth() && hasAnyRole(['Admin', 'Doctor', 'Staff']);
+      allow delete: if isAuth() && hasRole('Admin');
+    }
+
+    // === PRESCRIPTIONS COLLECTION ===
+    match /prescriptions/{rxId} {
+      allow read: if isAuth() && hasAnyRole(['Admin', 'Doctor', 'Pharmacist']);
+      allow create: if isAuth() && hasRole('Doctor');
+      allow update: if isAuth() && hasAnyRole(['Doctor', 'Pharmacist']);
+      allow delete: if isAuth() && hasRole('Admin');
+    }
+
+    // === INVENTORY COLLECTION ===
+    match /inventory/{itemId} {
+      allow read: if isAuth();
+      allow create: if isAuth() && hasRole('Admin');
+      allow update: if isAuth() && hasAnyRole(['Admin', 'Pharmacist']);
+      allow delete: if isAuth() && hasRole('Admin');
+    }
+
+    // === LAB_ORDERS COLLECTION ===
+    match /lab_orders/{orderId} {
+      allow read: if isAuth() && hasAnyRole(['Admin', 'Doctor', 'Lab Tech']);
+      allow create: if isAuth() && hasRole('Doctor');
+      allow update: if isAuth() && hasAnyRole(['Lab Tech', 'Doctor']);
+      allow delete: if isAuth() && hasRole('Admin');
+    }
+
+    // === LAB_RESULTS COLLECTION ===
+    match /lab_results/{resultId} {
+      allow read: if isAuth() && hasAnyRole(['Admin', 'Doctor', 'Lab Tech', 'Pharmacist']);
+      allow create: if isAuth() && hasRole('Lab Tech');
+      allow update: if isAuth() && hasRole('Lab Tech');
+      allow delete: if isAuth() && hasRole('Admin');
+    }
+
+    // === TRANSACTIONS (Billing/UPI) COLLECTION ===
+    match /transactions/{txnId} {
+      allow read: if isAuth() && hasAnyRole(['Admin', 'Pharmacist', 'Staff']);
+      allow create: if isAuth() && hasAnyRole(['Admin', 'Pharmacist', 'Staff']);
+      allow update: if isAuth() && hasAnyRole(['Admin', 'Pharmacist']);
+      allow delete: if isAuth() && hasRole('Admin');
+    }
+
+    // === INVOICES COLLECTION ===
+    match /invoices/{invoiceId} {
+      allow read: if isAuth() && hasAnyRole(['Admin', 'Pharmacist', 'Staff']);
+      allow create: if isAuth() && hasAnyRole(['Admin', 'Pharmacist', 'Staff']);
+      allow update: if isAuth() && hasAnyRole(['Admin', 'Pharmacist']);
+      allow delete: if isAuth() && hasRole('Admin');
+    }
+
+    // === AUDIT_LOGS COLLECTION ===
+    // Append-only; any authenticated user can write, only admins can read
+    match /audit_logs/{logId} {
+      allow read: if isAuth() && hasRole('Admin');
+      allow create: if isAuth();
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // === STAFF (Personnel) COLLECTION ===
+    match /staff/{staffId} {
+      allow read: if isAuth() && hasAnyRole(['Admin', 'Doctor', 'Staff']);
+      allow create: if isAuth() && hasRole('Admin');
+      allow update: if isAuth() && hasRole('Admin');
+      allow delete: if isAuth() && hasRole('Admin');
+    }
+
+    // === OPD_QUEUE COLLECTION ===
+    match /opd_queue/{entryId} {
+      allow read: if isAuth() && hasAnyRole(['Admin', 'Doctor', 'Staff']);
+      allow create: if isAuth() && hasAnyRole(['Admin', 'Staff']);
+      allow update: if isAuth() && hasAnyRole(['Admin', 'Doctor', 'Staff']);
+      allow delete: if isAuth() && hasRole('Admin');
+    }
+
+    // === WARDS + BEDS COLLECTION ===
+    match /wards/{wardId} {
+      allow read: if isAuth() && hasAnyRole(['Admin', 'Staff']);
+      allow write: if isAuth() && hasAnyRole(['Admin', 'Staff']);
+    }
+
+    // Deny everything else by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

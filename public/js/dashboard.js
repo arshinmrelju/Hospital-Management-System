@@ -29,7 +29,7 @@ function initAdminCharts(callback) {
           labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
           datasets: [{
             label: 'Admissions',
-            data: [28, 35, 31, 42, 38, 22, 18],
+            data: [0, 0, 0, 0, 0, 0, 0],
             borderColor: '#4338ca',
             backgroundColor: 'rgba(99,102,241,0.08)',
             borderWidth: 2.5,
@@ -39,7 +39,7 @@ function initAdminCharts(callback) {
             pointRadius: 4,
           }, {
             label: 'Discharges',
-            data: [22, 28, 26, 38, 34, 18, 15],
+            data: [0, 0, 0, 0, 0, 0, 0],
             borderColor: '#10b981',
             backgroundColor: 'rgba(16,185,129,0.05)',
             borderWidth: 2,
@@ -68,7 +68,7 @@ function initAdminCharts(callback) {
         data: {
           labels: ['In-Patient', 'Out-Patient', 'Discharged', 'Critical'],
           datasets: [{
-            data: [218, 84, 142, 12],
+            data: [0, 0, 0, 0],
             backgroundColor: ['#4338ca', '#10b981', '#64748b', '#ef4444'],
             borderWidth: 0,
             hoverOffset: 6
@@ -103,41 +103,7 @@ function applyAdminFilter() {
     return;
   }
 
-  // Simulate updating charts based on date selection
-  // By modifying the data slightly to show an interaction
-  if (adminAdmissionsChartInstance) {
-    const data1 = adminAdmissionsChartInstance.data.datasets[0].data;
-    const data2 = adminAdmissionsChartInstance.data.datasets[1].data;
-    
-    adminAdmissionsChartInstance.data.datasets[0].data = data1.map(v => Math.floor(v * (0.8 + Math.random() * 0.4)));
-    adminAdmissionsChartInstance.data.datasets[1].data = data2.map(v => Math.floor(v * (0.8 + Math.random() * 0.4)));
-    adminAdmissionsChartInstance.update();
-  }
-
-  if (adminStatusChartInstance) {
-    const data = adminStatusChartInstance.data.datasets[0].data;
-    adminStatusChartInstance.data.datasets[0].data = data.map(v => Math.floor(v * (0.8 + Math.random() * 0.4)));
-    adminStatusChartInstance.update();
-  }
-
-  // Update counters to random values around target
-  document.querySelectorAll('.stat-value').forEach(el => {
-    const target = parseInt(el.getAttribute('data-target') || '0', 10);
-    const newValue = Math.floor(target * (0.7 + Math.random() * 0.6));
-    if (el.textContent.includes('₹')) {
-      el.textContent = '₹' + newValue.toLocaleString('en-IN');
-    } else {
-      el.textContent = newValue;
-    }
-  });
-
-  // Toggle result badge and update label
-  const badge = document.getElementById('adminResultBadge');
-  if (badge) badge.classList.add('visible');
-  const countEl = document.getElementById('adminResultCount');
-  if (countEl) countEl.textContent = 'Active';
-
-  toast('Global operations filtered by selected date range.', 'info', 'filter_alt');
+  toast('Filter applied. Connect to Firestore to load real data for this range.', 'info', 'filter_alt');
 }
 
 function clearAdminFilter() {
@@ -152,13 +118,13 @@ function clearAdminFilter() {
   
   // Reset charts to default values
   if (adminAdmissionsChartInstance) {
-    adminAdmissionsChartInstance.data.datasets[0].data = [28, 35, 31, 42, 38, 22, 18];
-    adminAdmissionsChartInstance.data.datasets[1].data = [22, 28, 26, 38, 34, 18, 15];
+    adminAdmissionsChartInstance.data.datasets[0].data = [0, 0, 0, 0, 0, 0, 0];
+    adminAdmissionsChartInstance.data.datasets[1].data = [0, 0, 0, 0, 0, 0, 0];
     adminAdmissionsChartInstance.update();
   }
 
   if (adminStatusChartInstance) {
-    adminStatusChartInstance.data.datasets[0].data = [218, 84, 142, 12];
+    adminStatusChartInstance.data.datasets[0].data = [0, 0, 0, 0];
     adminStatusChartInstance.update();
   }
 

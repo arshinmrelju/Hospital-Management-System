@@ -5,27 +5,7 @@
 
 'use strict';
 
-/* --- Mock Data --- */
-const today = new Date().toISOString().split('T')[0];
-const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-const threeDaysAgo = new Date(Date.now() - 3 * 86400000).toISOString().split('T')[0];
-const lastMonth = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
-
-let RX_QUEUE = [
-  { id: 'RX-2401', patient: 'Rajan Mehta', age: 54, doctor: 'Dr. Julian Vance', meds: ['Metformin 500mg × 30 tabs', 'Amlodipine 5mg × 30 tabs'], status: 'pending', time: '09:15 AM', timestamp: `${today}T09:15:00`, priority: 'high' },
-  { id: 'RX-2402', patient: 'Shalini Rao', age: 31, doctor: 'Dr. Julian Vance', meds: ['Amoxicillin 250mg × 20 caps', 'Paracetamol 650mg × 10 tabs'], status: 'dispensing', time: '09:32 AM', timestamp: `${today}T09:32:00`, priority: 'medium' },
-  { id: 'RX-2403', patient: 'Arvind Gupta', age: 67, doctor: 'Dr. Kavita Singh', meds: ['Atorvastatin 10mg × 30 tabs', 'Pantoprazole 40mg × 15 tabs'], status: 'ready', time: '10:00 AM', timestamp: `${today}T10:00:00`, priority: 'low' },
-  { id: 'RX-2404', patient: 'Meera Iyer', age: 43, doctor: 'Dr. Julian Vance', meds: ['Ibuprofen 400mg × 10 tabs'], status: 'pending', time: '10:08 AM', timestamp: `${today}T10:08:00`, priority: 'medium' },
-  { id: 'RX-2405', patient: 'Suresh Babu', age: 59, doctor: 'Dr. Priya Nair', meds: ['Paracetamol 650mg × 10 tabs', 'Metformin 500mg × 30 tabs'], status: 'pending', time: '10:22 AM', timestamp: `${today}T10:22:00`, priority: 'high' },
-  { id: 'RX-2406', patient: 'Kavitha Menon', age: 28, doctor: 'Dr. Julian Vance', meds: ['Amoxicillin 250mg × 14 caps'], status: 'pending', time: '10:35 AM', timestamp: `${today}T10:35:00`, priority: 'low' },
-  // Yesterday's records
-  { id: 'RX-2398', patient: 'Harish Kumar', age: 48, doctor: 'Dr. Kavita Singh', meds: ['Metformin 500mg × 30 tabs'], status: 'dispensed', time: '04:15 PM', timestamp: `${yesterday}T16:15:00`, priority: 'medium' },
-  { id: 'RX-2399', patient: 'Leela Nair', age: 60, doctor: 'Dr. Priya Nair', meds: ['Paracetamol 650mg × 10 tabs'], status: 'dispensed', time: '05:30 PM', timestamp: `${yesterday}T17:30:00`, priority: 'low' },
-  // Last 7 Days records
-  { id: 'RX-2395', patient: 'Devendra Joshi', age: 36, doctor: 'Dr. Arjun Mehta', meds: ['Amoxicillin 250mg × 14 caps'], status: 'dispensed', time: '11:00 AM', timestamp: `${threeDaysAgo}T11:00:00`, priority: 'high' },
-  // This Month / Last Month records
-  { id: 'RX-2392', patient: 'Sita Ramaswamy', age: 72, doctor: 'Dr. Julian Vance', meds: ['Atorvastatin 10mg × 30 tabs'], status: 'dispensed', time: '10:30 AM', timestamp: `${lastMonth}T10:30:00`, priority: 'high' }
-];
+let RX_QUEUE = [];
 
 let filteredRxQueue = null;
 
@@ -501,30 +481,7 @@ function addManualRx() {
   toast(`Manual Rx added for ${patient}!`, 'success', 'receipt_long');
 }
 
-/* --- Simulate live Rx incoming --- */
-function simulateLiveRx() {
-  const mockPatients = ['Ananya Sharma', 'Vikram Pillai', 'Lakshmi Devi', 'Rahul Nair'];
-  const mockDoctors = ['Dr. Julian Vance', 'Dr. Kavita Singh', 'Dr. Priya Nair'];
-  const mockMeds = [['Paracetamol 650mg × 10 tabs'], ['Metformin 500mg × 30 tabs', 'Atorvastatin 10mg × 30 tabs']];
-  setInterval(() => {
-    if (Math.random() < 0.4) {
-      const newRx = {
-        id: `RX-${2400 + RX_QUEUE.length + 1}`,
-        patient: mockPatients[Math.floor(Math.random() * mockPatients.length)],
-        age: Math.floor(Math.random() * 50) + 20,
-        doctor: mockDoctors[Math.floor(Math.random() * mockDoctors.length)],
-        meds: mockMeds[Math.floor(Math.random() * mockMeds.length)],
-        status: 'pending',
-        time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-        timestamp: new Date().toISOString(),
-        priority: 'medium'
-      };
-      RX_QUEUE.push(newRx);
-      renderRxQueue();
-      toast(`New prescription from ${newRx.doctor} for ${newRx.patient}!`, 'info', 'receipt_long');
-    }
-  }, 25000);
-}
+
 
 /* --- Input listeners for invoice total --- */
 document.addEventListener('DOMContentLoaded', () => {
@@ -537,7 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchAndRenderInventory();
   fetchAndRenderStockLevels();
   // Don't update invoice total here, it will be updated after inventory is fetched
-  simulateLiveRx();
+  // Live Rx updates will come from Firestore
 
   // Event delegation for invoice inputs
   document.getElementById('invoiceLines')?.addEventListener('input', updateInvoiceTotal);

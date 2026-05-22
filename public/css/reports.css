@@ -133,54 +133,6 @@
   transition: width 0.2s ease;
 }
 
-/* Interactive Patient Simulator Widget */
-.simulator-widget {
-  background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(245,158,11,0.04));
-  border: 1px solid rgba(245,158,11,0.25);
-  box-shadow: 0 4px 30px rgba(245,158,11,0.06);
-}
-
-.simulator-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--accent-amber);
-  margin-bottom: 12px;
-}
-
-.simulator-header h3 {
-  font-family: var(--font-head);
-  font-weight: 700;
-  font-size: 1rem;
-}
-
-.simulator-body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.simulator-btn {
-  background: linear-gradient(135deg, #F59E0B, #D97706);
-  color: white;
-  border: none;
-  padding: 11px;
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  box-shadow: 0 2px 10px rgba(245,158,11,0.3);
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.simulator-btn:hover {
-  background: linear-gradient(135deg, #fbbf24, #b45309);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(245,158,11,0.4);
-}
-
 /* Charts Grid */
 .charts-grid {
   display: grid;

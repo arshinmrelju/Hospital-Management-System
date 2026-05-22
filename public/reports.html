@@ -195,7 +195,7 @@
           <div class="stat-icon-wrap"><span class="material-icons-round">check_circle</span></div>
           <div class="stat-body">
             <p class="stat-label">Success Rate</p>
-            <h2 class="stat-value" id="kpiSuccessRate">100%</h2>
+            <h2 class="stat-value" id="kpiSuccessRate">0%</h2>
             <p class="stat-delta positive"><span class="material-icons-round">speed</span>Excellent latency</p>
           </div>
         </div>
@@ -386,56 +386,6 @@
                 <span class="log-tag"><strong>[SYSTEM]</strong></span>
                 <span class="log-msg">HMS API Integration Logger running. Waiting for events...</span>
               </div>
-            </div>
-          </div>
-
-          <!-- Webhook / Hospital UPI Payment Simulator -->
-          <div class="widget glass-card simulator-widget">
-            <div class="simulator-header">
-              <span class="material-icons-round">sports_esports</span>
-              <h3>Live Webhook Simulator</h3>
-            </div>
-            <p style="font-size:0.8rem; color:var(--on-surface-var); line-height:1.4; margin-bottom:14px;">
-              Inject a mock patient checkout payment. It triggers the hospital's billing webhook API, demonstrating real-time transaction reconciliation.
-            </p>
-
-            <div class="simulator-body">
-              <div class="form-group">
-                <label>Select Mock Patient</label>
-                <select id="simPatientSelect" style="background:var(--surface-low); border:1.5px solid var(--outline-var); padding:8px 10px; border-radius:var(--radius-sm); font-weight:600;">
-                  <option value="PAT042">Rajan Kapoor</option>
-                  <option value="PAT108">Sara Parker</option>
-                  <option value="PAT223">Alex Johnson</option>
-                  <option value="PAT314">Karan Johar</option>
-                  <option value="PAT102">Dr. Sarah Mitchell</option>
-                </select>
-              </div>
-
-              <div class="form-row-2">
-                <div class="form-group">
-                  <label>Bill Subtype</label>
-                  <select id="simBillType" style="background:var(--surface-low); border:1.5px solid var(--outline-var); padding:8px 10px; border-radius:var(--radius-sm); font-weight:600;">
-                    <option value="Consultation">Consultation Fee</option>
-                    <option value="Pharmacy">Pharmacy Medicines</option>
-                    <option value="Laboratory">Lab Test diagnostics</option>
-                    <option value="Registration">OPD Registration</option>
-                  </select>
-                </div>
-
-                <div class="form-group">
-                  <label>Payer Gateway</label>
-                  <select id="simPayApp" style="background:var(--surface-low); border:1.5px solid var(--outline-var); padding:8px 10px; border-radius:var(--radius-sm); font-weight:600;">
-                    <option value="PhonePe">PhonePe UPI</option>
-                    <option value="Google Pay">GPay UPI</option>
-                    <option value="Paytm">Paytm UPI</option>
-                    <option value="BHIM UPI">BHIM UPI</option>
-                  </select>
-                </div>
-              </div>
-
-              <button type="button" class="simulator-btn" onclick="triggerMockPaymentSimulator()">
-                <span class="material-icons-round">sensors</span> Simulate Patient UPI Payment
-              </button>
             </div>
           </div>
 

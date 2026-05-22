@@ -317,24 +317,6 @@
   text-align: center;
   margin-bottom: 10px;
 }
-.demo-btns { display: flex; gap: 8px; }
-.demo-btn {
-  flex: 1;
-  background: var(--surface-low);
-  border: 1.5px solid var(--outline-var);
-  border-radius: var(--radius-md);
-  padding: 8px 6px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--on-surface-var);
-  transition: all 0.15s;
-}
-.demo-btn:hover {
-  border-color: var(--primary-light);
-  color: var(--primary-light);
-  background: var(--primary-soft);
-}
-
 .login-footer {
   font-size: 0.72rem;
   color: var(--outline);

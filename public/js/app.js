@@ -1,22 +1,32 @@
-/* =========================================
-   APP.JS – Shared utility & auth logic
-   ========================================= */
-
 'use strict';
 
 /* --- Auth / Session --- */
-const HMS = {
-  getUser() { return JSON.parse(localStorage.getItem('hms_user') || 'null'); },
-  setUser(user) { localStorage.setItem('hms_user', JSON.stringify(user)); },
-  logout() { localStorage.removeItem('hms_user'); location.href = 'index.html'; },
-  requireAuth() {
-    const user = this.getUser();
-    if (!user) { location.href = 'index.html'; return null; }
-    return user;
+function ensureHMS() {
+  if (!window.HMS) {
+    window.HMS = {
+      getUser() {
+        try { return JSON.parse(sessionStorage.getItem('hms_session') || 'null'); }
+        catch (_) { return null; }
+      },
+      setUser(user) { sessionStorage.setItem('hms_session', JSON.stringify(user)); },
+      logout() { sessionStorage.removeItem('hms_session');
+        if (window.firebaseAuth) {
+          import('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js').then(m => m.signOut(window.firebaseAuth)).catch(() => {});
+        }
+        location.href = 'index.html';
+      },
+      requireAuth() {
+        const user = this.getUser();
+        if (!user) { location.href = 'index.html'; return null; }
+        return user;
+      }
+    };
   }
-};
+  return window.HMS;
+}
+ensureHMS();
+const HMS = window.HMS;
 
-/* --- Toast Notification --- */
 function toast(message, type = 'info', icon = null) {
   let container = document.getElementById('toastContainer');
   if (!container) {
@@ -27,23 +37,29 @@ function toast(message, type = 'info', icon = null) {
   const icons = { success: 'check_circle', error: 'error', warning: 'warning', info: 'info' };
   const t = document.createElement('div');
   t.className = `toast ${type}`;
-  t.innerHTML = `<span class="material-icons-round">${icon || icons[type]}</span><span>${message}</span>`;
+  t.innerHTML = `<span class="material-icons-round">${icon || icons[type]}</span><span>${escapeHtml(message)}</span>`;
   container.appendChild(t);
   setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(50px)'; t.style.transition = 'all .3s'; setTimeout(() => t.remove(), 300); }, 3000);
 }
 
-/* --- Modal Helpers --- */
+function escapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
 function openModal(id) {
   const m = document.getElementById(id);
   if (m) { m.classList.add('active'); document.body.style.overflow = 'hidden'; }
 }
+
 function closeModal(event, id) {
   if (event && event.target !== event.currentTarget) return;
   const m = document.getElementById(id);
   if (m) { m.classList.remove('active'); document.body.style.overflow = ''; }
 }
 
-/* --- Sidebar (Mobile) --- */
 function initSidebar() {
   const toggle = document.getElementById('menuToggle');
   const sidebar = document.getElementById('sidebar');
@@ -59,7 +75,6 @@ function initSidebar() {
   });
 }
 
-/* --- Notification Panel --- */
 function initNotifications() {
   const btn = document.getElementById('notifBtn');
   const panel = document.getElementById('notifPanel');
@@ -81,13 +96,10 @@ function initNotifications() {
   });
 }
 
-/* --- User Info in Sidebar & Topbar --- */
-/* --- User Info in Sidebar & Topbar --- */
 function initUserDisplay() {
   const user = HMS.getUser();
   if (!user) return;
 
-  // 1. Dynamically Inject portals.css if not already present
   if (!document.getElementById('portals-stylesheet')) {
     const link = document.createElement('link');
     link.id = 'portals-stylesheet';
@@ -106,7 +118,6 @@ function initUserDisplay() {
   if (avatarEl) avatarEl.textContent = initials;
   if (topbarAvatarEl) topbarAvatarEl.textContent = initials;
 
-  // 2. Inject Portal Body Classes
   const role = user.role;
   document.body.classList.remove('portal-admin', 'portal-doctor', 'portal-pharmacy', 'portal-lab', 'portal-reception');
   if (role === 'Admin') {
@@ -121,9 +132,6 @@ function initUserDisplay() {
     document.body.classList.add('portal-reception');
   }
 
-  // 3. Inject Brand Role Badge in Sidebar Brand Area (Removed as requested)
-
-  // 4. Role-based Navigation Item Hiding
   const adminNavLink = document.getElementById('nav-admin');
   if (adminNavLink && role === 'Admin') {
     adminNavLink.style.display = 'flex';
@@ -147,18 +155,20 @@ function initUserDisplay() {
     });
   }
 
-  // 5. Dynamic Routing Redirects if landing on general dashboard.html or root
   const page = window.location.pathname.split('/').pop();
   if (page === 'dashboard.html' || page === '') {
-    if (role === 'Admin') window.location.href = 'admin-dashboard.html';
-    else if (role === 'Doctor') window.location.href = 'doctor-dashboard.html';
-    else if (role === 'Staff') window.location.href = 'reception-dashboard.html';
-    else if (role === 'Pharmacist') window.location.href = 'pharmacy-dashboard.html';
-    else if (role === 'Lab Tech') window.location.href = 'lab-dashboard.html';
+    const redirects = {
+      Admin: 'admin-dashboard.html',
+      Doctor: 'doctor-dashboard.html',
+      Staff: 'reception-dashboard.html',
+      Pharmacist: 'pharmacy-dashboard.html',
+      'Lab Tech': 'lab-dashboard.html'
+    };
+    const target = redirects[role];
+    if (target) window.location.href = target;
   }
 }
 
-/* --- Logout --- */
 function initLogout() {
   const btn = document.getElementById('logoutBtn');
   if (btn) btn.addEventListener('click', () => {
@@ -166,7 +176,6 @@ function initLogout() {
   });
 }
 
-/* --- Date Display --- */
 function initDateDisplay() {
   const el = document.getElementById('todayDate');
   if (!el) return;
@@ -174,29 +183,24 @@ function initDateDisplay() {
   el.textContent = new Date().toLocaleDateString('en-IN', opts);
 }
 
-/* --- Greeting --- */
 function initGreeting() {
   const el = document.getElementById('dashboardGreeting');
   if (!el) return;
   const h = new Date().getHours();
   const g = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
   const user = HMS.getUser();
-  el.textContent = `${g}, ${user ? user.name.split(' ')[0] : 'Doctor'}! Here's your workspace overview.`;
+  el.textContent = `${g}, ${user ? user.name.split(' ')[0] : 'User'}! Here's your workspace overview.`;
 }
 
-/* --- Tab Switching (shared) --- */
 function switchTab(btn, tabId) {
-  // Deactivate all tabs
   btn.closest('.tab-bar').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  // Hide all tab contents
   const prefix = tabId.split('-')[0];
   document.querySelectorAll('.tab-content').forEach(c => { c.hidden = true; });
   const target = document.getElementById(`tab-${tabId}`);
   if (target) target.hidden = false;
 }
 
-/* --- Counter Animation --- */
 function animateCounters() {
   document.querySelectorAll('.counter').forEach(el => {
     const target = parseInt(el.dataset.target, 10);
@@ -212,10 +216,6 @@ function animateCounters() {
   });
 }
 
-/* =============================================
-   SMART FILTER UTILITIES (Global)
-   ============================================= */
-
 function sfChipSelect(btn, prefix, type) {
   const chips = btn.closest('.sf-chips');
   if (chips) {
@@ -225,13 +225,9 @@ function sfChipSelect(btn, prefix, type) {
 
   const customRange = document.getElementById(`${prefix}CustomRange`);
   if (type === 'custom') {
-    if (customRange) {
-      customRange.classList.add('expanded');
-    }
+    if (customRange) customRange.classList.add('expanded');
   } else {
-    if (customRange) {
-      customRange.classList.remove('expanded');
-    }
+    if (customRange) customRange.classList.remove('expanded');
     sfApplyPresetFilter(prefix, type);
   }
 }
@@ -240,7 +236,6 @@ function sfGetPresetBounds(type) {
   const now = new Date();
   let start = new Date();
   let end = new Date();
-  
   if (type === 'today') {
     start.setHours(0,0,0,0);
     end.setHours(23,59,59,999);
@@ -262,90 +257,65 @@ function sfGetPresetBounds(type) {
 
 function sfApplyPresetFilter(prefix, type) {
   const bounds = sfGetPresetBounds(type);
-  
   const formatLocalDate = (d) => {
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const date = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${date}`;
   };
-  
   const startDateStr = formatLocalDate(bounds.start);
   const startTimeStr = String(bounds.start.getHours()).padStart(2, '0') + ':' + String(bounds.start.getMinutes()).padStart(2, '0');
-  
   const endDateStr = formatLocalDate(bounds.end);
   const endTimeStr = String(bounds.end.getHours()).padStart(2, '0') + ':' + String(bounds.end.getMinutes()).padStart(2, '0');
-  
   const startD = document.getElementById(`${prefix}StartDate`);
   const startT = document.getElementById(`${prefix}StartTime`);
   const endD = document.getElementById(`${prefix}EndDate`);
   const endT = document.getElementById(`${prefix}EndTime`);
-  
   if (startD) startD.value = startDateStr;
   if (startT) startT.value = startTimeStr;
   if (endD) endD.value = endDateStr;
   if (endT) endT.value = endTimeStr;
-  
   sfExecutePortalFilter(prefix);
 }
 
-function sfApplyCustom(prefix) {
-  sfExecutePortalFilter(prefix);
-}
+function sfApplyCustom(prefix) { sfExecutePortalFilter(prefix); }
 
 function sfClearFilter(prefix) {
   const startD = document.getElementById(`${prefix}StartDate`);
   const startT = document.getElementById(`${prefix}StartTime`);
   const endD = document.getElementById(`${prefix}EndDate`);
   const endT = document.getElementById(`${prefix}EndTime`);
-  
   if (startD) startD.value = '';
   if (startT) startT.value = '';
   if (endD) endD.value = '';
   if (endT) endT.value = '';
-  
   const filterEl = document.getElementById(`${prefix}SmartFilter`);
   if (filterEl) {
     filterEl.querySelectorAll('.sf-chip').forEach(c => c.classList.remove('active'));
     const todayChip = filterEl.querySelector(`.sf-chip[onclick*="'today'"]`);
     if (todayChip) todayChip.classList.add('active');
   }
-  
   const customRange = document.getElementById(`${prefix}CustomRange`);
   if (customRange) customRange.classList.remove('expanded');
-  
   sfExecutePortalClear(prefix);
 }
 
 function sfExecutePortalFilter(prefix) {
-  if (prefix === 'doc') {
-    if (typeof filterPatientQueue === 'function') filterPatientQueue();
-  } else if (prefix === 'opd') {
-    if (typeof filterOpdQueue === 'function') filterOpdQueue();
-  } else if (prefix === 'rx') {
-    if (typeof filterRxQueue === 'function') filterRxQueue();
-  } else if (prefix === 'lab') {
-    if (typeof filterSpecimenQueue === 'function') filterSpecimenQueue();
-  } else if (prefix === 'admin') {
-    if (typeof applyAdminFilter === 'function') applyAdminFilter();
-  }
+  if (prefix === 'doc') { if (typeof filterPatientQueue === 'function') filterPatientQueue(); }
+  else if (prefix === 'opd') { if (typeof filterOpdQueue === 'function') filterOpdQueue(); }
+  else if (prefix === 'rx') { if (typeof filterRxQueue === 'function') filterRxQueue(); }
+  else if (prefix === 'lab') { if (typeof filterSpecimenQueue === 'function') filterSpecimenQueue(); }
+  else if (prefix === 'admin') { if (typeof applyAdminFilter === 'function') applyAdminFilter(); }
 }
 
 function sfExecutePortalClear(prefix) {
-  if (prefix === 'doc') {
-    if (typeof clearPatientQueueFilter === 'function') clearPatientQueueFilter();
-  } else if (prefix === 'opd') {
-    if (typeof clearOpdQueueFilter === 'function') clearOpdQueueFilter();
-  } else if (prefix === 'rx') {
-    if (typeof clearRxQueueFilter === 'function') clearRxQueueFilter();
-  } else if (prefix === 'lab') {
-    if (typeof clearSpecimenQueueFilter === 'function') clearSpecimenQueueFilter();
-  } else if (prefix === 'admin') {
-    if (typeof clearAdminFilter === 'function') clearAdminFilter();
-  }
+  if (prefix === 'doc') { if (typeof clearPatientQueueFilter === 'function') clearPatientQueueFilter(); }
+  else if (prefix === 'opd') { if (typeof clearOpdQueueFilter === 'function') clearOpdQueueFilter(); }
+  else if (prefix === 'rx') { if (typeof clearRxQueueFilter === 'function') clearRxQueueFilter(); }
+  else if (prefix === 'lab') { if (typeof clearSpecimenQueueFilter === 'function') clearSpecimenQueueFilter(); }
+  else if (prefix === 'admin') { if (typeof clearAdminFilter === 'function') clearAdminFilter(); }
 }
 
-/* --- Initialize on DOM Ready --- */
 document.addEventListener('DOMContentLoaded', () => {
   initSidebar();
   initNotifications();
@@ -356,25 +326,10 @@ document.addEventListener('DOMContentLoaded', () => {
   animateCounters();
 });
 
-/* --- Dashboard Tab Switching --- */
 window.switchDashboardTab = function(tabId, event) {
-  // Hide all panes
-  document.querySelectorAll('.dashboard-tab-pane').forEach(pane => {
-    pane.classList.remove('active');
-  });
-  // Deactivate all tab buttons
-  document.querySelectorAll('.dashboard-tab-btn').forEach(btn => {
-    btn.classList.remove('active');
-  });
-  
-  // Show targeted pane
+  document.querySelectorAll('.dashboard-tab-pane').forEach(pane => { pane.classList.remove('active'); });
+  document.querySelectorAll('.dashboard-tab-btn').forEach(btn => { btn.classList.remove('active'); });
   const targetPane = document.getElementById(tabId);
-  if (targetPane) {
-    targetPane.classList.add('active');
-  }
-  
-  // Activate clicked button
-  if (event && event.currentTarget) {
-    event.currentTarget.classList.add('active');
-  }
+  if (targetPane) targetPane.classList.add('active');
+  if (event && event.currentTarget) event.currentTarget.classList.add('active');
 };
