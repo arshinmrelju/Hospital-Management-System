@@ -165,6 +165,11 @@ function filterMedTableRemote() {
     const q = document.getElementById('medSearch')?.value.trim().toLowerCase() || '';
     if (!q) { renderMedTable(); return; }
     const all = await ensureAllInventory();
+    console.log('ensureAllInventory returned', all.length, 'items');
+    const paracetamolCheck = all.find(m => m.name.toLowerCase().includes('paracetamol'));
+    console.log('paracetamol in _allInventory?', !!paracetamolCheck, paracetamolCheck?.name);
+    const paracetamolInMed = MEDICINES.find(m => m.name.toLowerCase().includes('paracetamol'));
+    console.log('paracetamol in MEDICINES?', !!paracetamolInMed, paracetamolInMed?.name);
     const matched = all.filter(m => {
       if (!q) return true;
       const batchMatch = (m.batches || []).some(b => (b.batchNo || '').toLowerCase().includes(q));
@@ -173,17 +178,20 @@ function filterMedTableRemote() {
              (m.rack || '').toLowerCase().includes(q) ||
              batchMatch;
     });
+    console.log('matched from _allInventory:', matched.length);
     if (matched.length > 0) {
       renderMedTable(matched);
     } else {
-      renderMedTable(MEDICINES.filter(m => {
+      const medFallback = MEDICINES.filter(m => {
         if (!q) return true;
         const batchMatch = (m.batches || []).some(b => (b.batchNo || '').toLowerCase().includes(q));
         return m.name.toLowerCase().includes(q) ||
                (m.cat || '').toLowerCase().includes(q) ||
                (m.rack || '').toLowerCase().includes(q) ||
                batchMatch;
-      }));
+      });
+      console.log('fallback matched from MEDICINES:', medFallback.length);
+      renderMedTable(medFallback);
     }
   }, 300);
 }
