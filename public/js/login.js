@@ -78,10 +78,16 @@ const style = document.createElement('style');
 style.textContent = '@keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)} }';
 document.head.appendChild(style);
 
-const existing = sessionStorage.getItem('hms_session');
-if (existing) {
+// If already logged in (session in sessionStorage or Firebase Auth restores), redirect
+(async () => {
   try {
-    const u = JSON.parse(existing);
-    if (u && u.redirect) location.href = u.redirect;
-  } catch (_) { }
-}
+    if (window._authReady) await window._authReady;
+  } catch (_) {}
+  const existing = sessionStorage.getItem('hms_session');
+  if (existing) {
+    try {
+      const u = JSON.parse(existing);
+      if (u && u.redirect && u.redirect !== window.location.href) location.href = u.redirect;
+    } catch (_) { }
+  }
+})();

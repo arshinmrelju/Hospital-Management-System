@@ -9,16 +9,33 @@ function ensureHMS() {
         catch (_) { return null; }
       },
       setUser(user) { sessionStorage.setItem('hms_session', JSON.stringify(user)); },
-      logout() { sessionStorage.removeItem('hms_session');
+      logout() {
+        sessionStorage.removeItem('hms_session');
         if (window.firebaseAuth) {
-          import('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js').then(m => m.signOut(window.firebaseAuth)).catch(() => {});
+          import('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js')
+            .then(m => m.signOut(window.firebaseAuth)).catch(() => {});
         }
         location.href = 'index.html';
       },
       requireAuth() {
         const user = this.getUser();
-        if (!user) { location.href = 'index.html'; return null; }
-        return user;
+        if (user) return user;
+        const tryRedirect = () => {
+          if (!this.getUser()) location.href = 'index.html';
+        };
+        // Wait for firebase-init.js module to load and onAuthStateChanged to fire
+        if (window._authReady === undefined) {
+          const poll = setInterval(() => {
+            if (window._authReady !== undefined) {
+              clearInterval(poll);
+              window._authReady.then(tryRedirect);
+            }
+          }, 50);
+          setTimeout(() => { clearInterval(poll); tryRedirect(); }, 3000);
+        } else {
+          window._authReady.then(tryRedirect);
+        }
+        return null;
       }
     };
   }
@@ -26,6 +43,9 @@ function ensureHMS() {
 }
 ensureHMS();
 const HMS = window.HMS;
+
+/* Expose HMS globally for pages that call it at top level */
+window.HMS_READY = window._authReady || Promise.resolve();
 
 /* Global console-log helper used by many pages */
 window.addConsoleLog = window.addConsoleLog || function addConsoleLog(type, msg) {

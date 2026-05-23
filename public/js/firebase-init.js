@@ -5,7 +5,12 @@ import {
   signOut,
   onAuthStateChanged,
   createUserWithEmailAndPassword,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  updateProfile,
+  updatePassword,
+  updateEmail,
+  reauthenticateWithCredential,
+  EmailAuthProvider
 } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
 import {
   getFirestore,
@@ -56,6 +61,70 @@ window.sendFirebasePasswordReset = (email) => sendPasswordResetEmail(auth, email
 window.firebaseFS = {
   collection, doc, getDoc, getDocs, addDoc, setDoc, updateDoc, deleteDoc,
   query, where, orderBy, limit: firestoreLimit, serverTimestamp, Timestamp
+};
+
+/* --- Auth state restoration across page loads --- */
+let _authReadyResolve;
+window._authReady = new Promise(resolve => { _authReadyResolve = resolve; });
+window._currentFirebaseUser = null;
+
+onAuthStateChanged(auth, async (firebaseUser) => {
+  if (firebaseUser) {
+    window._currentFirebaseUser = firebaseUser;
+    const existing = HMS_AUTH.getSession();
+    if (!existing) {
+      try {
+        const profile = await HMS_AUTH.fetchProfile(firebaseUser.uid);
+        if (profile) {
+          HMS_AUTH.setSession({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            name: profile.name || firebaseUser.email.split('@')[0],
+            title: profile.title || '',
+            role: profile.role || 'Staff',
+            redirect: HMS_AUTH.getRedirect(profile.role || 'Staff')
+          });
+        }
+      } catch (e) { /* ignore */ }
+    }
+  } else {
+    window._currentFirebaseUser = null;
+    sessionStorage.removeItem('hms_session');
+  }
+  _authReadyResolve(true);
+});
+
+/* --- Firebase Auth user profile helpers --- */
+window.getFirebaseUser = () => window._currentFirebaseUser;
+
+window.updateFirebaseProfile = async (updates) => {
+  const user = window._currentFirebaseUser;
+  if (!user) throw new Error('Not authenticated');
+  await updateProfile(user, updates);
+};
+
+window.updateFirebaseEmail = async (newEmail) => {
+  const user = window._currentFirebaseUser;
+  if (!user) throw new Error('Not authenticated');
+  await updateEmail(user, newEmail);
+};
+
+window.updateFirebasePassword = async (newPassword) => {
+  const user = window._currentFirebaseUser;
+  if (!user) throw new Error('Not authenticated');
+  await updatePassword(user, newPassword);
+};
+
+window.reauthenticateFirebaseUser = async (email, password) => {
+  const user = window._currentFirebaseUser;
+  if (!user) throw new Error('Not authenticated');
+  const credential = EmailAuthProvider.credential(email, password);
+  await reauthenticateWithCredential(user, credential);
+};
+
+window.updateUserDoc = async (uid, data) => {
+  const ref = doc(db, 'users', uid || window._currentFirebaseUser?.uid);
+  await setDoc(ref, { ...data, updatedAt: serverTimestamp() }, { merge: true });
 };
 
 /* Global sanitizer for XSS prevention */

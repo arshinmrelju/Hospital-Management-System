@@ -257,13 +257,29 @@
       btn.classList.add('active');
     }
 
-    function saveSettings() {
+    async function saveSettings() {
       const first = document.getElementById('settingFirstName')?.value;
       const last = document.getElementById('settingLastName')?.value;
-      if (first && last) {
+      const email = document.getElementById('settingEmail')?.value;
+      const phone = document.getElementById('settingPhone')?.value;
+      const title = document.getElementById('settingTitle')?.value;
+      const fullName = [first, last].filter(Boolean).join(' ');
+
+      // Update session + Firebase Auth displayName + Firestore user doc
+      if (fullName) {
         const u = HMS.getUser();
-        if (u) { u.name = `${first} ${last}`; HMS.setUser(u); }
+        if (u) { u.name = fullName; u.title = title; HMS.setUser(u); }
+        try {
+          const fu = window.getFirebaseUser();
+          if (fu) {
+            await window.updateFirebaseProfile({ displayName: fullName });
+            await window.updateUserDoc(u?.uid, { name: fullName, title, email, phone });
+          }
+        } catch (e) {
+          addConsoleLog('WARN', 'Could not sync profile to Firebase: ' + e.message);
+        }
       }
+
       // Persist hospital info
       try {
         const hosp = {
@@ -390,7 +406,7 @@
       // --- Wire Update Password button ---
       const pwBtn = document.getElementById('updatePasswordBtn');
       if (pwBtn) {
-        pwBtn.addEventListener('click', function() {
+        pwBtn.addEventListener('click', async function() {
           const curPw = document.getElementById('settingCurPassword')?.value;
           const newPw = document.getElementById('settingNewPassword')?.value;
           const confirmPw = document.getElementById('settingConfirmPassword')?.value;
@@ -406,39 +422,21 @@
             toast('Password must be at least 6 characters.', 'error');
             return;
           }
-          // Try Firebase password update if available
-          if (window.firebaseApp && window.firebaseAuth) {
+          try {
             const email = document.getElementById('settingEmail')?.value;
-            if (email) {
-              import('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js').then(function(mod) {
-                const auth = mod.getAuth(window.firebaseApp);
-                const user = auth.currentUser;
-                if (user) {
-                  const cred = mod.EmailAuthProvider.credential(email, curPw);
-                  user.reauthenticateWithCredential(cred).then(function() {
-                    user.updatePassword(newPw).then(function() {
-                      toast('Password updated successfully!', 'success', 'lock');
-                      document.getElementById('settingCurPassword').value = '';
-                      document.getElementById('settingNewPassword').value = '';
-                      document.getElementById('settingConfirmPassword').value = '';
-                    }).catch(function(err) {
-                      toast('Error: ' + err.message, 'error');
-                    });
-                  }).catch(function() {
-                    toast('Current password is incorrect.', 'error');
-                  });
-                } else {
-                  toast('You must be logged in to change password.', 'error');
-                }
-              });
-            } else {
-              toast('Email not found in profile.', 'error');
-            }
-          } else {
-            toast('Password update: ' + newPw + ' (Firebase Auth not available - simulated)', 'info', 'lock');
+            if (!email) throw new Error('Email not found in profile');
+            await window.reauthenticateFirebaseUser(email, curPw);
+            await window.updateFirebasePassword(newPw);
+            toast('Password updated successfully!', 'success', 'lock');
             document.getElementById('settingCurPassword').value = '';
             document.getElementById('settingNewPassword').value = '';
             document.getElementById('settingConfirmPassword').value = '';
+          } catch (err) {
+            if (err.code === 'auth/wrong-password' || err.message?.includes('reauthenticate')) {
+              toast('Current password is incorrect.', 'error');
+            } else {
+              toast('Error: ' + (err.message || 'Password update failed'), 'error');
+            }
           }
         });
       }

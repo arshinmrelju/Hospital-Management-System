@@ -1,3 +1,9 @@
+/**
+ * DEPRECATED — All auth logic has been consolidated into firebase-init.js.
+ * This creates a duplicate Firebase app instance and is NOT loaded by any page.
+ * Kept only as a reference; DO NOT use in new code.
+ * Use window.HMS_AUTH / window.firebaseAuth / window.firebaseFS from firebase-init.js instead.
+ */
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
 import {
   getAuth,
@@ -25,13 +31,11 @@ const firebaseConfig = {
   measurementId: 'G-WTGQMNEK28'
 };
 
+/* Named second app to avoid conflict with firebase-init.js */
 const app = initializeApp(firebaseConfig, 'wellness-auth');
 const auth = getAuth(app);
 const db = getFirestore(app);
-
-window.firebaseAuth = auth;
-window.firebaseDb = db;
-window.firebaseApp = app;
+/* Intentionally NOT setting window.* — use firebase-init.js globals instead */
 
 const ROLE_REDIRECTS = {
   Admin: 'admin-dashboard.html',
