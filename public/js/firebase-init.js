@@ -32,6 +32,7 @@ import {
   Timestamp
 } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 import { getAnalytics, isSupported } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js';
+import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyAsdbCJ0vXaLAMmGmxpGkXz4Zd_OR4wzAA',
@@ -64,6 +65,12 @@ window.firebaseFS = {
   collection, doc, getDoc, getDocs, addDoc, setDoc, updateDoc, deleteDoc,
   query, where, orderBy, startAfter, startAt, limit: firestoreLimit, serverTimestamp, Timestamp
 };
+
+const functionsInstance = getFunctions(app, 'us-central1');
+if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+  try { connectFunctionsEmulator(functionsInstance, 'localhost', 5001); } catch (e) { /* ignore */ }
+}
+window.firebaseFunctions = { httpsCallable: (name) => httpsCallable(functionsInstance, name) };
 
 /* --- Auth state restoration across page loads --- */
 let _authReadyResolve;

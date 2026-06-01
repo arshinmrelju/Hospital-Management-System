@@ -1,8 +1,8 @@
 'use strict';
 HMS.requireAuth();
 
-const db = window.firebaseDb;
-const fs = window.firebaseFS;
+let db;
+let fs;
 
 let allAppts = [];
 let filteredAppts = [];
@@ -345,6 +345,8 @@ function initPatientAutocomplete() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  db = window.firebaseDb;
+  fs = window.firebaseFS;
   const dateInput = document.getElementById('apptDate');
   if (dateInput) dateInput.value = localDateValue(new Date());
   loadAppointments();

@@ -157,6 +157,22 @@ service cloud.firestore {
       allow update: if false;
     }
 
+    // === SYNC_LOGS COLLECTION (Google Contacts Sync) ===
+    // Admins can read all logs; anyone can create
+    match /sync_logs/{logId} {
+      allow read: if isAuth() && hasRole('Admin');
+      allow create: if isAuth();
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // === SYNC_CONFIG COLLECTION ===
+    // Only admins can read/write
+    match /sync_config/{configId} {
+      allow read: if isAuth() && hasRole('Admin');
+      allow write: if isAuth() && hasRole('Admin');
+    }
+
     // === WARDS + BEDS COLLECTION ===
     match /wards/{wardId} {
       allow read: if isAuth() && hasAnyRole(['Admin', 'Staff']);

@@ -2,8 +2,9 @@
 
 HMS.requireAuth();
 
-const db = window.firebaseDb;
-const fs = window.firebaseFS;
+let db;
+let fs;
+
 
 let allPatients = []; window.allPatients = allPatients;
 let filteredPatients = [];
@@ -72,16 +73,66 @@ function sanitizeInput(val) {
 function formatDate(d) { return d ? new Date(d).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : ''; }
 function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
 
+function toggleAdvancedSearchPanel() {
+  const panel = document.getElementById('advancedSearchPanel');
+  const bar = document.querySelector('.filter-bar');
+  const btn = document.getElementById('toggleAdvancedSearch');
+  if (panel.style.display === 'none') {
+    panel.style.display = 'block';
+    bar.style.borderBottomLeftRadius = '0';
+    bar.style.borderBottomRightRadius = '0';
+    btn.style.background = 'var(--primary-soft)';
+    btn.style.color = 'var(--primary-light)';
+  } else {
+    panel.style.display = 'none';
+    bar.style.borderBottomLeftRadius = '';
+    bar.style.borderBottomRightRadius = '';
+    btn.style.background = '';
+    btn.style.color = '';
+    // Reset filters
+    const minAge = document.getElementById('minAgeFilter');
+    const maxAge = document.getElementById('maxAgeFilter');
+    const place = document.getElementById('placeFilter');
+    const doctor = document.getElementById('doctorFilter');
+    const op = document.getElementById('opFilter');
+    if (minAge) minAge.value = '';
+    if (maxAge) maxAge.value = '';
+    if (place) place.value = '';
+    if (doctor) doctor.value = '';
+    if (op) op.value = '';
+    applyFilters();
+  }
+}
+window.toggleAdvancedSearchPanel = toggleAdvancedSearchPanel;
+
 function applyFilters() {
   const search = (document.getElementById('patientSearch')?.value || '').toLowerCase();
   const dept = document.getElementById('deptFilter')?.value || '';
   const status = document.getElementById('statusFilter')?.value || '';
+  
+  // Advanced search parameters
+  const minAge = parseInt(document.getElementById('minAgeFilter')?.value) || 0;
+  const maxAge = parseInt(document.getElementById('maxAgeFilter')?.value) || 999;
+  const place = (document.getElementById('placeFilter')?.value || '').toLowerCase();
+  const doctor = (document.getElementById('doctorFilter')?.value || '').toLowerCase();
+  const op = (document.getElementById('opFilter')?.value || '').toLowerCase();
+
   filteredPatients = allPatients.filter(p => {
-    const name = `${p.fname} ${p.lname} ${p.id}`.toLowerCase();
+    const name = `${p.fname} ${p.lname} ${p.id} ${p.contact}`.toLowerCase();
     if (search && !name.includes(search)) return false;
     if (dept && p.dept !== dept) return false;
     if (status && p.status !== status) return false;
     if (activeFilter !== 'all' && p.type !== activeFilter && p.status !== activeFilter) return false;
+    
+    // Advanced filters
+    const age = parseInt(p.age) || 0;
+    if (age < minAge || age > maxAge) return false;
+    
+    const notes = (p.notes || '').toLowerCase();
+    if (place && !notes.includes(place)) return false;
+    if (doctor && !notes.includes(doctor)) return false;
+    if (op && !notes.includes(op)) return false;
+
     return true;
   });
   if (sortCol) {
@@ -98,6 +149,13 @@ function applyFilters() {
 }
 
 function filterPatients() { applyFilters(); }
+
+function syncSearch(val) {
+  const el = document.getElementById('patientSearch');
+  if (el) el.value = val;
+  filterPatients();
+}
+window.syncSearch = syncSearch;
 
 function setFilter(btn, filter) {
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
@@ -130,7 +188,12 @@ function updatePagination() {
   const nums = document.getElementById('pageNumbers');
   if (!nums) return;
   nums.innerHTML = '';
-  for (let i = 1; i <= Math.min(pages, 5); i++) {
+  let startPage = Math.max(1, currentPage - 2);
+  let endPage = Math.min(pages, startPage + 4);
+  if (endPage - startPage < 4) {
+    startPage = Math.max(1, endPage - 4);
+  }
+  for (let i = startPage; i <= endPage; i++) {
     const btn = document.createElement('button');
     btn.className = 'page-num' + (i === currentPage ? ' active' : '');
     btn.textContent = i;
@@ -181,13 +244,96 @@ function viewPatient(id) {
 function editPatient(id) {
   const p = allPatients.find(pt => pt.id === id);
   if (!p) { toast('Patient not found', 'error'); return; }
-  const newStatus = prompt(`Current status: ${p.status}\nEnter new status (stable/recovering/critical):`, p.status);
-  if (!newStatus || !['stable','recovering','critical'].includes(newStatus)) { toast('Invalid status', 'warning'); return; }
-  fs.updateDoc(fs.doc(db, 'patients', id), { status: newStatus, updatedAt: fs.serverTimestamp() });
-  p.status = newStatus;
-  window.allPatients = allPatients;
-  applyFilters();
-  toast(`Patient ${p.fname} ${p.lname} status updated to ${newStatus}`, 'success');
+  document.getElementById('editPatientId').value = id;
+  document.getElementById('editPatientTitle').textContent = `Edit ${p.fname} ${p.lname}`;
+  document.getElementById('editFirstName').value = p.fname || '';
+  document.getElementById('editLastName').value = p.lname || '';
+  document.getElementById('editDob').value = p.dob || '';
+  document.getElementById('editContact').value = p.contact || '';
+  document.getElementById('editEmail').value = p.email || '';
+  document.getElementById('editDept').value = p.dept || '';
+  document.getElementById('editType').value = p.type ? p.type.charAt(0).toUpperCase() + p.type.slice(1) : '';
+  document.getElementById('editBlood').value = p.blood || '';
+  document.getElementById('editStatus').value = p.status || 'stable';
+  document.getElementById('editNotes').value = p.notes || '';
+  if (document.getElementById('editGender')) document.getElementById('editGender').value = p.gender || '';
+  const syncCb = document.getElementById('editSyncToGoogle');
+  if (syncCb) syncCb.checked = p.syncToGoogle === true;
+  openModal('editPatientModal');
+}
+
+async function submitEditPatient(e) {
+  e.preventDefault();
+  const id = document.getElementById('editPatientId').value;
+  const raw = {
+    fname: sanitizeInput(document.getElementById('editFirstName').value),
+    lname: sanitizeInput(document.getElementById('editLastName').value),
+    contact: sanitizeInput(document.getElementById('editContact').value),
+    email: sanitizeInput(document.getElementById('editEmail').value.trim()),
+    dept: document.getElementById('editDept').value,
+    type: document.getElementById('editType').value.toLowerCase(),
+    blood: document.getElementById('editBlood').value || 'Unknown',
+    dob: document.getElementById('editDob').value,
+    gender: document.getElementById('editGender')?.value || '',
+    notes: sanitizeInput(document.getElementById('editNotes').value),
+    status: document.getElementById('editStatus').value,
+    syncToGoogle: document.getElementById('editSyncToGoogle')?.checked || false
+  };
+  const errors = validatePatientInput(raw);
+  if (errors.length > 0) {
+    toast(errors.join('. '), 'error');
+    return;
+  }
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Saving...';
+  try {
+    await fs.updateDoc(fs.doc(db, 'patients', id), {
+      fname: raw.fname,
+      lname: raw.lname,
+      contact: raw.contact,
+      email: raw.email,
+      dept: raw.dept,
+      type: raw.type,
+      blood: raw.blood,
+      dob: raw.dob,
+      gender: raw.gender,
+      notes: raw.notes,
+      status: raw.status,
+      age: raw.dob ? Math.floor((new Date() - new Date(raw.dob)) / (365.25 * 24 * 3600 * 1000)) : 0,
+      syncToGoogle: raw.syncToGoogle,
+      syncStatus: raw.syncToGoogle ? 'pending' : 'disabled',
+      updatedAt: fs.serverTimestamp()
+    });
+    const idx = allPatients.findIndex(p => p.id === id);
+    if (idx !== -1) {
+      allPatients[idx] = {
+        ...allPatients[idx],
+        fname: raw.fname,
+        lname: raw.lname,
+        contact: raw.contact,
+        email: raw.email,
+        dept: raw.dept,
+        type: raw.type,
+        blood: raw.blood,
+        dob: raw.dob,
+        gender: raw.gender,
+        notes: raw.notes,
+        status: raw.status,
+        syncToGoogle: raw.syncToGoogle,
+        syncStatus: raw.syncToGoogle ? 'pending' : 'disabled',
+        age: raw.dob ? Math.floor((new Date() - new Date(raw.dob)) / (365.25 * 24 * 3600 * 1000)) : allPatients[idx].age
+      };
+      window.allPatients = allPatients;
+    }
+    closeModal(null, 'editPatientModal');
+    applyFilters();
+    toast(`Patient ${raw.fname} ${raw.lname} updated!`, 'success');
+  } catch (err) {
+    toast('Failed to update: ' + err.message, 'error');
+  }
+  submitBtn.disabled = false;
+  submitBtn.textContent = 'Save Changes';
 }
 
 async function deletePatient(id) {
@@ -230,7 +376,8 @@ async function submitAddPatient(e) {
     dept: document.getElementById('pDept').value,
     type: document.getElementById('pType').value.toLowerCase(),
     blood: document.getElementById('pBlood').value || 'Unknown',
-    dob: document.getElementById('pDob').value
+    dob: document.getElementById('pDob').value,
+    syncToGoogle: document.getElementById('pSyncToGoogle')?.checked || false
   };
   const errors = validatePatientInput(raw);
   if (errors.length > 0) {
@@ -252,6 +399,10 @@ async function submitAddPatient(e) {
       lastVisit: new Date().toISOString().slice(0, 10),
       status: 'stable',
       age: raw.dob ? Math.floor((new Date() - new Date(raw.dob)) / (365.25 * 24 * 3600 * 1000)) : 0,
+      syncToGoogle: raw.syncToGoogle,
+      googleContactId: '',
+      syncStatus: raw.syncToGoogle ? 'pending' : 'disabled',
+      syncRetryCount: 0,
       createdAt: fs.serverTimestamp(),
       updatedAt: fs.serverTimestamp()
     });
@@ -266,7 +417,9 @@ async function submitAddPatient(e) {
       blood: raw.blood,
       status: 'stable',
       age: raw.dob ? Math.floor((new Date() - new Date(raw.dob)) / (365.25 * 24 * 3600 * 1000)) : 0,
-      lastVisit: new Date().toISOString().slice(0, 10)
+      lastVisit: new Date().toISOString().slice(0, 10),
+      syncToGoogle: raw.syncToGoogle,
+      syncStatus: raw.syncToGoogle ? 'pending' : 'disabled'
     };
     allPatients.unshift(newP);
     window.allPatients = allPatients;
@@ -282,5 +435,7 @@ async function submitAddPatient(e) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  db = window.firebaseDb;
+  fs = window.firebaseFS;
   loadPatients();
 });
