@@ -21,6 +21,11 @@ service cloud.firestore {
       return isAuth() && getUserRole() in roles;
     }
 
+    // Helper: check if a doctor is accessing their own patient
+    function isOwnPatient() {
+      return hasRole('Doctor') && resource.data.doctorId == request.auth.uid;
+    }
+
     // === USERS COLLECTION ===
     // Users can read their own profile; admins can read all
     // Any authenticated user may create their own doc (needed if created via Firebase Console)
@@ -32,17 +37,24 @@ service cloud.firestore {
     }
 
     // === PATIENTS COLLECTION ===
-    // Medical/Admin staff can CRUD; patients can read their own (future)
+    // Admin/Staff see all; doctors only see their assigned patients
     match /patients/{patientId} {
-      allow read: if isAuth() && hasAnyRole(['Admin', 'Doctor', 'Staff', 'Pharmacist', 'Lab Tech']);
+      allow read: if isAuth() && (
+        hasAnyRole(['Admin', 'Staff', 'Pharmacist', 'Lab Tech']) ||
+        isOwnPatient()
+      );
       allow create: if isAuth() && hasAnyRole(['Admin', 'Doctor', 'Staff']);
       allow update: if isAuth() && hasAnyRole(['Admin', 'Doctor', 'Staff']);
       allow delete: if isAuth() && hasRole('Admin');
     }
 
     // === APPOINTMENTS COLLECTION ===
+    // Doctors can only read their own appointments
     match /appointments/{appointmentId} {
-      allow read: if isAuth() && hasAnyRole(['Admin', 'Doctor', 'Staff']);
+      allow read: if isAuth() && (
+        hasAnyRole(['Admin', 'Staff']) ||
+        (hasRole('Doctor') && resource.data.doctorId == request.auth.uid)
+      );
       allow create: if isAuth() && hasAnyRole(['Admin', 'Doctor', 'Staff']);
       allow update: if isAuth() && hasAnyRole(['Admin', 'Doctor', 'Staff']);
       allow delete: if isAuth() && hasRole('Admin');
@@ -155,22 +167,6 @@ service cloud.firestore {
       allow create: if isAuth() && hasAnyRole(['Admin', 'Pharmacist', 'Staff']);
       allow delete: if isAuth() && hasAnyRole(['Admin', 'Pharmacist']);
       allow update: if false;
-    }
-
-    // === SYNC_LOGS COLLECTION (Google Contacts Sync) ===
-    // Admins can read all logs; anyone can create
-    match /sync_logs/{logId} {
-      allow read: if isAuth() && hasRole('Admin');
-      allow create: if isAuth();
-      allow update: if false;
-      allow delete: if false;
-    }
-
-    // === SYNC_CONFIG COLLECTION ===
-    // Only admins can read/write
-    match /sync_config/{configId} {
-      allow read: if isAuth() && hasRole('Admin');
-      allow write: if isAuth() && hasRole('Admin');
     }
 
     // === WARDS + BEDS COLLECTION ===

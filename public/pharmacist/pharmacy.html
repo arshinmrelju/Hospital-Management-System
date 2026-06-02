@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Pharmacy & Billing – Wellness Medicals HMS</title>
+  <link rel="icon" type="image/jpeg" href="../assets/hms-logo.jpg">
+  <meta name="description" content="Pharmacy inventory and billing management for Wellness Medicals." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel='stylesheet' href='css/pharmacist-theme.css' />
+  <link rel="stylesheet" href="../css/pharmacy.css" />
+</head>
+<body class="app-body">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img src="../assets/hms-logo.jpg" alt="Wellness Medicals Logo" class="brand-icon" />
+      <div class="brand-text"><span class="brand-title">Wellness</span><span class="brand-sub">Medicals HMS</span></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+        <!-- Techsiah Branding -->
+    <a href="https://techsiah.web.app" target="_blank" class="techsiah-badge">
+      <span class="techsiah-label">Powered by</span>
+      <svg class="logo-svg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="techsiah-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#2563EB" />
+            <stop offset="100%" stop-color="#3B82F6" />
+          </linearGradient>
+        </defs>
+        <path d="M6 10C6 7.79086 7.79086 6 10 6H22C24.2091 6 26 7.79086 26 10V22C26 24.2091 24.2091 26 22 26H10C7.79086 26 6 24.2091 6 22V10Z" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M12 11H20" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M16 11V21" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <circle cx="21" cy="21" r="2" fill="#2563EB" />
+      </svg>
+      <span class="techsiah-text">Techsiah<span class="techsiah-dot">.</span></span>
+    </a>
+<div class="sidebar-user">
+      <div class="user-avatar" id="userAvatar">DS</div>
+      <div class="user-info"><span class="user-name" id="sidebarUserName">Dr. Sarah Mitchell</span><span class="user-role" id="sidebarUserRole">Chief Surgeon · Admin</span></div>
+      <button class="logout-btn" id="logoutBtn"><span class="material-icons-round">logout</span></button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle"><span class="material-icons-round">menu</span></button>
+      <button class="mobile-search-toggle" id="mobileSearchToggle" aria-label="Toggle search"><span class="material-icons-round">search</span></button>
+      <div class="topbar-search">
+        <span class="material-icons-round search-icon">search</span>
+        <input type="text" id="pharmaSearch" placeholder="Search medicines, invoices…" oninput="filterPharmacy()" />
+      </div>
+      <div class="topbar-actions">
+        <button class="topbar-btn"><span class="material-icons-round">notifications</span><span class="badge">3</span></button>
+        <div class="topbar-avatar" id="topbarAvatar">DS</div>
+      </div>
+    </header>
+
+  <!-- Mobile Search Bar -->
+  <div class="mobile-search-bar" id="mobileSearchBar">
+    <div class="topbar-search">
+      <span class="material-icons-round search-icon">search</span>
+      <input type="text" id="globalSearchMobile" placeholder="Search patients, appointments, doctors…" />
+    </div>
+  </div>
+
+    <main class="page-body">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Pharmacy & Billing</h1>
+          <p class="page-sub">Inventory management and invoice generation</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn-secondary" onclick="openModal('addMedModal')">
+            <span class="material-icons-round">add_circle</span> Add Medicine
+          </button>
+          <button class="btn-primary" onclick="openModal('generateBillModal')">
+            <span class="material-icons-round">receipt_long</span> Generate Bill
+          </button>
+        </div>
+      </div>
+
+      <!-- Alert: Low Stock -->
+      <div class="alert-banner glass-card" id="lowStockAlert">
+        <span class="material-icons-round">warning</span>
+        <p><strong>Low Stock Alert:</strong> 4 medicines are running low. <a href="#" onclick="showLowStock()">View items</a></p>
+        <button onclick="document.getElementById('lowStockAlert').style.display='none'" class="close-alert"><span class="material-icons-round">close</span></button>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="pharma-stats-row">
+        <div class="stat-card" style="--accent:#0D9488">
+          <div class="stat-icon-wrap"><span class="material-icons-round">medication</span></div>
+          <div class="stat-body"><p class="stat-label">Total Medicines</p><h2 class="stat-value">0</h2><p class="stat-delta positive">In stock</p></div>
+        </div>
+        <div class="stat-card" style="--accent:#F59E0B">
+          <div class="stat-icon-wrap"><span class="material-icons-round">inventory_2</span></div>
+          <div class="stat-body"><p class="stat-label">Low Stock Items</p><h2 class="stat-value">0</h2><p class="stat-delta negative">Reorder needed</p></div>
+        </div>
+        <div class="stat-card" style="--accent:#EF4444">
+          <div class="stat-icon-wrap"><span class="material-icons-round">event_busy</span></div>
+          <div class="stat-body"><p class="stat-label">Expiring Soon</p><h2 class="stat-value">0</h2><p class="stat-delta negative">Within 30 days</p></div>
+        </div>
+        <div class="stat-card" style="--accent:#3B82F6">
+          <div class="stat-icon-wrap"><span class="material-icons-round">receipt_long</span></div>
+          <div class="stat-body"><p class="stat-label">Unpaid Invoices</p><h2 class="stat-value">0</h2><p class="stat-delta">₹0 pending</p></div>
+        </div>
+      </div>
+
+      <!-- Tab Bar -->
+      <div class="tab-bar glass-card" id="pharmaTabs">
+        <button class="tab-btn active" onclick="switchTab(this,'inventory')">Inventory</button>
+        <button class="tab-btn" onclick="switchTab(this,'prescriptions')">Pending Prescriptions</button>
+        <button class="tab-btn" onclick="switchTab(this,'billing')">Billing & Invoices</button>
+        <button class="tab-btn" onclick="switchTab(this,'procurement')">Procurement & ROP</button>
+      </div>
+
+      <!-- Inventory Tab -->
+      <div class="tab-content" id="tab-inventory">
+          <div class="widget glass-card table-widget">
+          <div class="table-toolbar">
+            <div class="filter-chips">
+              <button class="chip active" onclick="filterMedCategory(this,'all')">All</button>
+              <button class="chip" onclick="filterMedCategory(this,'antibiotics')">Antibiotics</button>
+              <button class="chip" onclick="filterMedCategory(this,'analgesics')">Analgesics</button>
+              <button class="chip" onclick="filterMedCategory(this,'cardiac')">Cardiac</button>
+              <button class="chip" onclick="filterMedCategory(this,'vitamins')">Vitamins</button>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <input type="text" class="filter-select" id="medSearch" placeholder="Search name, category, rack, batch…" style="width:220px" oninput="filterMedTableRemote()" />
+              <select class="filter-select" id="medStatusFilter" onchange="renderMedTable()" style="width:140px">
+                <option value="all">All Status</option>
+                <option value="in-stock">In Stock</option>
+                <option value="low">Low Stock</option>
+                <option value="out">Out of Stock</option>
+              </select>
+              <button class="chip" onclick="showLowStock()" title="Show low/out of stock items" style="color:var(--accent-amber)">Low Stock <span class="material-icons-round" style="font-size:16px">warning</span></button>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table class="data-table" id="medTable">
+              <thead>
+                <tr>
+                  <th>Medicine</th>
+                  <th>Category</th>
+                  <th>Batches</th>
+                  <th>Stock</th>
+                  <th>Rack</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="medTableBody"></tbody>
+            </table>
+          </div>
+          <div id="loadMoreInvContainer" style="text-align:center;padding:12px 0">
+            <button class="btn-secondary btn-sm" onclick="loadMoreInventory()" id="loadMoreInvBtn">Load More</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prescriptions Tab -->
+      <div class="tab-content" id="tab-prescriptions" hidden>
+        <div class="widget glass-card">
+          <div class="widget-header"><h3>Pending Prescriptions from Doctors</h3></div>
+          <div class="prescription-list" id="prescriptionList"></div>
+        </div>
+      </div>
+
+      <!-- Billing Tab -->
+      <div class="tab-content" id="tab-billing" hidden>
+        <div class="widget glass-card table-widget">
+          <div class="table-toolbar">
+            <div class="filter-chips">
+              <button class="chip active" onclick="filterBill(this,'all')">All</button>
+              <button class="chip" onclick="filterBill(this,'paid')">Paid</button>
+              <button class="chip" onclick="filterBill(this,'unpaid')">Unpaid</button>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table class="data-table" id="billTable">
+              <thead>
+                <tr>
+                  <th>Invoice #</th>
+                  <th>Patient</th>
+                  <th>Date</th>
+                  <th>Items</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="billTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Procurement & ROP Tab -->
+      <div class="tab-content" id="tab-procurement" hidden>
+        <div class="procurement-grid">
+          
+          <!-- Left Column: Config & Simulation -->
+          <div style="display: flex; flex-direction: column; gap: 20px; min-width: 0;">
+            <!-- Configuration Widget -->
+            <div class="widget glass-card">
+              <div class="widget-header">
+                <h3>ROP & Safety Stock Configuration</h3>
+              </div>
+              <p style="font-size: 0.85rem; color: var(--on-surface-var); margin-bottom: 16px;">
+                Safety Stock levels and reorder parameters are maintained below. If stock falls below ROP, the system immediately generates a PR.
+              </p>
+              <div class="table-scroll">
+            <table class="data-table" style="font-size: 0.82rem;">
+              <thead>
+                <tr>
+                  <th>Medicine</th>
+                  <th>Rack</th>
+                  <th>Current Stock</th>
+                  <th>Safety Stock</th>
+                  <th>ROP Threshold</th>
+                  <th>Reorder Qty</th>
+                  <th>Configure</th>
+                </tr>
+              </thead>
+              <tbody id="ropConfigTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+              </div>
+            </div>
+
+            <!-- Simulation Widget -->
+            <div class="widget glass-card">
+              <div class="widget-header">
+                <h3>Live Simulation: Dispense Stock</h3>
+              </div>
+              <p style="font-size: 0.85rem; color: var(--on-surface-var); margin-bottom: 16px;">
+                Dispense medicines to trigger inventory reduction. If levels fall below ROP, the automation engine will instantly generate a Purchase Requisition.
+              </p>
+              <form id="simDispenseForm" onsubmit="runDispenseSimulation(event)" style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+                <div class="form-group" style="flex: 1; min-width: 180px;">
+                  <label>Select Medicine</label>
+                  <select id="simMedSelect" required style="background: var(--surface-low); border: 1.5px solid var(--outline-var); border-radius: var(--radius-md); padding: 8px 12px; width: 100%;"></select>
+                </div>
+                <div class="form-group" style="width: 110px;">
+                  <label>Dispense Qty</label>
+                  <input type="number" id="simDispenseQty" min="1" value="10" required style="background: var(--surface-low); border: 1.5px solid var(--outline-var); border-radius: var(--radius-md); padding: 8px 12px; width: 100%;" />
+                </div>
+                <button type="submit" class="btn-primary" style="padding: 10px 18px; height: 42px;">
+                  <span class="material-icons-round">remove_circle_outline</span> Dispense Stock
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Right Column: PRs & Notifications -->
+          <div style="display: flex; flex-direction: column; gap: 20px; min-width: 0;">
+            <!-- Purchase Requisitions Widget -->
+            <div class="widget glass-card">
+              <div class="widget-header">
+                <h3>Automated Purchase Requisitions (PR)</h3>
+              </div>
+              <div class="table-scroll">
+                <table class="data-table" style="font-size: 0.82rem;">
+                  <thead>
+                    <tr>
+                      <th>PR ID</th>
+                      <th>Medicine</th>
+                      <th>Qty</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="prTableBody">
+                    <!-- Dynamically populated -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Notifications Log Widget -->
+            <div class="widget glass-card">
+              <div class="widget-header">
+                <h3>Auto-Alert Log (Purchase Dept.)</h3>
+                <button type="button" class="icon-btn" onclick="clearRopNotifs()" title="Clear Alerts Log"><span class="material-icons-round">clear_all</span></button>
+              </div>
+              <div class="prescription-list" id="ropNotificationList" style="max-height: 250px; overflow-y: auto; padding-right: 4px;">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add Medicine Modal -->
+  <div class="modal-overlay" id="addMedModal" onclick="closeModal(event,'addMedModal')">
+    <div class="modal glass-card">
+      <div class="modal-header">
+        <h2>Add Medicine</h2>
+        <button class="modal-close" onclick="closeModal(null,'addMedModal')"><span class="material-icons-round">close</span></button>
+      </div>
+      <form class="modal-form" onsubmit="submitAddMed(event)">
+        <div class="form-group"><label>Medicine Name *</label><input type="text" id="medName" required /></div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Category</label><select id="medCat"><option>Antibiotics</option><option>Analgesics</option><option>Cardiac</option><option>Vitamins</option><option>Other</option></select></div>
+          <div class="form-group"><label>Rack / Location</label><input type="text" id="medRack" placeholder="e.g. A-12, Shelf-3" /></div>
+        </div>
+        <hr style="border:none;border-top:1px solid var(--outline);margin:12px 0;opacity:.3" />
+        <p style="font-size:.82rem;color:var(--on-surface-var);margin-bottom:8px">First Batch Details</p>
+        <div class="form-row-2">
+          <div class="form-group"><label>Batch Number *</label><input type="text" id="medBatchNo" required placeholder="e.g. B2024001" /></div>
+          <div class="form-group"><label>Batch Stock *</label><input type="number" id="medStock" required min="0" /></div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Batch MRP (₹) *</label><input type="number" id="medPrice" required min="0" step="0.01" /></div>
+          <div class="form-group"><label>Batch Expiry *</label><input type="date" id="medExpiry" required /></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal(null,'addMedModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Add to Inventory</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Medicine Modal -->
+  <div class="modal-overlay" id="editMedModal" onclick="closeModal(event,'editMedModal')">
+    <div class="modal glass-card" style="max-width:560px">
+      <div class="modal-header">
+        <h2>Edit Medicine</h2>
+        <button class="modal-close" onclick="closeModal(null,'editMedModal')"><span class="material-icons-round">close</span></button>
+      </div>
+      <form class="modal-form" onsubmit="submitEditMed(event)">
+        <div class="form-group"><label>Medicine Name</label><input type="text" id="editMedName" readonly style="background:var(--surface-mid);cursor:not-allowed" /></div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Category</label><select id="editMedCat"><option>Antibiotics</option><option>Analgesics</option><option>Cardiac</option><option>Vitamins</option><option>Other</option></select></div>
+          <div class="form-group"><label>Rack / Location</label><input type="text" id="editMedRack" placeholder="e.g. A-12, Shelf-3" /></div>
+        </div>
+        <hr style="border:none;border-top:1px solid var(--outline);margin:12px 0;opacity:.3" />
+        <p style="font-size:.82rem;color:var(--on-surface-var);margin-bottom:8px">Batches <span id="editBatchCount"></span></p>
+        <div id="editBatchesList" style="max-height:200px;overflow-y:auto;margin-bottom:12px"></div>
+        <button type="button" class="btn-secondary btn-sm" onclick="addEditBatchRow()" style="width:100%">+ Add Batch</button>
+        <hr style="border:none;border-top:1px solid var(--outline);margin:12px 0;opacity:.3" />
+        <div class="form-row-2">
+          <div class="form-group"><label>Safety Stock</label><input type="number" id="editSafetyStock" min="0" /></div>
+          <div class="form-group"><label>Lead Time (days)</label><input type="number" id="editLeadTime" min="1" /></div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Avg Daily Usage</label><input type="number" id="editAdu" min="1" /></div>
+          <div class="form-group"><label>Reorder Qty</label><input type="number" id="editReorderQty" min="1" /></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal(null,'editMedModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Generate Bill Modal -->
+  <div class="modal-overlay" id="generateBillModal" onclick="closeModal(event,'generateBillModal')">
+    <div class="modal glass-card wide-modal">
+      <div class="modal-header">
+        <h2>Generate Invoice</h2>
+        <button class="modal-close" onclick="closeModal(null,'generateBillModal')"><span class="material-icons-round">close</span></button>
+      </div>
+      <form class="modal-form" onsubmit="submitBill(event)">
+        <div class="form-row-2">
+          <div class="form-group"><label>Patient *</label>
+          <div class="custom-autocomplete" id="billPatientAutocomplete">
+            <input type="text" id="billPatient" placeholder="Type to search patient name or phone..." required autocomplete="off" />
+            <div class="autocomplete-dropdown" id="billPatientDropdown"></div>
+          </div>
+          </div>
+          <div class="form-group"><label>Invoice Date</label><input type="date" id="billDate" /></div>
+        </div>
+        <div class="form-group"><label>Consultation Fee (₹)</label><input type="number" id="billConsult" value="500" min="0" /></div>
+        <div class="invoice-items">
+          <div class="items-header"><h4>Medicines / Services</h4><button type="button" class="btn-sm btn-secondary" onclick="addBillItem()"><span class="material-icons-round">add</span> Add Item</button></div>
+          <div id="billItemsContainer">
+            <div class="bill-item-row"><input type="text" placeholder="Item name" class="item-name" list="billingMedicineList" autocomplete="off" /><input type="number" placeholder="Qty" class="item-qty" min="1" value="1" oninput="updateBillLineAmount(this)" /><input type="number" placeholder="Amount" class="item-price" min="0" oninput="this.dataset.manual='true';updateBillTotal()" /><button type="button" class="icon-btn danger" onclick="this.parentElement.remove();updateBillTotal()"><span class="material-icons-round">delete</span></button><div class="bill-item-status" aria-live="polite"></div></div>
+          </div>
+        </div>
+        <div class="bill-total"><strong>Total: ₹<span id="billTotalAmt">500</span></strong></div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal(null,'generateBillModal')">Cancel</button>
+          <button type="submit" class="btn-primary"><span class="material-icons-round">print</span> Generate & Print</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bill View Modal -->
+  <div class="modal-overlay" id="viewBillModal" onclick="closeModal(event,'viewBillModal')">
+    <div class="modal glass-card wide-modal" id="viewBillContent"></div>
+  </div>
+
+  <datalist id="billingMedicineList">
+    <option value="Amoxicillin 500mg"></option>
+    <option value="Paracetamol 650mg"></option>
+    <option value="Atorvastatin 10mg"></option>
+    <option value="Vitamin D3 60K"></option>
+    <option value="Ciprofloxacin 500mg"></option>
+    <option value="Ibuprofen 400mg"></option>
+    <option value="Metformin 500mg"></option>
+    <option value="Vitamin B12"></option>
+  </datalist>
+
+  <!-- ROP Settings Modal -->
+  <div class="modal-overlay" id="configRopModal" onclick="closeModal(event,'configRopModal')">
+    <div class="modal glass-card">
+      <div class="modal-header">
+        <h2>Configure ROP Parameters</h2>
+        <button class="modal-close" onclick="closeModal(null,'configRopModal')"><span class="material-icons-round">close</span></button>
+      </div>
+      <form class="modal-form" onsubmit="submitRopConfig(event)">
+        <input type="hidden" id="ropConfigMedNameHidden" />
+        <div class="form-group">
+          <label>Medicine Name</label>
+          <input type="text" id="ropConfigMedName" readonly style="opacity:0.75; background:var(--surface-mid);" />
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Safety Stock Level (Units) *</label>
+            <input type="number" id="ropConfigSafetyStock" min="0" required oninput="calculateRopValue()" />
+          </div>
+          <div class="form-group">
+            <label>Supplier Lead Time (Days) *</label>
+            <input type="number" id="ropConfigLeadTime" min="1" required oninput="calculateRopValue()" />
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Average Daily Usage *</label>
+            <input type="number" id="ropConfigAdu" min="1" required oninput="calculateRopValue()" />
+          </div>
+          <div class="form-group">
+            <label>Reorder Quantity (EOQ) *</label>
+            <input type="number" id="ropConfigReorderQty" min="1" required />
+          </div>
+        </div>
+        <div style="background:var(--primary-soft); padding:16px; border-radius:var(--radius-md); font-size:0.85rem; color:var(--primary); border:1px solid rgba(13,148,136,0.2)">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong>Calculated ROP:</strong>
+            <span style="font-size:1.15rem; font-weight:800; font-family:var(--font-head);" id="ropConfigCalculatedVal">95</span>
+          </div>
+          <p style="font-size:0.75rem; color:var(--on-surface-var); margin-top:4px;">Formula: (Average Daily Usage × Lead Time) + Safety Stock</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal(null,'configRopModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Save Configuration</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="../js/firebase-init.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/role-nav.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/pharmacy.js"></script>
+</body>
+</html>

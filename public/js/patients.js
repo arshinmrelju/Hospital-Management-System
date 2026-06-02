@@ -257,8 +257,6 @@ function editPatient(id) {
   document.getElementById('editStatus').value = p.status || 'stable';
   document.getElementById('editNotes').value = p.notes || '';
   if (document.getElementById('editGender')) document.getElementById('editGender').value = p.gender || '';
-  const syncCb = document.getElementById('editSyncToGoogle');
-  if (syncCb) syncCb.checked = p.syncToGoogle === true;
   openModal('editPatientModal');
 }
 
@@ -277,7 +275,6 @@ async function submitEditPatient(e) {
     gender: document.getElementById('editGender')?.value || '',
     notes: sanitizeInput(document.getElementById('editNotes').value),
     status: document.getElementById('editStatus').value,
-    syncToGoogle: document.getElementById('editSyncToGoogle')?.checked || false
   };
   const errors = validatePatientInput(raw);
   if (errors.length > 0) {
@@ -301,8 +298,6 @@ async function submitEditPatient(e) {
       notes: raw.notes,
       status: raw.status,
       age: raw.dob ? Math.floor((new Date() - new Date(raw.dob)) / (365.25 * 24 * 3600 * 1000)) : 0,
-      syncToGoogle: raw.syncToGoogle,
-      syncStatus: raw.syncToGoogle ? 'pending' : 'disabled',
       updatedAt: fs.serverTimestamp()
     });
     const idx = allPatients.findIndex(p => p.id === id);
@@ -320,8 +315,6 @@ async function submitEditPatient(e) {
         gender: raw.gender,
         notes: raw.notes,
         status: raw.status,
-        syncToGoogle: raw.syncToGoogle,
-        syncStatus: raw.syncToGoogle ? 'pending' : 'disabled',
         age: raw.dob ? Math.floor((new Date() - new Date(raw.dob)) / (365.25 * 24 * 3600 * 1000)) : allPatients[idx].age
       };
       window.allPatients = allPatients;
@@ -354,7 +347,12 @@ async function loadPatients() {
   const tbody = document.getElementById('patientTableBody');
   if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--on-surface-var)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px;color:var(--outline-var)">hourglass_empty</span>Loading patients...</td></tr>';
   try {
-    const snap = await fs.getDocs(fs.query(fs.collection(db, 'patients'), fs.orderBy('lastVisit', 'desc')));
+    const constraints = [fs.orderBy('lastVisit', 'desc')];
+    const user = window.HMS ? window.HMS.getUser() : null;
+    if (user && user.role === 'Doctor') {
+      constraints.unshift(fs.where('doctorId', '==', user.uid));
+    }
+    const snap = await fs.getDocs(fs.query(fs.collection(db, 'patients'), ...constraints));
     allPatients = [];
     snap.forEach(d => allPatients.push({ id: d.id, ...d.data() }));
     window.allPatients = allPatients;
@@ -377,7 +375,6 @@ async function submitAddPatient(e) {
     type: document.getElementById('pType').value.toLowerCase(),
     blood: document.getElementById('pBlood').value || 'Unknown',
     dob: document.getElementById('pDob').value,
-    syncToGoogle: document.getElementById('pSyncToGoogle')?.checked || false
   };
   const errors = validatePatientInput(raw);
   if (errors.length > 0) {
@@ -399,10 +396,6 @@ async function submitAddPatient(e) {
       lastVisit: new Date().toISOString().slice(0, 10),
       status: 'stable',
       age: raw.dob ? Math.floor((new Date() - new Date(raw.dob)) / (365.25 * 24 * 3600 * 1000)) : 0,
-      syncToGoogle: raw.syncToGoogle,
-      googleContactId: '',
-      syncStatus: raw.syncToGoogle ? 'pending' : 'disabled',
-      syncRetryCount: 0,
       createdAt: fs.serverTimestamp(),
       updatedAt: fs.serverTimestamp()
     });
@@ -418,8 +411,6 @@ async function submitAddPatient(e) {
       status: 'stable',
       age: raw.dob ? Math.floor((new Date() - new Date(raw.dob)) / (365.25 * 24 * 3600 * 1000)) : 0,
       lastVisit: new Date().toISOString().slice(0, 10),
-      syncToGoogle: raw.syncToGoogle,
-      syncStatus: raw.syncToGoogle ? 'pending' : 'disabled'
     };
     allPatients.unshift(newP);
     window.allPatients = allPatients;

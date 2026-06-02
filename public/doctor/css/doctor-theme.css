@@ -1,0 +1,5 @@
+.portal-doctor { --portal-accent: #0D9488; --portal-accent-soft: rgba(13,148,136,0.1); --portal-accent-light: #5EEAD4; }
+.portal-doctor .sidebar-brand .brand-title { color: var(--portal-accent); }
+.portal-doctor .nav-item.active { background: var(--portal-accent-soft); border-right: 3px solid var(--portal-accent); color: var(--portal-accent); }
+.portal-doctor .nav-item.active .material-icons-round { color: var(--portal-accent); }
+.portal-doctor .stat-card { border-top: 3px solid var(--portal-accent); }

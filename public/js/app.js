@@ -1,5 +1,30 @@
 'use strict';
 
+/* --- Portal Guard --- */
+(function initPortalGuard() {
+  const portalMap = { admin: 'Admin', doctor: 'Doctor', staff: 'Staff', pharmacist: 'Pharmacist', labtech: 'Lab Tech' };
+  const path = window.location.pathname;
+  const match = path.match(/^\/(admin|doctor|staff|pharmacist|labtech)\//);
+  if (match) {
+    const expectedRole = portalMap[match[1]];
+    const check = () => {
+      const user = window.HMS ? window.HMS.getUser() : null;
+      if (user && user.role !== expectedRole) {
+        const redirects = { Admin: '/admin/dashboard', Doctor: '/doctor/dashboard', Staff: '/staff/dashboard', Pharmacist: '/pharmacist/dashboard', 'Lab Tech': '/labtech/dashboard' };
+        window.location.href = redirects[user.role] || '/';
+      }
+    };
+    if (window._authReady) {
+      window._authReady.then(check);
+    } else {
+      const poll = setInterval(() => {
+        if (window._authReady !== undefined) { clearInterval(poll); window._authReady.then(check); }
+      }, 50);
+      setTimeout(() => { clearInterval(poll); check(); }, 3000);
+    }
+  }
+})();
+
 /* --- Auth / Session --- */
 function ensureHMS() {
   if (!window.HMS) {
@@ -15,21 +40,17 @@ function ensureHMS() {
           import('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js')
             .then(m => m.signOut(window.firebaseAuth)).catch(() => {});
         }
-        location.href = 'index.html';
+        location.href = '/';
       },
       requireAuth() {
         const user = this.getUser();
         if (user) return user;
         const tryRedirect = () => {
-          if (!this.getUser()) location.href = 'index.html';
+          if (!this.getUser()) location.href = '/';
         };
-        // Wait for firebase-init.js module to load and onAuthStateChanged to fire
         if (window._authReady === undefined) {
           const poll = setInterval(() => {
-            if (window._authReady !== undefined) {
-              clearInterval(poll);
-              window._authReady.then(tryRedirect);
-            }
+            if (window._authReady !== undefined) { clearInterval(poll); window._authReady.then(tryRedirect); }
           }, 50);
           setTimeout(() => { clearInterval(poll); tryRedirect(); }, 3000);
         } else {
@@ -44,10 +65,7 @@ function ensureHMS() {
 ensureHMS();
 const HMS = window.HMS;
 
-/* Expose HMS globally for pages that call it at top level */
 window.HMS_READY = window._authReady || Promise.resolve();
-
-/* Global console-log helper used by many pages */
 window.addConsoleLog = window.addConsoleLog || function addConsoleLog(type, msg) {
   if (typeof console !== 'undefined') console.log('[' + type + '] ' + msg);
 };
@@ -85,18 +103,88 @@ function closeModal(event, id) {
   if (m) { m.classList.remove('active'); document.body.style.overflow = ''; }
 }
 
+function labelDynamicTables() {
+  document.querySelectorAll('.data-table, .admin-table, .appt-table').forEach(table => {
+    const headers = [];
+    const ths = table.querySelectorAll('thead th');
+    ths.forEach(th => {
+      const txt = th.textContent.trim();
+      if (th.querySelector('input[type="checkbox"]')) { headers.push(''); }
+      else { headers.push(txt || ''); }
+    });
+    if (headers.length === 0) return;
+    table.querySelectorAll('tbody tr').forEach(row => {
+      row.querySelectorAll('td').forEach((td, i) => {
+        if (!td.hasAttribute('data-label') && i < headers.length) {
+          td.setAttribute('data-label', headers[i]);
+        }
+      });
+    });
+  });
+}
+
+const _origInsert = Element.prototype.insertAdjacentHTML;
+if (_origInsert) {
+  Element.prototype.insertAdjacentHTML = function(pos, text) {
+    _origInsert.call(this, pos, text);
+    if (pos === 'beforeend' && (this.closest('.data-table') || this.closest('.admin-table'))) {
+      setTimeout(labelDynamicTables, 0);
+    }
+  };
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.active, #addStaffModal.active, #editStaffModal.active, #scheduleModal.active').forEach(el => {
+      el.classList.remove('active');
+    });
+    document.body.style.overflow = '';
+  }
+});
+
 function initSidebar() {
   const toggle = document.getElementById('menuToggle');
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebarOverlay');
   if (!toggle) return;
-  toggle.addEventListener('click', () => {
-    sidebar.classList.toggle('open');
-    overlay.classList.toggle('active');
-  });
-  overlay.addEventListener('click', () => {
+  const closeSidebar = () => {
     sidebar.classList.remove('open');
     overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  };
+  const openSidebar = () => {
+    sidebar.classList.add('open');
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  };
+  toggle.addEventListener('click', () => {
+    if (sidebar.classList.contains('open')) { closeSidebar(); }
+    else { openSidebar(); }
+  });
+  overlay.addEventListener('click', closeSidebar);
+
+  let touchStartX = 0;
+  let touchCurrentX = 0;
+  const SWIPE_THRESHOLD = 80;
+  sidebar.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+  sidebar.addEventListener('touchmove', (e) => { touchCurrentX = e.changedTouches[0].screenX; }, { passive: true });
+  sidebar.addEventListener('touchend', () => {
+    const diff = touchStartX - touchCurrentX;
+    if (diff > SWIPE_THRESHOLD && sidebar.classList.contains('open')) { closeSidebar(); }
+  }, { passive: true });
+}
+
+function initMobileSearch() {
+  const toggleBtn = document.getElementById('mobileSearchToggle');
+  const mobileBar = document.getElementById('mobileSearchBar');
+  if (!toggleBtn || !mobileBar) return;
+  toggleBtn.addEventListener('click', () => {
+    const isActive = mobileBar.classList.toggle('active');
+    toggleBtn.querySelector('.material-icons-round').textContent = isActive ? 'close' : 'search';
+    if (isActive) {
+      const input = mobileBar.querySelector('input');
+      if (input) setTimeout(() => input.focus(), 100);
+    }
   });
 }
 
@@ -109,9 +197,7 @@ function initNotifications() {
     panel.hidden = !panel.hidden;
   });
   document.addEventListener('click', (e) => {
-    if (panel && !panel.hidden && !panel.contains(e.target) && e.target !== btn) {
-      panel.hidden = true;
-    }
+    if (panel && !panel.hidden && !panel.contains(e.target) && e.target !== btn) { panel.hidden = true; }
   });
   const clearBtn = document.getElementById('clearNotif');
   if (clearBtn) clearBtn.addEventListener('click', () => {
@@ -121,15 +207,28 @@ function initNotifications() {
   });
 }
 
+function initPortalTheme() {
+  const user = HMS.getUser();
+  if (!user) return;
+  const role = user.role;
+  document.body.classList.remove('portal-admin', 'portal-doctor', 'portal-pharmacy', 'portal-lab', 'portal-reception');
+  if (role === 'Admin') document.body.classList.add('portal-admin');
+  else if (role === 'Doctor') document.body.classList.add('portal-doctor');
+  else if (role === 'Pharmacist') document.body.classList.add('portal-pharmacy');
+  else if (role === 'Lab Tech') document.body.classList.add('portal-lab');
+  else document.body.classList.add('portal-reception');
+}
+
 function initUserDisplay() {
   const user = HMS.getUser();
   if (!user) return;
 
+  /* Load portals.css if not already loaded */
   if (!document.getElementById('portals-stylesheet')) {
     const link = document.createElement('link');
     link.id = 'portals-stylesheet';
     link.rel = 'stylesheet';
-    link.href = 'css/portals.css';
+    link.href = '/css/portals.css';
     document.head.appendChild(link);
   }
 
@@ -143,54 +242,12 @@ function initUserDisplay() {
   if (avatarEl) avatarEl.textContent = initials;
   if (topbarAvatarEl) topbarAvatarEl.textContent = initials;
 
-  const role = user.role;
-  document.body.classList.remove('portal-admin', 'portal-doctor', 'portal-pharmacy', 'portal-lab', 'portal-reception');
-  if (role === 'Admin') {
-    document.body.classList.add('portal-admin');
-  } else if (role === 'Doctor') {
-    document.body.classList.add('portal-doctor');
-  } else if (role === 'Pharmacist') {
-    document.body.classList.add('portal-pharmacy');
-  } else if (role === 'Lab Tech') {
-    document.body.classList.add('portal-lab');
-  } else {
-    document.body.classList.add('portal-reception');
-  }
+  initPortalTheme();
 
-  const adminNavLink = document.getElementById('nav-admin');
-  if (adminNavLink && role === 'Admin') {
-    adminNavLink.style.display = 'flex';
-  }
-
-  if (role === 'Doctor') {
-    const itemsToHide = ['nav-patients', 'nav-appointments', 'nav-pharmacy', 'nav-lab', 'nav-reports'];
-    itemsToHide.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.style.display = 'none';
-    });
-    const headerActionBtn = document.getElementById('headerActionBtn');
-    if (headerActionBtn) headerActionBtn.style.display = 'none';
-  }
-
-  if (role === 'Pharmacist') {
-    const itemsToHide = ['nav-dashboard', 'nav-patients', 'nav-appointments', 'nav-doctors', 'nav-lab', 'nav-admin', 'nav-settings', 'nav-reports'];
-    itemsToHide.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.style.display = 'none';
-    });
-  }
-
-  const page = window.location.pathname.split('/').pop();
-  if (page === 'dashboard.html' || page === '') {
-    const redirects = {
-      Admin: 'admin-dashboard.html',
-      Doctor: 'doctor-dashboard.html',
-      Staff: 'reception-dashboard.html',
-      Pharmacist: 'pharmacy-dashboard.html',
-      'Lab Tech': 'lab-dashboard.html'
-    };
-    const target = redirects[role];
-    if (target) window.location.href = target;
+  /* Render dynamic sidebar nav */
+  if (typeof renderSidebarNav === 'function') {
+    const currentPath = window.location.pathname.replace(/\.html$/, '');
+    renderSidebarNav(user.role, currentPath);
   }
 }
 
@@ -214,13 +271,12 @@ function initGreeting() {
   const h = new Date().getHours();
   const g = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
   const user = HMS.getUser();
-  el.textContent = `${g}, ${user ? user.name.split(' ')[0] : 'User'}! Here's your workspace overview.`;
+  el.textContent = `${g}, ${user ? user.name.split(' ')[0] : 'User'}! Welcome to your workspace.`;
 }
 
 function switchTab(btn, tabId) {
   btn.closest('.tab-bar').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  const prefix = tabId.split('-')[0];
   document.querySelectorAll('.tab-content').forEach(c => { c.hidden = true; });
   const target = document.getElementById(`tab-${tabId}`);
   if (target) target.hidden = false;
@@ -243,11 +299,8 @@ function animateCounters() {
 
 function sfChipSelect(btn, prefix, type) {
   const chips = btn.closest('.sf-chips');
-  if (chips) {
-    chips.querySelectorAll('.sf-chip').forEach(c => c.classList.remove('active'));
-  }
+  if (chips) chips.querySelectorAll('.sf-chip').forEach(c => c.classList.remove('active'));
   btn.classList.add('active');
-
   const customRange = document.getElementById(`${prefix}CustomRange`);
   if (type === 'custom') {
     if (customRange) customRange.classList.add('expanded');
@@ -261,33 +314,16 @@ function sfGetPresetBounds(type) {
   const now = new Date();
   let start = new Date();
   let end = new Date();
-  if (type === 'today') {
-    start.setHours(0,0,0,0);
-    end.setHours(23,59,59,999);
-  } else if (type === 'yesterday') {
-    start.setDate(now.getDate() - 1);
-    start.setHours(0,0,0,0);
-    end.setDate(now.getDate() - 1);
-    end.setHours(23,59,59,999);
-  } else if (type === '7days') {
-    start.setDate(now.getDate() - 7);
-    start.setHours(0,0,0,0);
-    end.setHours(23,59,59,999);
-  } else if (type === 'month') {
-    start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-    end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-  }
+  if (type === 'today') { start.setHours(0,0,0,0); end.setHours(23,59,59,999); }
+  else if (type === 'yesterday') { start.setDate(now.getDate() - 1); start.setHours(0,0,0,0); end.setDate(now.getDate() - 1); end.setHours(23,59,59,999); }
+  else if (type === '7days') { start.setDate(now.getDate() - 7); start.setHours(0,0,0,0); end.setHours(23,59,59,999); }
+  else if (type === 'month') { start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0); end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999); }
   return { start, end };
 }
 
 function sfApplyPresetFilter(prefix, type) {
   const bounds = sfGetPresetBounds(type);
-  const formatLocalDate = (d) => {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const date = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${date}`;
-  };
+  const formatLocalDate = (d) => { const year = d.getFullYear(); const month = String(d.getMonth() + 1).padStart(2, '0'); const date = String(d.getDate()).padStart(2, '0'); return `${year}-${month}-${date}`; };
   const startDateStr = formatLocalDate(bounds.start);
   const startTimeStr = String(bounds.start.getHours()).padStart(2, '0') + ':' + String(bounds.start.getMinutes()).padStart(2, '0');
   const endDateStr = formatLocalDate(bounds.end);
@@ -349,64 +385,54 @@ document.addEventListener('DOMContentLoaded', () => {
   initDateDisplay();
   initGreeting();
   animateCounters();
+  initMobileSearch();
+  setTimeout(labelDynamicTables, 100);
 });
 
 /* --- Global Search --- */
 function initGlobalSearch() {
   var searchInput = document.getElementById('globalSearch');
-  if (!searchInput) return;
+  var mobileSearchInput = document.getElementById('globalSearchMobile');
 
-  searchInput.addEventListener('keydown', function(e) {
+  function handleSearch(e) {
     if (e.key !== 'Enter') return;
-    var q = searchInput.value.trim();
+    var q = e.target.value.trim();
     if (!q) return;
 
-    var path = window.location.pathname.split('/').pop() || 'dashboard.html';
-
-    // Page-specific search routing
-    if (path === 'patients.html') {
-      // Trigger the patient search on the page
-      var patientSearch = document.getElementById('patientSearch');
-      if (patientSearch) {
-        patientSearch.value = q;
-        patientSearch.dispatchEvent(new Event('input'));
-        toast('Filtering patients for "' + q + '"', 'info', 'search');
-      }
-    } else if (path === 'pharmacy.html') {
-      // Trigger the medicine search on the page
-      var medSearch = document.getElementById('medSearch');
-      if (medSearch) {
-        medSearch.value = q;
-        medSearch.dispatchEvent(new Event('input'));
-        toast('Filtering medicines for "' + q + '"', 'info', 'search');
-      }
-    } else if (path === 'appointments.html') {
-      // Trigger appointment search
-      var aptSearch = document.getElementById('apptSearch');
-      if (aptSearch) {
-        aptSearch.value = q;
-        aptSearch.dispatchEvent(new Event('input'));
-        toast('Filtering appointments for "' + q + '"', 'info', 'search');
-      }
-    } else if (path === 'reports.html') {
-      // Trigger transaction search
-      var txnSearch = document.getElementById('searchTxn');
-      if (txnSearch) {
-        txnSearch.value = q;
-        txnSearch.dispatchEvent(new Event('input'));
-        toast('Filtering transactions for "' + q + '"', 'info', 'search');
-      }
-    } else {
-      // Default: redirect to patients page with search query
-      toast('Searching for "' + q + '" across the system...', 'info', 'search');
-      setTimeout(function() {
-        window.location.href = 'patients.html?search=' + encodeURIComponent(q);
-      }, 600);
+    var mobileBar = document.getElementById('mobileSearchBar');
+    if (mobileBar && mobileBar.classList.contains('active')) {
+      mobileBar.classList.remove('active');
+      var toggleBtn = document.getElementById('mobileSearchToggle');
+      if (toggleBtn) toggleBtn.querySelector('.material-icons-round').textContent = 'search';
     }
-  });
+
+    var path = window.location.pathname;
+    var portalPrefix = '';
+    var pm = path.match(/^\/(admin|doctor|staff|pharmacist|labtech)\//);
+    if (pm) portalPrefix = '/' + pm[1];
+
+    if (path.includes('patients')) {
+      var patientSearch = document.getElementById('patientSearch');
+      if (patientSearch) { patientSearch.value = q; patientSearch.dispatchEvent(new Event('input')); toast('Filtering patients for "' + q + '"', 'info', 'search'); }
+    } else if (path.includes('pharmacy')) {
+      var medSearch = document.getElementById('medSearch');
+      if (medSearch) { medSearch.value = q; medSearch.dispatchEvent(new Event('input')); toast('Filtering medicines for "' + q + '"', 'info', 'search'); }
+    } else if (path.includes('appointments')) {
+      var aptSearch = document.getElementById('apptSearch');
+      if (aptSearch) { aptSearch.value = q; aptSearch.dispatchEvent(new Event('input')); toast('Filtering appointments for "' + q + '"', 'info', 'search'); }
+    } else if (path.includes('reports')) {
+      var txnSearch = document.getElementById('searchTxn');
+      if (txnSearch) { txnSearch.value = q; txnSearch.dispatchEvent(new Event('input')); toast('Filtering transactions for "' + q + '"', 'info', 'search'); }
+    } else {
+      toast('Searching for "' + q + '" across the system...', 'info', 'search');
+      setTimeout(function() { window.location.href = portalPrefix + '/patients?search=' + encodeURIComponent(q); }, 600);
+    }
+  }
+
+  if (searchInput) searchInput.addEventListener('keydown', handleSearch);
+  if (mobileSearchInput) mobileSearchInput.addEventListener('keydown', handleSearch);
 }
 
-// Initialize global search on DOMContentLoaded
 document.addEventListener('DOMContentLoaded', initGlobalSearch);
 
 window.switchDashboardTab = function(tabId, event) {
@@ -417,7 +443,6 @@ window.switchDashboardTab = function(tabId, event) {
   if (event && event.currentTarget) event.currentTarget.classList.add('active');
 };
 
-// Support URL search parameter on patients.html
 document.addEventListener('DOMContentLoaded', function() {
   var params = new URLSearchParams(window.location.search);
   var searchQ = params.get('search');
@@ -425,9 +450,6 @@ document.addEventListener('DOMContentLoaded', function() {
     var gs = document.getElementById('globalSearch');
     if (gs) gs.value = searchQ;
     var patientSearch = document.getElementById('patientSearch');
-    if (patientSearch) {
-      patientSearch.value = searchQ;
-      patientSearch.dispatchEvent(new Event('input'));
-    }
+    if (patientSearch) { patientSearch.value = searchQ; patientSearch.dispatchEvent(new Event('input')); }
   }
 });

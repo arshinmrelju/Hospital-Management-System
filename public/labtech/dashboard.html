@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Pathology Lab Portal – Wellness Medicals HMS</title>
+  <link rel="icon" type="image/jpeg" href="../assets/hms-logo.jpg">
+  <meta name="description" content="Cyber-diagnostic pathology lab portal with specimen tracking, analysis scanning, and results management." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/portals.css" />
+  <link rel='stylesheet' href='css/labtech-theme.css' />
+  <style>
+    /* --- Lab Portal Premium Styles --- */
+    .specimen-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      background: var(--surface-low);
+      border: 1px solid var(--outline-var);
+      border-radius: var(--radius-md);
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.22s;
+    }
+    .specimen-card:hover { background: var(--surface-mid); border-color: var(--primary-light); }
+    .specimen-card.active { background: var(--primary-soft); border-color: var(--primary-light); }
+    .specimen-icon { width: 40px; height: 40px; background: var(--primary-soft); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .specimen-icon span { color: var(--primary-light); font-size: 20px; }
+    .specimen-type { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--primary-light); }
+    .specimen-name { font-weight: 700; font-size: 0.88rem; }
+    .specimen-detail { font-size: 0.78rem; color: var(--on-surface-var); margin-top: 2px; }
+    .spec-status { font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
+    .spec-status.queued { background: rgba(245,158,11,0.12); color: #d97706; }
+    .spec-status.processing { background: rgba(14,165,233,0.12); color: #0284c7; }
+    .spec-status.complete { background: rgba(16,185,129,0.12); color: #059669; }
+    .spec-status.critical { background: rgba(239,68,68,0.12); color: #ef4444; }
+
+    /* Scanner Display */
+    .scanner-panel {
+      background: linear-gradient(135deg, #0a1628, #0d1f3c, #091225);
+      border: 1px solid rgba(14,165,233,0.25);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      min-height: 280px;
+    }
+    .scanner-panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 30%, rgba(14,165,233,0.08), transparent 70%);
+      pointer-events: none;
+    }
+    .scanner-title { color: #7dd3fc; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px; }
+    .scanner-display { color: #38bdf8; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
+    .scanner-line { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid rgba(14,165,233,0.08); }
+    .scanner-line .label { color: #64748b; min-width: 140px; font-size: 0.75rem; }
+    .scanner-line .value { color: #38bdf8; font-weight: 600; }
+    .scanner-line .value.alert { color: #f87171; }
+    .scanner-line .value.normal { color: #34d399; }
+    .scan-progress {
+      height: 3px;
+      background: rgba(14,165,233,0.15);
+      border-radius: 99px;
+      overflow: hidden;
+      margin: 16px 0;
+    }
+    .scan-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #0284c7, #38bdf8, #0284c7);
+      background-size: 200% 100%;
+      animation: scanProgress 2s infinite linear;
+      border-radius: 99px;
+    }
+    @keyframes scanProgress {
+      0% { background-position: 200% 0; width: 30%; margin-left: 0%; }
+      50% { width: 60%; }
+      100% { background-position: -200% 0; width: 30%; margin-left: 70%; }
+    }
+    .scan-btn {
+      background: linear-gradient(135deg, #0284c7, #0ea5e9);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
+    }
+    .scan-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(2,132,199,0.4); }
+
+    /* Metric Input Grid */
+    .metric-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .metric-input-group label { font-size: 0.75rem; font-weight: 600; color: var(--on-surface-var); margin-bottom: 5px; display: block; text-transform: uppercase; letter-spacing: 0.03em; }
+    .metric-input-group input {
+      width: 100%;
+      background: var(--surface);
+      border: 1.5px solid var(--outline-var);
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--on-surface);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .metric-input-group input:focus { border-color: var(--primary-light); outline: none; }
+    .range-hint { font-size: 0.72rem; color: var(--outline); margin-top: 3px; }
+    .range-ok { color: #059669 !important; }
+    .range-alert { color: #ef4444 !important; }
+  </style>
+</head>
+
+<body class="app-body">
+
+  <!-- Ambient Background Orbs -->
+  <div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img src="../assets/hms-logo.jpg" alt="Wellness Medicals Logo" class="brand-icon" />
+      <div class="brand-text">
+        <span class="brand-title">Wellness</span>
+        <span class="brand-sub">Medicals HMS</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+
+    <!-- Techsiah Branding -->
+    <a href="https://techsiah.web.app" target="_blank" class="techsiah-badge">
+      <span class="techsiah-label">Powered by</span>
+      <svg class="logo-svg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="techsiah-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#2563EB" />
+            <stop offset="100%" stop-color="#3B82F6" />
+          </linearGradient>
+        </defs>
+        <path d="M6 10C6 7.79086 7.79086 6 10 6H22C24.2091 6 26 7.79086 26 10V22C26 24.2091 24.2091 26 22 26H10C7.79086 26 6 24.2091 6 22V10Z" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M12 11H20" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M16 11V21" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <circle cx="21" cy="21" r="2" fill="#2563EB" />
+      </svg>
+      <span class="techsiah-text">Techsiah<span class="techsiah-dot">.</span></span>
+    </a>
+
+    <div class="sidebar-user">
+      <div class="user-avatar" id="userAvatar">SR</div>
+      <div class="user-info">
+        <span class="user-name" id="sidebarUserName">Lab Tech Samuel Ross</span>
+        <span class="user-role" id="sidebarUserRole">Senior Pathologist · Lab Tech</span>
+      </div>
+      <button class="logout-btn" id="logoutBtn" title="Logout">
+        <span class="material-icons-round">logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+        <span class="material-icons-round">menu</span>
+      </button>
+      <button class="mobile-search-toggle" id="mobileSearchToggle" aria-label="Toggle search">
+        <span class="material-icons-round">search</span>
+      </button>
+      <div class="topbar-search">
+        <span class="material-icons-round search-icon">search</span>
+        <input type="text" id="globalSearch" placeholder="Search specimens, patient IDs, test codes..." />
+      </div>
+      <div class="topbar-actions">
+        <button class="topbar-btn" id="notifBtn" aria-label="Notifications">
+          <span class="material-icons-round">notifications</span>
+          <span class="badge" id="notifBadge">4</span>
+        </button>
+        <div class="topbar-avatar" id="topbarAvatar">SR</div>
+      </div>
+    </header>
+
+  <!-- Mobile Search Bar -->
+  <div class="mobile-search-bar" id="mobileSearchBar">
+    <div class="topbar-search">
+      <span class="material-icons-round search-icon">search</span>
+      <input type="text" id="globalSearchMobile" placeholder="Search patients, appointments, doctors…" />
+    </div>
+  </div>
+
+    <!-- Page Body -->
+    <main class="page-body">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Pathology Lab Console</h1>
+          <p class="page-sub" id="dashboardGreeting">Diagnostic instruments calibrated. Scanning systems active.</p>
+        </div>
+        <div class="header-actions">
+          <span class="date-badge" id="todayDate"></span>
+          <button class="btn-primary btn-sm" onclick="openModal('newSpecimenModal')">
+            <span class="material-icons-round">add</span> Log Specimen
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="stats-grid">
+        <div class="stat-card" style="--accent:#0284c7">
+          <div class="stat-icon-wrap"><span class="material-icons-round">science</span></div>
+          <div class="stat-body">
+            <p class="stat-label">Specimens In Queue</p>
+            <h2 class="stat-value counter" data-target="0">0</h2>
+            <p class="stat-delta" style="color:#d97706"><span class="material-icons-round">hourglass_top</span>Awaiting analysis</p>
+          </div>
+        </div>
+        <div class="stat-card" style="--accent:#10b981">
+          <div class="stat-icon-wrap"><span class="material-icons-round">check_circle</span></div>
+          <div class="stat-body">
+            <p class="stat-label">Tests Completed</p>
+            <h2 class="stat-value counter" data-target="0">0</h2>
+            <p class="stat-delta positive"><span class="material-icons-round">trending_up</span>+11 vs yesterday</p>
+          </div>
+        </div>
+        <div class="stat-card" style="--accent:#ef4444">
+          <div class="stat-icon-wrap"><span class="material-icons-round">priority_high</span></div>
+          <div class="stat-body">
+            <p class="stat-label">Critical Findings</p>
+            <h2 class="stat-value counter" data-target="0">0</h2>
+            <p class="stat-delta negative"><span class="material-icons-round">warning</span>Immediate review</p>
+          </div>
+        </div>
+        <div class="stat-card" style="--accent:#7c3aed">
+          <div class="stat-icon-wrap"><span class="material-icons-round">timer</span></div>
+          <div class="stat-body">
+            <p class="stat-label">Avg. TAT (mins)</p>
+            <h2 class="stat-value counter" data-target="0">0</h2>
+            <p class="stat-delta positive"><span class="material-icons-round">speed</span>Within target</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dashboard Tabs -->
+      <div class="dashboard-tabs">
+        <button class="dashboard-tab-btn active" onclick="switchDashboardTab('tab-specimen', event)">Specimen Queue</button>
+        <button class="dashboard-tab-btn" onclick="switchDashboardTab('tab-results', event)">Completed Results</button>
+        <button class="dashboard-tab-btn" onclick="switchDashboardTab('tab-scanner', event)">Digital Scanner Panel</button>
+        <button class="dashboard-tab-btn" onclick="switchDashboardTab('tab-metrics', event)">Manual Lab Metric Entry</button>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div class="dashboard-tab-content">
+        <!-- TAB 1: Specimen Queue -->
+        <div class="dashboard-tab-pane active" id="tab-specimen">
+          <div class="widget glass-card" id="specimen-queue">
+            <div class="widget-header" style="flex-direction:column; align-items:stretch; gap:10px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span class="material-icons-round" style="color:var(--primary-light)">science</span>
+                  <h3>Specimen Queue</h3>
+                </div>
+                <span id="specimenCount" style="background:rgba(2,132,199,0.1);color:#0284c7;border-radius:20px;padding:3px 10px;font-size:0.72rem;font-weight:700;">23 Pending</span>
+              </div>
+              <!-- Smart Filter Bar -->
+              <div class="smart-filter" id="labSmartFilter">
+                <div class="smart-filter-top">
+                  <div class="sf-label">
+                    <span class="material-icons-round">tune</span>
+                    Filter Queue
+                  </div>
+                  <div class="sf-chips">
+                    <button class="sf-chip active" onclick="sfChipSelect(this,'lab','today')">Today</button>
+                    <button class="sf-chip" onclick="sfChipSelect(this,'lab','yesterday')">Yesterday</button>
+                    <button class="sf-chip" onclick="sfChipSelect(this,'lab','7days')">Last 7 Days</button>
+                    <button class="sf-chip" onclick="sfChipSelect(this,'lab','month')">This Month</button>
+                    <button class="sf-chip custom-range-chip" onclick="sfChipSelect(this,'lab','custom')">
+                      <span class="material-icons-round" style="font-size:13px">date_range</span> Custom
+                    </button>
+                  </div>
+                  <span class="sf-result-badge" id="labResultBadge">
+                    <span class="material-icons-round">science</span>
+                    <span id="labResultCount">23 Pending</span>
+                  </span>
+                </div>
+                <div class="smart-filter-custom" id="labCustomRange">
+                  <div class="sf-input-group">
+                    <label>From</label>
+                    <div class="sf-input-row">
+                      <input type="date" class="sf-date-input" id="labStartDate" />
+                      <input type="time" class="sf-time-input" id="labStartTime" />
+                    </div>
+                  </div>
+                  <div class="sf-range-arrow"><span class="material-icons-round">arrow_forward</span></div>
+                  <div class="sf-input-group">
+                    <label>To</label>
+                    <div class="sf-input-row">
+                      <input type="date" class="sf-date-input" id="labEndDate" />
+                      <input type="time" class="sf-time-input" id="labEndTime" />
+                    </div>
+                  </div>
+                  <div class="sf-actions">
+                    <button class="sf-apply-btn" onclick="sfApplyCustom('lab')">
+                      <span class="material-icons-round">check</span> Apply
+                    </button>
+                    <button class="sf-clear-btn" onclick="sfClearFilter('lab')">
+                      <span class="material-icons-round">close</span> Clear
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="specimenList" style="margin-top:12px;max-height:360px;overflow-y:auto;padding-right:4px;">
+              <p style="text-align:center;padding:20px;color:var(--outline);font-size:0.85rem">Loading specimens...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: Completed Results -->
+        <div class="dashboard-tab-pane" id="tab-results">
+          <div class="widget glass-card" id="results">
+            <div class="widget-header">
+              <h3>Completed Results</h3>
+              <button class="btn-secondary btn-sm" onclick="toast('Results exported to PDF!', 'success', 'picture_as_pdf')">
+                <span class="material-icons-round">download</span> Export
+              </button>
+            </div>
+            <div id="resultsList" style="margin-top:12px;max-height:280px;overflow-y:auto;">
+              <!-- Dynamically rendered -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: Digital Scanner Panel -->
+        <div class="dashboard-tab-pane" id="tab-scanner">
+          <div class="widget glass-card" id="scanner" style="padding: 0; overflow: hidden;">
+            <div class="scanner-panel">
+              <div class="scanner-title">⬢ Hematology Digital Analyzer · V3.2 · CALIBRATED</div>
+              <div class="scan-progress"><div class="scan-progress-bar"></div></div>
+              <div class="scanner-display" id="scannerDisplay">
+                <div class="scanner-line">
+                  <span class="label">SPECIMEN ID</span>
+                  <span class="value" id="scanSpcId">--</span>
+                </div>
+                <div class="scanner-line">
+                  <span class="label">PATIENT</span>
+                  <span class="value" id="scanPatient">-- Select specimen --</span>
+                </div>
+                <div class="scanner-line">
+                  <span class="label">TEST TYPE</span>
+                  <span class="value" id="scanTestType">--</span>
+                </div>
+                <div class="scanner-line">
+                  <span class="label">WBC COUNT</span>
+                  <span class="value" id="scanWBC">--</span>
+                </div>
+                <div class="scanner-line">
+                  <span class="label">RBC COUNT</span>
+                  <span class="value" id="scanRBC">--</span>
+                </div>
+                <div class="scanner-line">
+                  <span class="label">HEMOGLOBIN</span>
+                  <span class="value" id="scanHgb">--</span>
+                </div>
+                <div class="scanner-line">
+                  <span class="label">PLATELETS</span>
+                  <span class="value" id="scanPlatelet">--</span>
+                </div>
+                <div class="scanner-line">
+                  <span class="label">RESULT STATUS</span>
+                  <span class="value normal" id="scanStatus">STANDBY</span>
+                </div>
+              </div>
+              <div style="margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="scan-btn" onclick="runScan()" id="scanBtn">
+                  <span class="material-icons-round">document_scanner</span> RUN SCAN
+                </button>
+                <button class="scan-btn" onclick="clearScanner()" style="background:rgba(14,165,233,0.12);color:#38bdf8;box-shadow:none;border:1px solid rgba(14,165,233,0.2);">
+                  <span class="material-icons-round">refresh</span> CLEAR
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: Manual Lab Metric Entry -->
+        <div class="dashboard-tab-pane" id="tab-metrics">
+          <div class="widget glass-card" id="metrics">
+            <div class="widget-header">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="material-icons-round" style="color:var(--primary-light)">monitoring</span>
+                <h3>Manual Lab Metric Entry</h3>
+              </div>
+              <button class="btn-secondary btn-sm" onclick="saveMetrics()">
+                <span class="material-icons-round">save</span> Save Results
+              </button>
+            </div>
+            <div style="margin-top:14px;">
+              <div class="form-group" style="margin-bottom:10px;">
+                <label style="font-size:0.8rem;font-weight:600;color:var(--on-surface-var);margin-bottom:6px;display:block;">Patient / Specimen</label>
+                <select id="metricsSpecimenSelect" style="width:100%;background:var(--surface);border:1.5px solid var(--outline-var);padding:9px 12px;border-radius:var(--radius-sm);color:var(--on-surface);font-size:0.85rem;font-weight:600;">
+                  <option value="">-- Select Specimen --</option>
+                </select>
+              </div>
+              <div class="metric-grid" id="metricsGrid">
+                <div class="metric-input-group">
+                  <label>WBC (×10³/µL)</label>
+                  <input type="number" id="m_wbc" placeholder="4.0–11.0" step="0.1" />
+                  <p class="range-hint">Normal: 4.0–11.0</p>
+                </div>
+                <div class="metric-input-group">
+                  <label>RBC (×10⁶/µL)</label>
+                  <input type="number" id="m_rbc" placeholder="4.5–5.5" step="0.01" />
+                  <p class="range-hint">Normal: 4.5–5.5</p>
+                </div>
+                <div class="metric-input-group">
+                  <label>Hemoglobin (g/dL)</label>
+                  <input type="number" id="m_hgb" placeholder="13.5–17.5" step="0.1" />
+                  <p class="range-hint">Normal: 13.5–17.5</p>
+                </div>
+                <div class="metric-input-group">
+                  <label>Platelets (×10³/µL)</label>
+                  <input type="number" id="m_plt" placeholder="150–400" />
+                  <p class="range-hint">Normal: 150–400</p>
+                </div>
+                <div class="metric-input-group">
+                  <label>Blood Glucose (mg/dL)</label>
+                  <input type="number" id="m_glu" placeholder="70–100" />
+                  <p class="range-hint">Fasting: 70–100</p>
+                </div>
+                <div class="metric-input-group">
+                  <label>Creatinine (mg/dL)</label>
+                  <input type="number" id="m_cre" placeholder="0.7–1.3" step="0.01" />
+                  <p class="range-hint">Normal: 0.7–1.3</p>
+                </div>
+              </div>
+              <div class="form-group" style="margin-top:12px;">
+                <label style="font-size:0.8rem;font-weight:600;color:var(--on-surface-var);margin-bottom:6px;display:block;">Pathologist Notes</label>
+                <textarea id="m_notes" rows="2" placeholder="Add clinical observations..." style="width:100%;background:var(--surface);border:1.5px solid var(--outline-var);padding:8px 12px;border-radius:var(--radius-sm);font-size:0.85rem;color:var(--on-surface);resize:none;"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- New Specimen Modal -->
+  <div class="modal-overlay" id="newSpecimenModal" onclick="closeModal(event, 'newSpecimenModal')">
+    <div class="modal-card" style="max-width:480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Log New Specimen</h3>
+        <button class="modal-close" onclick="closeModal(event, 'newSpecimenModal'); event.stopPropagation()">
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Patient Name</label>
+          <input type="text" id="newSpcPatient" placeholder="Patient full name" style="width:100%;background:var(--surface);border:1.5px solid var(--outline-var);padding:10px 12px;border-radius:var(--radius-sm);color:var(--on-surface);" />
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+          <div class="form-group">
+            <label>Test Type</label>
+            <select id="newSpcType" style="width:100%;background:var(--surface);border:1.5px solid var(--outline-var);padding:10px 12px;border-radius:var(--radius-sm);color:var(--on-surface);">
+              <option>Complete Blood Count</option>
+              <option>Blood Glucose</option>
+              <option>Lipid Panel</option>
+              <option>Kidney Function Test</option>
+              <option>Liver Function Test</option>
+              <option>Thyroid Profile</option>
+              <option>Urine Routine</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Sample Type</label>
+            <select id="newSpcSample" style="width:100%;background:var(--surface);border:1.5px solid var(--outline-var);padding:10px 12px;border-radius:var(--radius-sm);color:var(--on-surface);">
+              <option>Venous Blood</option>
+              <option>Arterial Blood</option>
+              <option>Urine</option>
+              <option>Stool</option>
+              <option>Swab</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:10px;">
+          <label>Referred by</label>
+          <input type="text" id="newSpcDoctor" placeholder="Referring doctor" style="width:100%;background:var(--surface);border:1.5px solid var(--outline-var);padding:10px 12px;border-radius:var(--radius-sm);color:var(--on-surface);" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal(event, 'newSpecimenModal'); event.stopPropagation()">Cancel</button>
+        <button class="btn-primary" style="background:var(--primary-light);" onclick="addSpecimen()">
+          <span class="material-icons-round">science</span> Log Specimen
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="../js/firebase-init.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/role-nav.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/lab-dashboard.js"></script>
+</body>
+
+</html>

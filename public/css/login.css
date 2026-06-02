@@ -377,14 +377,35 @@
   }
   .brand-panel {
     padding: 32px 28px;
+    align-items: center;
+    text-align: center;
   }
   .form-panel {
     padding: 32px 28px;
   }
   .brand-stats { flex-wrap: wrap; }
+  .brand-name { font-size: 1.6rem; }
+  .brand-tagline { font-size: 0.82rem; margin-bottom: 24px; }
 }
 @media (max-width: 480px) {
-  .login-container { border-radius: var(--radius-lg); }
-  .form-panel { padding: 24px 20px; }
-  .brand-panel { padding: 24px 20px; }
+  .login-container { border-radius: var(--radius-lg); min-height: auto; }
+  .form-panel { padding: 24px 16px; }
+  .brand-panel { padding: 20px 16px; }
+  .brand-name { font-size: 1.3rem; }
+  .brand-stats { flex-direction: column; gap: 8px; }
+  .stat-divider { display: none; }
+  .stat-item { text-align: left; display: flex; align-items: center; gap: 12px; }
+  .stat-num { font-size: 1.2rem; }
+  .form-header h2 { font-size: 1.3rem; }
+  .btn-login { padding: 16px; font-size: 0.9rem; }
+  .login-footer { margin-top: 16px; }
+  .powered-by-wrapper { margin-top: 8px; }
+  .role-btn { padding: 10px 6px; font-size: 0.78rem; }
+}
+
+@media (max-width: 360px) {
+  .form-panel { padding: 16px 12px; }
+  .brand-panel { padding: 16px 12px; }
+  .brand-logo { margin-bottom: 16px; }
+  .logo-icon { width: 52px; height: 52px; }
 }

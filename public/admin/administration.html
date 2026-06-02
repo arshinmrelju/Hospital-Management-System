@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Administration – Wellness Medicals HMS</title>
+  <link rel="icon" type="image/jpeg" href="../assets/hms-logo.jpg">
+  <meta name="description"
+    content="Administration portal for Wellness Medicals – manage staff, departments, and hospital systems." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel='stylesheet' href='css/admin-theme.css' />
+  <link rel="stylesheet" href="../css/administration.css" />
+</head>
+
+<body class="app-body">
+
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img src="../assets/hms-logo.jpg" alt="Wellness Medicals Logo" class="brand-icon" />
+      <div class="brand-text">
+        <span class="brand-title">Wellness</span>
+        <span class="brand-sub">Medicals HMS</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+
+        <!-- Techsiah Branding -->
+    <a href="https://techsiah.web.app" target="_blank" class="techsiah-badge">
+      <span class="techsiah-label">Powered by</span>
+      <svg class="logo-svg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="techsiah-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#2563EB" />
+            <stop offset="100%" stop-color="#3B82F6" />
+          </linearGradient>
+        </defs>
+        <path d="M6 10C6 7.79086 7.79086 6 10 6H22C24.2091 6 26 7.79086 26 10V22C26 24.2091 24.2091 26 22 26H10C7.79086 26 6 24.2091 6 22V10Z" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M12 11H20" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M16 11V21" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <circle cx="21" cy="21" r="2" fill="#2563EB" />
+      </svg>
+      <span class="techsiah-text">Techsiah<span class="techsiah-dot">.</span></span>
+    </a>
+<div class="sidebar-user">
+      <div class="user-avatar" id="userAvatar">--</div>
+      <div class="user-info">
+        <span class="user-name" id="sidebarUserName">Loading...</span>
+        <span class="user-role" id="sidebarUserRole">Admin</span>
+      </div>
+      <button class="logout-btn" id="logoutBtn" title="Logout">
+        <span class="material-icons-round">logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Mobile Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+        <span class="material-icons-round">menu</span>
+      </button>
+      <button class="mobile-search-toggle" id="mobileSearchToggle" aria-label="Toggle search">
+        <span class="material-icons-round">search</span>
+      </button>
+      <div class="topbar-search">
+        <span class="material-icons-round search-icon">search</span>
+        <input type="text" id="globalSearch" placeholder="Search staff, departments, logs…" />
+      </div>
+      <div class="topbar-actions">
+        <button class="topbar-btn" id="notifBtn">
+          <span class="material-icons-round">notifications</span>
+          <span class="badge" id="notifBadge">2</span>
+        </button>
+        <div class="topbar-avatar" id="topbarAvatar">--</div>
+      </div>
+    </header>
+
+  <!-- Mobile Search Bar -->
+  <div class="mobile-search-bar" id="mobileSearchBar">
+    <div class="topbar-search">
+      <span class="material-icons-round search-icon">search</span>
+      <input type="text" id="globalSearchMobile" placeholder="Search patients, appointments, doctors…" />
+    </div>
+  </div>
+
+    <main class="page-body">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Hospital Administration</h1>
+          <p class="page-sub">Manage personnel, departments, and hospital configuration.</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn-primary"
+            onclick="document.getElementById('addStaffModal').classList.add('active'); document.getElementById('addStaffOverlay').classList.add('active'); document.body.style.overflow = 'hidden';">
+            <span class="material-icons-round">person_add</span> Add New Staff
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab Bar -->
+      <div class="tab-bar glass-card">
+        <button class="tab-btn active" onclick="switchTab(this, 'staff')">
+          <span class="material-icons-round">groups</span> Staff Management
+        </button>
+        <button class="tab-btn" onclick="switchTab(this, 'schedule')">
+          <span class="material-icons-round">schedule</span> Schedule &amp; Rotation
+        </button>
+        <button class="tab-btn" onclick="switchTab(this, 'departments')">
+          <span class="material-icons-round">account_tree</span> Departments
+        </button>
+        <button class="tab-btn" onclick="switchTab(this, 'logs')">
+          <span class="material-icons-round">history</span> System Logs
+        </button>
+      </div>
+
+      <!-- Tab Content: Staff Management -->
+      <div id="tab-staff" class="tab-content">
+        <div class="admin-filters glass-card">
+          <div class="filter-group">
+            <label>Search Personnel</label>
+            <div class="search-input-wrap">
+              <span class="material-icons-round">search</span>
+              <input type="text" id="staffSearch" placeholder="Name, ID, or Phone..." oninput="filterStaffTable()" />
+            </div>
+          </div>
+          <div class="filter-group">
+            <label>Role</label>
+            <select id="roleFilter" onchange="filterStaffTable()">
+              <option value="all">All Roles</option>
+              <option value="Doctor">Doctor</option>
+              <option value="Nurse">Nurse</option>
+              <option value="Pharmacist">Pharmacist</option>
+              <option value="Staff">Staff</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Status</label>
+            <select id="statusFilter" onchange="filterStaffTable()">
+              <option value="all">All Status</option>
+              <option value="Active">Active</option>
+              <option value="On Leave">On Leave</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+          <div class="filter-group filter-count-group">
+            <label>&nbsp;</label>
+            <span class="badge-status confirmed" style="font-size:0.85rem;padding:8px 16px;" id="staffCount">0</span>
+          </div>
+        </div>
+
+        <div class="glass-card table-widget">
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Staff ID</th>
+                  <th>Name & Role</th>
+                  <th>Department</th>
+                  <th>Specialization</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="staffTableBody">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content: Schedule & Rotation -->
+      <div id="tab-schedule" class="tab-content" hidden>
+        <div class="schedule-layout">
+          <!-- Head of Staff Section -->
+          <div class="hos-section glass-card">
+            <div class="hos-header">
+              <h3><span class="material-icons-round">workspace_premium</span> Head of Staff — Weekly Rotation</h3>
+              <p>Assign a non-doctor staff member as Head of Staff for the current week. Rotates weekly.</p>
+            </div>
+            <div id="hosCurrentDisplay"></div>
+            <div class="hos-history">
+              <h4>Rotation History</h4>
+              <div id="hosHistoryList"></div>
+            </div>
+          </div>
+
+          <!-- Schedule Management -->
+          <div class="sched-section glass-card">
+            <div class="sched-header">
+              <h3><span class="material-icons-round">calendar_month</span> Staff Schedules</h3>
+              <p>Manage shift timings and working days for each staff member.</p>
+            </div>
+            <div class="admin-filters" style="padding: 16px 0;margin-bottom:8px;">
+              <div class="filter-group">
+                <label>Search Schedule</label>
+                <div class="search-input-wrap">
+                  <span class="material-icons-round">search</span>
+                  <input type="text" id="scheduleSearch" placeholder="Name, ID, or Department..." oninput="filterScheduleTable()" />
+                </div>
+              </div>
+              <div class="filter-group">
+                <label>Department</label>
+                <select id="scheduleDeptFilter" onchange="filterScheduleTable()">
+                  <option value="all">All Departments</option>
+                  <option value="General Surgery">General Surgery</option>
+                  <option value="Cardiology">Cardiology</option>
+                  <option value="Neurology">Neurology</option>
+                  <option value="Emergency">Emergency</option>
+                  <option value="Pharmacy">Pharmacy</option>
+                  <option value="Laboratory">Laboratory</option>
+                  <option value="Administration">Administration</option>
+                </select>
+              </div>
+              <div class="filter-group filter-count-group">
+                <label>&nbsp;</label>
+                <span class="badge-status confirmed" style="font-size:0.85rem;padding:8px 16px;" id="scheduleCount">0</span>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Staff ID</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Shift Timing</th>
+                    <th>Working Days</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="scheduleTableBody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content: Departments -->
+      <div id="tab-departments" class="tab-content" hidden>
+        <div class="dept-grid">
+          <div class="dept-card glass-card">
+            <div class="dept-icon-wrap" style="background: rgba(13, 148, 136, 0.1); color: #0D9488;">
+              <span class="material-icons-round">favorite</span>
+            </div>
+            <div class="dept-info">
+              <h3>Cardiology</h3>
+              <p>8 Doctors · 12 Staff</p>
+            </div>
+            <button class="btn-icon"><span class="material-icons-round">chevron_right</span></button>
+          </div>
+          <div class="dept-card glass-card">
+            <div class="dept-icon-wrap" style="background: rgba(59, 130, 246, 0.1); color: #3B82F6;">
+              <span class="material-icons-round">brain</span>
+            </div>
+            <div class="dept-info">
+              <h3>Neurology</h3>
+              <p>5 Doctors · 8 Staff</p>
+            </div>
+            <button class="btn-icon"><span class="material-icons-round">chevron_right</span></button>
+          </div>
+          <div class="dept-card glass-card">
+            <div class="dept-icon-wrap" style="background: rgba(245, 158, 11, 0.1); color: #F59E0B;">
+              <span class="material-icons-round">emergency</span>
+            </div>
+            <div class="dept-info">
+              <h3>Emergency</h3>
+              <p>12 Doctors · 20 Staff</p>
+            </div>
+            <button class="btn-icon"><span class="material-icons-round">chevron_right</span></button>
+          </div>
+          <button class="add-dept-card glass-card">
+            <span class="material-icons-round">add</span>
+            <span>Create New Department</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab Content: Logs -->
+      <div id="tab-logs" class="tab-content" hidden>
+        <div class="glass-card logs-widget">
+          <div class="logs-header">
+            <h3>Recent System Activity</h3>
+            <button class="btn-secondary btn-sm"><span class="material-icons-round">download</span> Export Logs</button>
+          </div>
+          <ul class="logs-list" id="logsList">
+            <!-- Populated by JS from Firestore audit_logs -->
+          </ul>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add Staff Side Drawer -->
+  <div class="modal-overlay" id="addStaffOverlay"
+    onclick="closeModal(event, 'addStaffOverlay'); document.getElementById('addStaffModal').classList.remove('active');">
+  </div>
+  <div class="modal" id="addStaffModal">
+    <div class="modal-header">
+      <h2>Add New Staff Member</h2>
+      <button class="btn-icon"
+        onclick="document.getElementById('addStaffModal').classList.remove('active'); document.getElementById('addStaffOverlay').classList.remove('active'); document.body.style.overflow = '';">
+        <span class="material-icons-round">close</span>
+      </button>
+    </div>
+
+    <form id="addStaffForm" class="admin-form">
+      <div class="form-group">
+        <label>Full Name</label>
+        <div class="search-input-wrap">
+          <span class="material-icons-round">person</span>
+          <input type="text" id="staffName" required placeholder="e.g. Dr. John Doe" />
+        </div>
+      </div>
+
+      <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="form-group">
+          <label>Role</label>
+          <select id="staffRole" required onchange="toggleSpecializationField()">
+            <option value="Doctor">Doctor</option>
+            <option value="Nurse">Nurse</option>
+            <option value="Pharmacist">Pharmacist</option>
+            <option value="Staff">Staff</option>
+            <option value="Admin">Admin</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Department</label>
+          <select id="staffDept">
+            <option value="General Surgery">General Surgery</option>
+            <option value="Cardiology">Cardiology</option>
+            <option value="Neurology">Neurology</option>
+            <option value="Emergency">Emergency</option>
+            <option value="Pharmacy">Pharmacy</option>
+            <option value="Laboratory">Laboratory</option>
+            <option value="Administration">Administration</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" id="specializationGroup">
+        <label>Specialization</label>
+        <div class="search-input-wrap">
+          <span class="material-icons-round">workspace_premium</span>
+          <input type="text" id="staffSpec" placeholder="e.g. Senior Surgeon" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Contact Number</label>
+        <div class="search-input-wrap">
+          <span class="material-icons-round">phone</span>
+          <input type="tel" id="staffPhone" required placeholder="+91 98765 43210" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Email Address</label>
+        <div class="search-input-wrap">
+          <span class="material-icons-round">alternate_email</span>
+          <input type="email" id="staffEmail" required placeholder="john.doe@wellness.com" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Security Password</label>
+        <div class="search-input-wrap">
+          <span class="material-icons-round">lock</span>
+          <input type="password" id="staffPass" placeholder="Leave blank for 'Welcome@123'" />
+        </div>
+      </div>
+
+      <div class="modal-footer" style="margin-top: auto; padding-top: 30px;">
+        <button type="button" class="btn-secondary"
+          onclick="document.getElementById('addStaffModal').classList.remove('active'); document.getElementById('addStaffOverlay').classList.remove('active'); document.body.style.overflow = '';">Cancel</button>
+        <button type="submit" class="btn-primary">Create Staff Account</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Edit Staff Side Drawer -->
+  <div class="modal-overlay" id="editStaffOverlay"
+    onclick="closeModal(event, 'editStaffOverlay'); document.getElementById('editStaffModal').classList.remove('active');">
+  </div>
+  <div class="modal" id="editStaffModal">
+    <div class="modal-header">
+      <h2>Edit Staff Member</h2>
+      <button class="btn-icon"
+        onclick="document.getElementById('editStaffModal').classList.remove('active'); document.getElementById('editStaffOverlay').classList.remove('active'); document.body.style.overflow = '';">
+        <span class="material-icons-round">close</span>
+      </button>
+    </div>
+
+    <form id="editStaffForm" class="admin-form">
+      <input type="hidden" id="editStaffId" />
+      <div class="form-group">
+        <label>Full Name</label>
+        <div class="search-input-wrap">
+          <span class="material-icons-round">person</span>
+          <input type="text" id="editStaffName" required />
+        </div>
+      </div>
+
+      <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="form-group">
+          <label>Role</label>
+          <select id="editStaffRole" required onchange="toggleEditSpecializationField()">
+            <option value="Doctor">Doctor</option>
+            <option value="Nurse">Nurse</option>
+            <option value="Pharmacist">Pharmacist</option>
+            <option value="Staff">Staff</option>
+            <option value="Admin">Admin</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Department</label>
+          <select id="editStaffDept">
+            <option value="General Surgery">General Surgery</option>
+            <option value="Cardiology">Cardiology</option>
+            <option value="Neurology">Neurology</option>
+            <option value="Emergency">Emergency</option>
+            <option value="Pharmacy">Pharmacy</option>
+            <option value="Laboratory">Laboratory</option>
+            <option value="Administration">Administration</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" id="editSpecializationGroup">
+        <label>Specialization</label>
+        <div class="search-input-wrap">
+          <span class="material-icons-round">workspace_premium</span>
+          <input type="text" id="editStaffSpec" />
+        </div>
+      </div>
+
+      <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="form-group">
+          <label>Status</label>
+          <select id="editStaffStatus">
+            <option value="Active">Active</option>
+            <option value="On Leave">On Leave</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Contact Number</label>
+          <div class="search-input-wrap">
+            <span class="material-icons-round">phone</span>
+            <input type="tel" id="editStaffPhone" />
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Email Address</label>
+        <div class="search-input-wrap">
+          <span class="material-icons-round">alternate_email</span>
+          <input type="email" id="editStaffEmail" required />
+        </div>
+      </div>
+
+      <div class="modal-footer" style="margin-top: auto; padding-top: 30px;">
+        <button type="button" class="btn-secondary"
+          onclick="document.getElementById('editStaffModal').classList.remove('active'); document.getElementById('editStaffOverlay').classList.remove('active'); document.body.style.overflow = '';">Cancel</button>
+        <button type="submit" class="btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Schedule Side Drawer -->
+  <div class="modal-overlay" id="scheduleOverlay"
+    onclick="closeModal(event, 'scheduleOverlay'); document.getElementById('scheduleModal').classList.remove('active');">
+  </div>
+  <div class="modal" id="scheduleModal">
+    <div class="modal-header">
+      <h2>Edit Staff Schedule</h2>
+      <button class="btn-icon"
+        onclick="document.getElementById('scheduleModal').classList.remove('active'); document.getElementById('scheduleOverlay').classList.remove('active'); document.body.style.overflow = '';">
+        <span class="material-icons-round">close</span>
+      </button>
+    </div>
+
+    <form id="scheduleForm" class="admin-form">
+      <input type="hidden" id="schedStaffId" />
+      <div class="form-group">
+        <label>Staff Member</label>
+        <p style="font-size:1.1rem;font-weight:700;" id="schedStaffName">--</p>
+      </div>
+
+      <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="form-group">
+          <label>Shift Start</label>
+          <input type="time" id="schedShiftStart" required />
+        </div>
+        <div class="form-group">
+          <label>Shift End</label>
+          <input type="time" id="schedShiftEnd" required />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Working Days</label>
+        <div class="days-chip-grid">
+          <button type="button" class="day-chip-select active" data-day="Monday" onclick="toggleDayChip(this)">Mon</button>
+          <button type="button" class="day-chip-select active" data-day="Tuesday" onclick="toggleDayChip(this)">Tue</button>
+          <button type="button" class="day-chip-select active" data-day="Wednesday" onclick="toggleDayChip(this)">Wed</button>
+          <button type="button" class="day-chip-select active" data-day="Thursday" onclick="toggleDayChip(this)">Thu</button>
+          <button type="button" class="day-chip-select active" data-day="Friday" onclick="toggleDayChip(this)">Fri</button>
+          <button type="button" class="day-chip-select" data-day="Saturday" onclick="toggleDayChip(this)">Sat</button>
+          <button type="button" class="day-chip-select" data-day="Sunday" onclick="toggleDayChip(this)">Sun</button>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="margin-top: auto; padding-top: 30px;">
+        <button type="button" class="btn-secondary"
+          onclick="document.getElementById('scheduleModal').classList.remove('active'); document.getElementById('scheduleOverlay').classList.remove('active'); document.body.style.overflow = '';">Cancel</button>
+        <button type="submit" class="btn-primary">Save Schedule</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Head of Staff Assign Modal -->
+  <div class="modal-overlay" id="hosOverlay"
+    onclick="closeHosOverlay(event)">
+    <div class="modal" id="hosModal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Assign Head of Staff</h2>
+        <button class="btn-icon" onclick="closeHosModal()">
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+
+      <form id="hosForm" class="admin-form">
+        <div class="form-group">
+          <label>Select Staff Member (non-doctor, active)</label>
+          <select id="hosStaffSelect" required></select>
+        </div>
+        <p style="font-size:0.82rem;color:var(--on-surface-var);">The selected staff will be Head of Staff for the current week. They will be replaced automatically next week.</p>
+        <div class="modal-footer" style="margin-top: auto; padding-top: 30px;">
+          <button type="button" class="btn-secondary" onclick="closeHosModal()">Cancel</button>
+          <button type="submit" class="btn-primary">Assign</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="../js/firebase-init.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/role-nav.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/administration.js"></script>
+</body>
+
+</html>

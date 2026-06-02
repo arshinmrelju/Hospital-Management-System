@@ -792,7 +792,26 @@
 }
 
 /* Responsive */
+@media (max-width: 1024px) {
+  #addStaffModal, #editStaffModal, #scheduleModal {
+    width: 400px;
+  }
+}
 @media (max-width: 768px) {
+  #addStaffModal, #editStaffModal, #scheduleModal {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 0;
+    padding: 0;
+    left: 0;
+    right: 0;
+  }
+  .admin-form { padding: 20px; }
+  .modal-header { padding: 20px; }
+  .modal-footer { padding: 16px 20px 24px; flex-direction: column; }
+  .modal-footer button { width: 100%; justify-content: center; }
+  .modal-header h2 { font-size: 1.1rem; }
+
   .hos-card {
     flex-direction: column;
     text-align: center;
@@ -808,4 +827,29 @@
   .schedule-layout {
     gap: 16px;
   }
+
+  .admin-filters { flex-direction: column; padding: 16px; gap: 12px; }
+  .filter-group { min-width: 0; width: 100%; }
+
+  .dept-grid { grid-template-columns: 1fr; }
+
+  .log-item { flex-wrap: wrap; gap: 8px; }
+  .log-time { width: auto; }
+
+  .hos-section, .sched-section { padding: 16px; }
+  .hos-card { padding: 16px; }
+  .hos-header h3, .sched-header h3 { font-size: 1rem; }
+  .hos-avatar { width: 52px; height: 52px; font-size: 1.1rem; }
+
+  .day-chip-select { padding: 10px 12px; font-size: 0.78rem; }
+}
+@media (max-width: 480px) {
+  .admin-filters { padding: 12px; }
+  .staff-info-cell { flex-direction: column; text-align: center; gap: 8px; }
+  .hos-card { padding: 14px; }
+  .hos-info h3 { font-size: 1.05rem; }
+  .hos-avatar { width: 44px; height: 44px; font-size: 1rem; }
+  #addStaffModal .admin-form { padding: 16px; gap: 14px; }
+  .form-group input, .form-group select { padding: 12px 14px; font-size: 0.88rem; border-radius: 12px; }
+  .hos-section, .sched-section { padding: 12px; }
 }

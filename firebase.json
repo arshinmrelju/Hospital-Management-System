@@ -12,7 +12,7 @@
         "headers": [
           {
             "key": "Content-Security-Policy",
-            "value": "default-src 'self'; script-src 'self' https://www.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com 'unsafe-inline' 'unsafe-eval'; style-src 'self' https://fonts.googleapis.com https://www.gstatic.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://img.icons8.com data:; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://script.google.com https://www.gstatic.com;"
+            "value": "default-src 'self'; script-src 'self' https://www.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com 'unsafe-inline' 'unsafe-eval'; style-src 'self' https://fonts.googleapis.com https://www.gstatic.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://img.icons8.com data:; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.gstatic.com;"
           },
           {
             "key": "X-Content-Type-Options",
@@ -38,6 +38,46 @@
       }
     ],
     "rewrites": [
+      {
+        "source": "/admin",
+        "destination": "/admin/dashboard.html"
+      },
+      {
+        "source": "/doctor",
+        "destination": "/doctor/dashboard.html"
+      },
+      {
+        "source": "/staff",
+        "destination": "/staff/dashboard.html"
+      },
+      {
+        "source": "/pharmacist",
+        "destination": "/pharmacist/dashboard.html"
+      },
+      {
+        "source": "/labtech",
+        "destination": "/labtech/dashboard.html"
+      },
+      {
+        "source": "/login-admin",
+        "destination": "/login-admin.html"
+      },
+      {
+        "source": "/login-doctor",
+        "destination": "/login-doctor.html"
+      },
+      {
+        "source": "/login-staff",
+        "destination": "/login-staff.html"
+      },
+      {
+        "source": "/login-pharmacist",
+        "destination": "/login-pharmacist.html"
+      },
+      {
+        "source": "/login-labtech",
+        "destination": "/login-labtech.html"
+      },
       {
         "source": "**",
         "destination": "/index.html"

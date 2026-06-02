@@ -67,7 +67,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 11px 14px;
+  padding: 12px 14px;
   border-radius: var(--radius-md);
   color: var(--on-surface-var);
   font-size: 0.875rem;
@@ -75,6 +75,7 @@
   text-decoration: none;
   transition: all 0.15s ease;
   position: relative;
+  min-height: var(--touch-target);
 }
 .nav-item .material-icons-round { font-size: 20px; flex-shrink: 0; }
 .nav-item:hover {
@@ -193,10 +194,28 @@
   background: none;
   border: none;
   color: var(--on-surface);
-  padding: 4px;
+  padding: 10px;
   border-radius: var(--radius-sm);
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  align-items: center;
+  justify-content: center;
 }
 .menu-toggle .material-icons-round { font-size: 24px; }
+
+.mobile-search-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--on-surface);
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  align-items: center;
+  justify-content: center;
+}
+.mobile-search-toggle .material-icons-round { font-size: 24px; }
 
 .topbar-search {
   flex: 1;
@@ -231,9 +250,25 @@
   display: flex;
   color: var(--on-surface-var);
   transition: all 0.15s;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  align-items: center;
+  justify-content: center;
 }
 .topbar-btn:hover { border-color: var(--primary-light); color: var(--primary-light); }
 .topbar-btn .material-icons-round { font-size: 20px; }
+
+.mobile-search-bar {
+  display: none;
+  padding: 8px 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--outline-var);
+}
+.mobile-search-bar.active { display: flex; }
+.mobile-search-bar .topbar-search {
+  max-width: 100%;
+  flex: 1;
+}
 .topbar-btn .badge {
   position: absolute;
   top: -5px; right: -5px;
@@ -380,11 +415,38 @@
   .main-content { margin-left: 0; }
   .menu-toggle { display: flex; }
   .page-body { padding: 20px 16px 40px; }
+  .notif-panel {
+    right: 12px;
+    width: 320px;
+  }
+}
+@media (max-width: 768px) {
+  .notif-panel {
+    right: 8px;
+    left: 8px;
+    width: auto;
+    top: calc(var(--topbar-h) + 4px);
+  }
 }
 @media (max-width: 600px) {
-  .topbar { padding: 0 14px; gap: 10px; }
+  .topbar { padding: 0 10px; gap: 6px; }
   .topbar-search { display: none; }
+  .mobile-search-toggle { display: flex; }
   .page-header { flex-direction: column; }
+  .page-title { font-size: 1.4rem; }
+  .page-body { padding: 14px 10px 32px; }
+  .topbar-btn { padding: 10px; }
+  .date-badge { font-size: 0.72rem; padding: 4px 10px; }
+  .sidebar-nav { padding: 12px 8px; }
+  .nav-item { padding: 10px 12px; font-size: 0.82rem; min-height: var(--touch-target); }
+  .sidebar-brand { padding: 14px 14px 12px; }
+  .brand-title { font-size: 0.95rem; }
+  .sidebar-user { padding: 10px 12px; }
+  .view-btn { padding: 8px 10px; }
+}
+@media (max-width: 400px) {
+  .page-body { padding: 10px 6px 24px; }
+  .topbar { padding: 0 6px; gap: 4px; }
 }
 
 /* ================== TECHSIAH BRANDING ================== */

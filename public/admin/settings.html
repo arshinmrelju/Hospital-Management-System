@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Settings – Wellness Medicals HMS</title>
+  <link rel="icon" type="image/jpeg" href="../assets/hms-logo.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel='stylesheet' href='css/admin-theme.css' />
+  <style>
+    .settings-grid { display: grid; grid-template-columns: 240px 1fr; gap: 24px; }
+    .settings-nav { display: flex; flex-direction: column; gap: 4px; }
+    .settings-nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: var(--radius-md); cursor: pointer; font-weight: 600; font-size: .875rem; color: var(--on-surface-var); transition: all .15s; }
+    .settings-nav-item:hover { background: var(--surface-low); color: var(--primary-light); }
+    .settings-nav-item.active { background: var(--primary-soft); color: var(--primary-light); }
+    .settings-nav-item .material-icons-round { font-size: 20px; }
+    .settings-panel { display: none; }
+    .settings-panel.active { display: block; }
+    .settings-section { margin-bottom: 32px; }
+    .settings-section h3 { font-family: var(--font-head); font-size: 1rem; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--outline-var); }
+    .setting-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 0; border-bottom: 1px solid var(--surface-mid); }
+    .setting-row:last-child { border-bottom: none; }
+    .setting-info { flex: 1; }
+    .setting-info strong { display: block; font-size: .9rem; font-weight: 600; }
+    .setting-info p { font-size: .8rem; color: var(--on-surface-var); margin-top: 2px; }
+    .toggle-switch { position: relative; width: 44px; height: 24px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-track { position: absolute; inset: 0; background: var(--surface-high); border-radius: 9999px; cursor: pointer; transition: background .2s; }
+    .toggle-switch input:checked + .toggle-track { background: var(--primary-light); }
+    .toggle-track::after { content:''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: #fff; top: 3px; left: 3px; transition: transform .2s; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+    .toggle-switch input:checked + .toggle-track::after { transform: translateX(20px); }
+    .profile-avatar-large { width: 80px; height: 80px; background: linear-gradient(135deg, var(--primary-light), #2DD4BF); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-head); font-size: 1.8rem; font-weight: 800; color: #fff; }
+    @media (max-width: 768px) { .settings-grid { grid-template-columns: 1fr; } .settings-nav { flex-direction: row; flex-wrap: wrap; } }
+
+    .dark-mode { --surface-bg: #0f172a; --surface: #1e293b; --surface-low: #1a2332; --surface-mid: #2d3a4e; --surface-high: #3b4a60; --on-surface: #e2e8f0; --on-surface-var: #94a3b8; --outline-var: #334155; }
+    .dark-mode .glass-card { background: rgba(30, 41, 59, .85); border-color: rgba(148, 163, 184, .12); }
+    .dark-mode .widget { background: rgba(30, 41, 59, .85); }
+    .dark-mode .topbar { background: rgba(15, 23, 42, .9); }
+    .dark-mode .sidebar { background: #0f172a; border-color: #1e293b; }
+    .dark-mode input, .dark-mode textarea, .dark-mode select { background: #1e293b; color: #e2e8f0; border-color: #334155; }
+  </style>
+</head>
+<body class="app-body">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img src="../assets/hms-logo.jpg" alt="Wellness Medicals Logo" class="brand-icon" />
+      <div class="brand-text"><span class="brand-title">Wellness</span><span class="brand-sub">Medicals HMS</span></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+        <!-- Techsiah Branding -->
+    <a href="https://techsiah.web.app" target="_blank" class="techsiah-badge">
+      <span class="techsiah-label">Powered by</span>
+      <svg class="logo-svg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="techsiah-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#2563EB" />
+            <stop offset="100%" stop-color="#3B82F6" />
+          </linearGradient>
+        </defs>
+        <path d="M6 10C6 7.79086 7.79086 6 10 6H22C24.2091 6 26 7.79086 26 10V22C26 24.2091 24.2091 26 22 26H10C7.79086 26 6 24.2091 6 22V10Z" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M12 11H20" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M16 11V21" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <circle cx="21" cy="21" r="2" fill="#2563EB" />
+      </svg>
+      <span class="techsiah-text">Techsiah<span class="techsiah-dot">.</span></span>
+    </a>
+<div class="sidebar-user">
+      <div class="user-avatar" id="userAvatar">DS</div>
+      <div class="user-info"><span class="user-name" id="sidebarUserName">Dr. Sarah Mitchell</span><span class="user-role" id="sidebarUserRole">Chief Surgeon · Admin</span></div>
+      <button class="logout-btn" id="logoutBtn"><span class="material-icons-round">logout</span></button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle"><span class="material-icons-round">menu</span></button>
+      <button class="mobile-search-toggle" id="mobileSearchToggle" aria-label="Toggle search"><span class="material-icons-round">search</span></button>
+      <div class="topbar-search"><span class="material-icons-round search-icon">search</span><input type="text" placeholder="Search settings…" /></div>
+      <div class="topbar-actions">
+        <button class="topbar-btn"><span class="material-icons-round">notifications</span><span class="badge">3</span></button>
+        <div class="topbar-avatar" id="topbarAvatar">DS</div>
+      </div>
+    </header>
+
+  <!-- Mobile Search Bar -->
+  <div class="mobile-search-bar" id="mobileSearchBar">
+    <div class="topbar-search">
+      <span class="material-icons-round search-icon">search</span>
+      <input type="text" id="globalSearchMobile" placeholder="Search patients, appointments, doctors…" />
+    </div>
+  </div>
+
+    <main class="page-body">
+      <div class="page-header">
+        <div><h1 class="page-title">Settings</h1><p class="page-sub">Manage your account and hospital system preferences</p></div>
+        <button class="btn-primary" onclick="saveSettings()"><span class="material-icons-round">save</span> Save Changes</button>
+      </div>
+
+      <div class="settings-grid">
+        <!-- Settings Nav -->
+        <div class="widget glass-card" style="padding:16px;align-self:start">
+          <div class="settings-nav">
+            <div class="settings-nav-item active" onclick="showSettingsPanel('profile', this)"><span class="material-icons-round">person</span>Profile</div>
+            <div class="settings-nav-item" onclick="showSettingsPanel('hospital', this)"><span class="material-icons-round">local_hospital</span>Hospital</div>
+            <div class="settings-nav-item" onclick="showSettingsPanel('notifications', this)"><span class="material-icons-round">notifications</span>Notifications</div>
+            <div class="settings-nav-item" onclick="showSettingsPanel('security', this)"><span class="material-icons-round">security</span>Security</div>
+            <div class="settings-nav-item" onclick="showSettingsPanel('appearance', this)"><span class="material-icons-round">palette</span>Appearance</div>
+            <div class="settings-nav-item" onclick="showSettingsPanel('billing_cfg', this)"><span class="material-icons-round">receipt_long</span>Billing Config</div>
+          </div>
+        </div>
+
+        <!-- Panels -->
+        <div class="widget glass-card" style="padding:28px">
+          <!-- Profile -->
+          <div class="settings-panel active" id="panel-profile">
+            <div class="settings-section">
+              <h3>Personal Information</h3>
+              <div style="display:flex;gap:20px;align-items:center;margin-bottom:20px">
+                <div class="profile-avatar-large" id="profileAvatarLg">DS</div>
+                <div>
+                  <button class="btn-secondary btn-sm" id="changePhotoBtn">Change Photo</button>
+                  <p style="font-size:.75rem;color:var(--on-surface-var);margin-top:6px">JPG or PNG, max 2MB</p>
+                </div>
+              </div>
+              <div class="form-row-2">
+                <div class="form-group"><label>First Name</label><input type="text" id="settingFirstName" value="Sarah" /></div>
+                <div class="form-group"><label>Last Name</label><input type="text" id="settingLastName" value="Mitchell" /></div>
+              </div>
+              <div class="form-row-2" style="margin-top:16px">
+                <div class="form-group"><label>Email</label><input type="email" id="settingEmail" value="s.mitchell@wellness.com" /></div>
+                <div class="form-group"><label>Phone</label><input type="tel" id="settingPhone" value="+91 9876543210" /></div>
+              </div>
+              <div class="form-row-2" style="margin-top:16px">
+                <div class="form-group"><label>Designation</label><input type="text" id="settingTitle" value="Chief Surgeon" /></div>
+                <div class="form-group"><label>Department</label>
+                  <select id="settingDept"><option>General Surgery</option><option>Cardiology</option><option>Neurology</option><option>Pediatrics</option></select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hospital -->
+          <div class="settings-panel" id="panel-hospital">
+            <div class="settings-section">
+              <h3>Hospital Information</h3>
+              <div class="form-group"><label>Hospital Name</label><input type="text" id="settingHospitalName" value="Wellness Medicals" /></div>
+              <div class="form-row-2" style="margin-top:16px">
+                <div class="form-group"><label>Registration Number</label><input type="text" id="settingRegNumber" value="MH/HOSP/2018/042" /></div>
+                <div class="form-group"><label>Phone</label><input type="tel" id="settingHospPhone" value="+91 22 4567 8900" /></div>
+              </div>
+              <div class="form-group" style="margin-top:16px"><label>Address</label><textarea id="settingHospAddress" rows="2">123, Healthcare Avenue, Bandra West, Mumbai 400050</textarea></div>
+            </div>
+            <div class="settings-section">
+              <h3>Operational Settings</h3>
+              <div class="setting-row">
+                <div class="setting-info"><strong>OPD Hours</strong><p>Set outpatient department working hours</p></div>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <input type="time" id="settingOpdStart" class="filter-select" value="08:00" style="width:110px" />
+                  <span style="font-size:.82rem;color:var(--on-surface-var)">to</span>
+                  <input type="time" id="settingOpdEnd" class="filter-select" value="20:00" style="width:110px" />
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-info"><strong>Emergency Services</strong><p>24/7 emergency department availability</p></div>
+                <label class="toggle-switch"><input type="checkbox" id="settingEmergency" checked /><span class="toggle-track"></span></label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notifications -->
+          <div class="settings-panel" id="panel-notifications">
+            <div class="settings-section">
+              <h3>Notification Preferences</h3>
+              <div class="setting-row"><div class="setting-info"><strong>Critical Patient Alerts</strong><p>Receive alerts for critical patient status changes</p></div><label class="toggle-switch"><input type="checkbox" id="settingNotifCritical" checked /><span class="toggle-track"></span></label></div>
+              <div class="setting-row"><div class="setting-info"><strong>Appointment Reminders</strong><p>Reminders for upcoming appointments</p></div><label class="toggle-switch"><input type="checkbox" id="settingNotifAppt" checked /><span class="toggle-track"></span></label></div>
+              <div class="setting-row"><div class="setting-info"><strong>Lab Results Ready</strong><p>Alert when laboratory results are available</p></div><label class="toggle-switch"><input type="checkbox" id="settingNotifLab" checked /><span class="toggle-track"></span></label></div>
+              <div class="setting-row"><div class="setting-info"><strong>Low Stock Alerts</strong><p>Pharmacy inventory low stock notifications</p></div><label class="toggle-switch"><input type="checkbox" id="settingNotifStock" checked /><span class="toggle-track"></span></label></div>
+              <div class="setting-row"><div class="setting-info"><strong>System Updates</strong><p>Updates about HMS system changes</p></div><label class="toggle-switch"><input type="checkbox" id="settingNotifSystem" /><span class="toggle-track"></span></label></div>
+              <div class="setting-row"><div class="setting-info"><strong>Email Notifications</strong><p>Send a copy of all alerts to your email</p></div><label class="toggle-switch"><input type="checkbox" id="settingNotifEmail" checked /><span class="toggle-track"></span></label></div>
+            </div>
+          </div>
+
+          <!-- Security -->
+          <div class="settings-panel" id="panel-security">
+            <div class="settings-section">
+              <h3>Change Password</h3>
+              <div class="form-group"><label>Current Password</label><input type="password" id="settingCurPassword" placeholder="••••••••" /></div>
+              <div class="form-row-2" style="margin-top:16px">
+                <div class="form-group"><label>New Password</label><input type="password" id="settingNewPassword" placeholder="••••••••" /></div>
+                <div class="form-group"><label>Confirm Password</label><input type="password" id="settingConfirmPassword" placeholder="••••••••" /></div>
+              </div>
+              <button class="btn-primary" style="margin-top:16px" id="updatePasswordBtn">Update Password</button>
+            </div>
+            <div class="settings-section">
+              <h3>Security Options</h3>
+              <div class="setting-row"><div class="setting-info"><strong>Two-Factor Authentication</strong><p>Add an extra layer of security to your account</p></div><label class="toggle-switch"><input type="checkbox" id="setting2fa" /><span class="toggle-track"></span></label></div>
+              <div class="setting-row"><div class="setting-info"><strong>Auto Logout</strong><p>Automatically log out after 30 minutes of inactivity</p></div><label class="toggle-switch"><input type="checkbox" id="settingAutoLogout" checked /><span class="toggle-track"></span></label></div>
+              <div class="setting-row"><div class="setting-info"><strong>Session History</strong><p>Track and manage active login sessions</p></div><button class="btn-secondary btn-sm" id="viewSessionsBtn">View Sessions</button></div>
+            </div>
+          </div>
+
+          <!-- Appearance -->
+          <div class="settings-panel" id="panel-appearance">
+            <div class="settings-section">
+              <h3>Theme & Display</h3>
+              <div class="setting-row"><div class="setting-info"><strong>Dark Mode</strong><p>Switch to dark theme (coming soon)</p></div><label class="toggle-switch"><input type="checkbox" id="settingDarkMode" /><span class="toggle-track"></span></label></div>
+              <div class="setting-row"><div class="setting-info"><strong>Compact View</strong><p>Reduce spacing for more data density</p></div><label class="toggle-switch"><input type="checkbox" id="settingCompactView" /><span class="toggle-track"></span></label></div>
+              <div class="setting-row"><div class="setting-info"><strong>Animation Effects</strong><p>Enable smooth UI transitions</p></div><label class="toggle-switch"><input type="checkbox" id="settingAnimations" checked /><span class="toggle-track"></span></label></div>
+            </div>
+            <div class="settings-section">
+              <h3>Accent Color</h3>
+              <div style="display:flex;gap:12px;flex-wrap:wrap">
+                <div onclick="setAccent('#0D9488')" style="width:36px;height:36px;background:#0D9488;border-radius:50%;cursor:pointer;border:3px solid #0D9488;box-shadow:0 0 0 3px rgba(13,148,136,.3)" title="Teal (Default)"></div>
+                <div onclick="setAccent('#3B82F6')" style="width:36px;height:36px;background:#3B82F6;border-radius:50%;cursor:pointer" title="Blue"></div>
+                <div onclick="setAccent('#8B5CF6')" style="width:36px;height:36px;background:#8B5CF6;border-radius:50%;cursor:pointer" title="Violet"></div>
+                <div onclick="setAccent('#F59E0B')" style="width:36px;height:36px;background:#F59E0B;border-radius:50%;cursor:pointer" title="Amber"></div>
+                <div onclick="setAccent('#EC4899')" style="width:36px;height:36px;background:#EC4899;border-radius:50%;cursor:pointer" title="Pink"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Billing Config -->
+          <div class="settings-panel" id="panel-billing_cfg">
+            <div class="settings-section">
+              <h3>Billing Configuration</h3>
+              <div class="form-row-2">
+                <div class="form-group"><label>Default Consultation Fee (₹)</label><input type="number" id="settingConsultFee" value="500" /></div>
+                <div class="form-group"><label>GST Rate (%)</label><input type="number" id="settingGstRate" value="18" /></div>
+              </div>
+              <div class="form-row-2" style="margin-top:16px">
+                <div class="form-group"><label>Currency Symbol</label><input type="text" id="settingCurrency" value="₹" maxlength="3" /></div>
+                <div class="form-group"><label>Invoice Prefix</label><input type="text" id="settingInvPrefix" value="INV-" /></div>
+              </div>
+              <div class="setting-row" style="margin-top:8px"><div class="setting-info"><strong>Auto-generate Invoice Numbers</strong><p>Sequentially auto-number all invoices</p></div><label class="toggle-switch"><input type="checkbox" id="settingAutoInv" checked /><span class="toggle-track"></span></label></div>
+              <div class="setting-row"><div class="setting-info"><strong>Print Invoice on Generation</strong><p>Auto-open print dialog when invoice is created</p></div><label class="toggle-switch"><input type="checkbox" id="settingPrintInv" /><span class="toggle-track"></span></label></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="../js/firebase-init.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/role-nav.js"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    HMS.requireAuth();
+    function showSettingsPanel(panel, btn) {
+      document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.settings-nav-item').forEach(b => b.classList.remove('active'));
+      document.getElementById(`panel-${panel}`)?.classList.add('active');
+      btn.classList.add('active');
+    }
+
+    async function saveSettings() {
+      const first = document.getElementById('settingFirstName')?.value;
+      const last = document.getElementById('settingLastName')?.value;
+      const email = document.getElementById('settingEmail')?.value;
+      const phone = document.getElementById('settingPhone')?.value;
+      const title = document.getElementById('settingTitle')?.value;
+      const fullName = [first, last].filter(Boolean).join(' ');
+
+      // Update session + Firebase Auth displayName + Firestore user doc
+      if (fullName) {
+        const u = HMS.getUser();
+        if (u) { u.name = fullName; u.title = title; HMS.setUser(u); }
+        try {
+          const fu = window.getFirebaseUser();
+          if (fu) {
+            await window.updateFirebaseProfile({ displayName: fullName });
+            await window.updateUserDoc(u?.uid, { name: fullName, title, email, phone });
+          }
+        } catch (e) {
+          addConsoleLog('WARN', 'Could not sync profile to Firebase: ' + e.message);
+        }
+      }
+
+      // Persist hospital info
+      try {
+        const hosp = {
+          name: document.getElementById('settingHospitalName')?.value || '',
+          reg: document.getElementById('settingRegNumber')?.value || '',
+          phone: document.getElementById('settingHospPhone')?.value || '',
+          address: document.getElementById('settingHospAddress')?.value || '',
+          opdStart: document.getElementById('settingOpdStart')?.value || '08:00',
+          opdEnd: document.getElementById('settingOpdEnd')?.value || '20:00'
+        };
+        localStorage.setItem('hms_hospital_info', JSON.stringify(hosp));
+      } catch(e) {}
+      applyDarkMode(document.getElementById('settingDarkMode')?.checked || false);
+      // Persist billing config
+      try {
+        const billing = {
+          consultFee: document.getElementById('settingConsultFee')?.value || '500',
+          gstRate: document.getElementById('settingGstRate')?.value || '18',
+          currency: document.getElementById('settingCurrency')?.value || '\u20B9',
+          invPrefix: document.getElementById('settingInvPrefix')?.value || 'INV-'
+        };
+        localStorage.setItem('hms_billing_config', JSON.stringify(billing));
+      } catch(e) {}
+      toast('Settings saved successfully!', 'success', 'save');
+    }
+
+    function setAccent(color) {
+      document.documentElement.style.setProperty('--primary-light', color);
+      try { localStorage.setItem('hms_accent_color', color); } catch(e) {}
+      toast('Accent color updated!', 'success', 'palette');
+    }
+
+    function persistToggle(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      try {
+        const prefs = JSON.parse(localStorage.getItem('hms_toggle_prefs') || '{}');
+        prefs[id] = el.checked;
+        localStorage.setItem('hms_toggle_prefs', JSON.stringify(prefs));
+      } catch(e) {}
+    }
+
+    function loadToggle(id) {
+      try {
+        const prefs = JSON.parse(localStorage.getItem('hms_toggle_prefs') || '{}');
+        const el = document.getElementById(id);
+        if (el && prefs[id] !== undefined) el.checked = prefs[id];
+      } catch(e) {}
+    }
+
+    // Populate settings from storage and wire handlers
+    document.addEventListener('DOMContentLoaded', () => {
+      const u = HMS.getUser();
+      if (u) {
+        const parts = (u.name || '').split(' ');
+        if (document.getElementById('settingFirstName')) document.getElementById('settingFirstName').value = parts[0] || '';
+        if (document.getElementById('settingLastName')) document.getElementById('settingLastName').value = parts.slice(1).join(' ') || '';
+        if (document.getElementById('settingTitle')) document.getElementById('settingTitle').value = u.title || '';
+        const initials = parts.map(n=>n[0]).join('').toUpperCase().slice(0,2);
+        const el = document.getElementById('profileAvatarLg');
+        if (el) el.textContent = initials;
+      }
+
+      // Load hospital info
+      try {
+        const hosp = JSON.parse(localStorage.getItem('hms_hospital_info') || '{}');
+        if (hosp.name) document.getElementById('settingHospitalName').value = hosp.name;
+        if (hosp.reg) document.getElementById('settingRegNumber').value = hosp.reg;
+        if (hosp.phone) document.getElementById('settingHospPhone').value = hosp.phone;
+        if (hosp.address) document.getElementById('settingHospAddress').value = hosp.address;
+        if (hosp.opdStart) document.getElementById('settingOpdStart').value = hosp.opdStart;
+        if (hosp.opdEnd) document.getElementById('settingOpdEnd').value = hosp.opdEnd;
+      } catch(e) {}
+
+      // Load billing config
+      try {
+        const billing = JSON.parse(localStorage.getItem('hms_billing_config') || '{}');
+        if (billing.consultFee) document.getElementById('settingConsultFee').value = billing.consultFee;
+        if (billing.gstRate) document.getElementById('settingGstRate').value = billing.gstRate;
+        if (billing.currency) document.getElementById('settingCurrency').value = billing.currency;
+        if (billing.invPrefix) document.getElementById('settingInvPrefix').value = billing.invPrefix;
+      } catch(e) {}
+
+      // Load accent color
+      try {
+        const accent = localStorage.getItem('hms_accent_color');
+        if (accent) document.documentElement.style.setProperty('--primary-light', accent);
+      } catch(e) {}
+
+      // Load toggle states
+      ['settingDarkMode','settingEmergency','settingCompactView','settingAnimations',
+       'settingNotifCritical','settingNotifAppt','settingNotifLab','settingNotifStock',
+       'settingNotifSystem','settingNotifEmail','setting2fa','settingAutoLogout',
+       'settingAutoInv','settingPrintInv'].forEach(loadToggle);
+
+      // --- Wire Change Photo button ---
+      const photoBtn = document.getElementById('changePhotoBtn');
+      if (photoBtn) {
+        photoBtn.addEventListener('click', function() {
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = 'image/jpeg,image/png';
+          input.onchange = function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) {
+              toast('Image too large. Max 2MB.', 'error');
+              return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+              try { localStorage.setItem('hms_profile_photo', ev.target.result); } catch(ex) {}
+              document.getElementById('profileAvatarLg').style.backgroundImage = 'url(' + ev.target.result + ')';
+              document.getElementById('profileAvatarLg').style.backgroundSize = 'cover';
+              document.getElementById('profileAvatarLg').textContent = '';
+              toast('Profile photo updated!', 'success');
+            };
+            reader.readAsDataURL(file);
+          };
+          input.click();
+        });
+      }
+
+      // --- Wire Update Password button ---
+      const pwBtn = document.getElementById('updatePasswordBtn');
+      if (pwBtn) {
+        pwBtn.addEventListener('click', async function() {
+          const curPw = document.getElementById('settingCurPassword')?.value;
+          const newPw = document.getElementById('settingNewPassword')?.value;
+          const confirmPw = document.getElementById('settingConfirmPassword')?.value;
+          if (!curPw || !newPw || !confirmPw) {
+            toast('Please fill in all password fields.', 'error');
+            return;
+          }
+          if (newPw !== confirmPw) {
+            toast('New passwords do not match.', 'error');
+            return;
+          }
+          if (newPw.length < 6) {
+            toast('Password must be at least 6 characters.', 'error');
+            return;
+          }
+          try {
+            const email = document.getElementById('settingEmail')?.value;
+            if (!email) throw new Error('Email not found in profile');
+            await window.reauthenticateFirebaseUser(email, curPw);
+            await window.updateFirebasePassword(newPw);
+            toast('Password updated successfully!', 'success', 'lock');
+            document.getElementById('settingCurPassword').value = '';
+            document.getElementById('settingNewPassword').value = '';
+            document.getElementById('settingConfirmPassword').value = '';
+          } catch (err) {
+            if (err.code === 'auth/wrong-password' || err.message?.includes('reauthenticate')) {
+              toast('Current password is incorrect.', 'error');
+            } else {
+              toast('Error: ' + (err.message || 'Password update failed'), 'error');
+            }
+          }
+        });
+      }
+
+      // --- Wire View Sessions button ---
+      const sessBtn = document.getElementById('viewSessionsBtn');
+      if (sessBtn) {
+        sessBtn.addEventListener('click', function() {
+          const sessions = JSON.parse(localStorage.getItem('hms_sessions') || '[]');
+          if (sessions.length === 0) {
+            // Show a mock session
+            const mock = [
+              { device: 'Chrome on Windows', ip: '192.168.1.100', lastActive: new Date().toLocaleString(), current: true },
+              { device: 'Safari on iPhone', ip: '192.168.1.101', lastActive: new Date(Date.now() - 86400000).toLocaleString(), current: false }
+            ];
+            toast('Current session: ' + mock[0].device + ' (Active now). Other: ' + mock[1].device, 'info', 'devices');
+          } else {
+            toast(sessions.length + ' active session(s) found.', 'info', 'devices');
+          }
+        });
+      }
+
+      // --- Wire dark mode toggle (applied immediately) ---
+      const dmToggle = document.getElementById('settingDarkMode');
+      if (dmToggle) {
+        dmToggle.addEventListener('change', function() {
+          applyDarkMode(this.checked);
+          persistToggle('settingDarkMode');
+        });
+      }
+
+      // --- Wire remaining toggle switches ---
+      document.querySelectorAll('.toggle-switch input[type="checkbox"]').forEach(function(toggle) {
+        if (toggle.id && toggle.id !== 'settingDarkMode') {
+          toggle.addEventListener('change', function() { persistToggle(toggle.id); });
+        }
+      });
+    });
+  </script>
+</body>
+</html>

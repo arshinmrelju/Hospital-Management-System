@@ -1,0 +1,5 @@
+.portal-lab { --portal-accent: #E11D48; --portal-accent-soft: rgba(225,29,72,0.1); --portal-accent-light: #FB7185; }
+.portal-lab .sidebar-brand .brand-title { color: var(--portal-accent); }
+.portal-lab .nav-item.active { background: var(--portal-accent-soft); border-right: 3px solid var(--portal-accent); color: var(--portal-accent); }
+.portal-lab .nav-item.active .material-icons-round { color: var(--portal-accent); }
+.portal-lab .stat-card { border-top: 3px solid var(--portal-accent); }

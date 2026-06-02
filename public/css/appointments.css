@@ -176,3 +176,44 @@
   text-overflow: ellipsis;
 }
 
+@media (max-width: 768px) {
+  .appt-card {
+    flex-wrap: wrap;
+    padding: 12px;
+    gap: 10px;
+  }
+  .appt-type-icon { width: 36px; height: 36px; }
+  .appt-type-icon .material-icons-round { font-size: 18px; }
+  .appt-info { flex: 1 1 100%; order: 1; }
+  .appt-actions { order: 2; width: 100%; justify-content: flex-end; }
+  .appt-meta { flex-wrap: wrap; }
+  .appt-patient { font-size: 0.85rem; }
+
+  .cal-grid {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+  }
+  .cal-cell { min-height: 60px; min-width: 80px; }
+  .cal-date { font-size: 0.75rem; }
+
+  .timeline-slot { gap: 10px; }
+  .slot-time { width: 55px; font-size: 0.72rem; }
+  .appt-card .appt-meta span { font-size: 0.72rem; }
+
+  .calendar-strip-widget { padding: 14px 16px; }
+  .cal-header { margin-bottom: 10px; }
+  .cal-month-year { font-size: 0.9rem; }
+  .cal-day { min-width: 44px; padding: 10px 6px; }
+  .day-name { font-size: 0.65rem; }
+  .day-num { font-size: 1rem; }
+}
+@media (max-width: 480px) {
+  .cal-cell { min-width: 60px; min-height: 44px; padding: 6px; }
+  .cal-appt-pill { font-size: 0.6rem; padding: 1px 4px; }
+  .cal-grid-day-label { font-size: 0.65rem; padding: 4px; }
+  .empty-appt-actions { flex-direction: column; align-items: stretch; }
+  .empty-appt-actions .btn-primary,
+  .empty-appt-actions .btn-secondary { justify-content: center; }
+}
+

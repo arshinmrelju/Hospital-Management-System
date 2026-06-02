@@ -175,11 +175,11 @@ window.esc = function esc(val) {
 };
 
 const ROLE_REDIRECTS = {
-  Admin: 'admin-dashboard.html',
-  Doctor: 'doctor-dashboard.html',
-  Staff: 'reception-dashboard.html',
-  Pharmacist: 'pharmacy-dashboard.html',
-  'Lab Tech': 'lab-dashboard.html'
+  Admin: '/admin/dashboard',
+  Doctor: '/doctor/dashboard',
+  Staff: '/staff/dashboard',
+  Pharmacist: '/pharmacist/dashboard',
+  'Lab Tech': '/labtech/dashboard'
 };
 
 const HMS_AUTH = {
@@ -189,10 +189,20 @@ const HMS_AUTH = {
     return { uid: cred.user.uid, email: cred.user.email, ...profile };
   },
 
+  async loginWithRole(email, password, expectedRole) {
+    const userData = await this.login(email, password);
+    const actualRole = userData.role || 'Staff';
+    if (expectedRole && actualRole !== expectedRole) {
+      await signOut(auth);
+      throw new Error(`ACCESS_DENIED:This portal is for ${expectedRole}s only. You are registered as ${actualRole}.`);
+    }
+    return userData;
+  },
+
   async logout() {
     await signOut(auth);
     sessionStorage.removeItem('hms_session');
-    location.href = 'index.html';
+    location.href = '/';
   },
 
   async fetchProfile(uid) {
@@ -215,12 +225,32 @@ const HMS_AUTH = {
 
   requireAuth() {
     const user = this.getSession();
-    if (!user) { location.href = 'index.html'; return null; }
+    if (!user) { location.href = '/'; return null; }
     return user;
   },
 
+  requirePortalAuth() {
+    const user = this.getSession();
+    if (!user) { location.href = '/'; return null; }
+    const expectedPortal = this.getPortalFromPath();
+    if (expectedPortal) {
+      const portalRoleMap = { admin: 'Admin', doctor: 'Doctor', staff: 'Staff', pharmacist: 'Pharmacist', labtech: 'Lab Tech' };
+      const expectedRole = portalRoleMap[expectedPortal];
+      if (expectedRole && user.role !== expectedRole) {
+        location.href = ROLE_REDIRECTS[user.role] || '/';
+        return null;
+      }
+    }
+    return user;
+  },
+
+  getPortalFromPath() {
+    const match = window.location.pathname.match(/^\/(admin|doctor|staff|pharmacist|labtech)\//);
+    return match ? match[1] : null;
+  },
+
   getRedirect(role) {
-    return ROLE_REDIRECTS[role] || 'dashboard.html';
+    return ROLE_REDIRECTS[role] || '/';
   },
 
   hasRole(allowedRoles) {
@@ -231,7 +261,7 @@ const HMS_AUTH = {
   requireRole(allowedRoles) {
     const user = this.requireAuth();
     if (user && !allowedRoles.includes(user.role)) {
-      location.href = ROLE_REDIRECTS[user.role] || 'dashboard.html';
+      location.href = ROLE_REDIRECTS[user.role] || '/';
       return null;
     }
     return user;
@@ -243,5 +273,6 @@ window.HMS = {
   getUser() { return HMS_AUTH.getSession(); },
   setUser(data) { HMS_AUTH.setSession(data); },
   logout() { HMS_AUTH.logout(); },
-  requireAuth() { return HMS_AUTH.requireAuth(); }
+  requireAuth() { return HMS_AUTH.requireAuth(); },
+  requirePortalAuth() { return HMS_AUTH.requirePortalAuth(); }
 };

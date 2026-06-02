@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Financial Reports – Wellness Medicals HMS</title>
+  <link rel="icon" type="image/jpeg" href="../assets/hms-logo.jpg">
+  <meta name="description"
+    content="Financial audit logs and live PhonePe UPI transaction history reports for Wellness Medicals Hospital." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel='stylesheet' href='css/admin-theme.css' />
+  <link rel="stylesheet" href="../css/reports.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+</head>
+
+<body class="app-body">
+
+  <!-- Ambient background lighting -->
+  <div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img src="../assets/hms-logo.jpg" alt="Wellness Medicals Logo" class="brand-icon" />
+      <div class="brand-text">
+        <span class="brand-title">Wellness</span>
+        <span class="brand-sub">Medicals HMS</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+
+    <!-- Techsiah Branding -->
+    <a href="https://techsiah.web.app" target="_blank" class="techsiah-badge">
+      <span class="techsiah-label">Powered by</span>
+      <svg class="logo-svg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="techsiah-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#2563EB" />
+            <stop offset="100%" stop-color="#3B82F6" />
+          </linearGradient>
+        </defs>
+        <path d="M6 10C6 7.79086 7.79086 6 10 6H22C24.2091 6 26 7.79086 26 10V22C26 24.2091 24.2091 26 22 26H10C7.79086 26 6 24.2091 6 22V10Z" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M12 11H20" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M16 11V21" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <circle cx="21" cy="21" r="2" fill="#2563EB" />
+      </svg>
+      <span class="techsiah-text">Techsiah<span class="techsiah-dot">.</span></span>
+    </a>
+
+    <div class="sidebar-user">
+      <div class="user-avatar" id="userAvatar">DS</div>
+      <div class="user-info">
+        <span class="user-name" id="sidebarUserName">Dr. Sarah Mitchell</span>
+        <span class="user-role" id="sidebarUserRole">Chief Surgeon · Admin</span>
+      </div>
+      <button class="logout-btn" id="logoutBtn" title="Logout">
+        <span class="material-icons-round">logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Mobile Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Top Bar -->
+    <header class="topbar no-print">
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+        <span class="material-icons-round">menu</span>
+      </button>
+      <button class="mobile-search-toggle" id="mobileSearchToggle" aria-label="Toggle search">
+        <span class="material-icons-round">search</span>
+      </button>
+      <div class="topbar-search">
+        <span class="material-icons-round search-icon">search</span>
+        <input type="text" id="globalSearch" placeholder="Search invoices, ledger logs, accounts…" />
+      </div>
+      <div class="topbar-actions">
+        <button class="topbar-btn" id="notifBtn" aria-label="Notifications">
+          <span class="material-icons-round">notifications</span>
+          <span class="badge" id="notifBadge">2</span>
+        </button>
+        <div class="topbar-avatar" id="topbarAvatar">DS</div>
+      </div>
+    </header>
+
+  <!-- Mobile Search Bar -->
+  <div class="mobile-search-bar" id="mobileSearchBar">
+    <div class="topbar-search">
+      <span class="material-icons-round search-icon">search</span>
+      <input type="text" id="globalSearchMobile" placeholder="Search patients, appointments, doctors…" />
+    </div>
+  </div>
+
+    <!-- Notification Panel -->
+    <div class="notif-panel glass-card" id="notifPanel" hidden>
+      <div class="notif-header">
+        <h4>Notifications</h4><button id="clearNotif">Clear all</button>
+      </div>
+      <div class="notif-list">
+        <div class="notif-item"><span class="material-icons-round">payments</span>
+          <div><strong>Sync Complete</strong>
+            <p>PhonePe merchant ledgers successfully reconciled.</p><small>Today</small>
+          </div>
+        </div>
+        <div class="notif-item"><span class="material-icons-round">analytics</span>
+          <div><strong>Revenue Target</strong>
+            <p>UPI Collections exceeded daily threshold by 12%</p><small>Yesterday</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page Body -->
+    <main class="page-body printable-report">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Financial Reports</h1>
+          <p class="page-sub">Hospital collections ledger and automated UPI transaction sync audit logs</p>
+        </div>
+        <div class="header-actions no-print">
+          <span class="date-badge" id="todayDate"></span>
+          <button class="btn-secondary btn-sm" onclick="window.print()">
+            <span class="material-icons-round">print</span> Print Audit
+          </button>
+          <button class="btn-primary btn-sm" onclick="exportTxnToCSV()">
+            <span class="material-icons-round">download</span> Export to CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Statistics Grid -->
+      <div class="stats-grid">
+        <div class="stat-card" style="--accent:#0D9488">
+          <div class="stat-icon-wrap"><span class="material-icons-round">account_balance_wallet</span></div>
+          <div class="stat-body">
+            <p class="stat-label">Total UPI Revenue</p>
+            <h2 class="stat-value" id="kpiTotalUpi">₹0</h2>
+            <p class="stat-delta positive"><span class="material-icons-round">trending_up</span>+12.4% this week</p>
+          </div>
+        </div>
+        <div class="stat-card connected" style="--accent:#5F259F">
+          <div class="stat-icon-wrap">
+            <img src="../assets/phonepe-mini.png" style="width:24px;height:24px;object-fit:contain" 
+                 onerror="this.src='https://img.icons8.com/color/48/bank-cards.png'"/>
+          </div>
+          <div class="stat-body">
+            <p class="stat-label">PhonePe Status</p>
+            <h2 class="stat-value" style="font-size:1.4rem; margin-top:8px;">Live Sync</h2>
+            <p class="stat-delta positive"><span class="material-icons-round">link</span>Active endpoint</p>
+          </div>
+        </div>
+        <div class="stat-card" style="--accent:#10B981">
+          <div class="stat-icon-wrap"><span class="material-icons-round">check_circle</span></div>
+          <div class="stat-body">
+            <p class="stat-label">Success Rate</p>
+            <h2 class="stat-value" id="kpiSuccessRate">0%</h2>
+            <p class="stat-delta positive"><span class="material-icons-round">speed</span>Excellent latency</p>
+          </div>
+        </div>
+        <div class="stat-card" style="--accent:#F59E0B">
+          <div class="stat-icon-wrap"><span class="material-icons-round">hourglass_bottom</span></div>
+          <div class="stat-body">
+            <p class="stat-label">Pending Settlements</p>
+            <h2 class="stat-value" id="kpiPendingSettlements">₹0</h2>
+            <p class="stat-delta" style="color:var(--accent-amber);"><span class="material-icons-round">update</span>Awaiting gateway sync</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Columns Layout -->
+      <div class="reports-layout">
+        <!-- LEFT: Graphs and Invoices -->
+        <div style="display:flex; flex-direction:column; gap:24px; min-width:0;">
+          
+          <!-- Charts Section -->
+          <div class="charts-grid no-print">
+            <div class="widget glass-card">
+              <div class="widget-header">
+                <h3>Daily UPI Collection Trends</h3>
+              </div>
+              <div class="chart-container-rep">
+                <canvas id="upiTrendChart"></canvas>
+              </div>
+            </div>
+
+            <div class="widget glass-card">
+              <div class="widget-header">
+                <h3>UPI App Shares</h3>
+              </div>
+              <div class="donut-container-rep">
+                <canvas id="upiShareChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Transaction Ledger Box -->
+          <div class="widget glass-card">
+            <div class="widget-header">
+              <h3>UPI Transaction Ledger</h3>
+              <span class="badge-status stable no-print" style="text-transform:none;">Real-time update feed</span>
+            </div>
+
+            <!-- Filters Bar -->
+            <div class="filter-bar glass-card no-print" style="margin-bottom:16px;">
+              <div class="filter-chips">
+                <div class="form-group" style="flex:1.5;">
+                  <label>Search ledger</label>
+                  <div style="position:relative; display:flex; align-items:center;">
+                    <span class="material-icons-round" style="position:absolute; left:12px; color:var(--outline); font-size:18px;">search</span>
+                    <input type="text" id="searchTxn" placeholder="Search patient, transaction ID, VPA..." 
+                           oninput="filterTxnTable()" style="padding-left:38px; background:var(--surface-low); border:1.5px solid var(--outline-var); border-radius:var(--radius-md); height:38px; width:100%;" />
+                  </div>
+                </div>
+
+                <div class="form-group" style="width:130px;">
+                  <label>Status</label>
+                  <select id="statusFilter" onchange="filterTxnTable()" class="filter-select" style="height:38px;">
+                    <option value="ALL">All Status</option>
+                    <option value="SUCCESS">Success</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="FAILED">Failed</option>
+                  </select>
+                </div>
+
+                <div class="form-group" style="width:140px;">
+                  <label>Gateway</label>
+                  <select id="appFilter" onchange="filterTxnTable()" class="filter-select" style="height:38px;">
+                    <option value="ALL">All Gateways</option>
+                    <option value="PhonePe">PhonePe</option>
+                    <option value="Google Pay">Google Pay</option>
+                    <option value="Paytm">Paytm</option>
+                    <option value="BHIM UPI">BHIM UPI</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ledger Table -->
+            <div class="table-scroll">
+              <table class="data-table" id="txnTable">
+                <thead>
+                  <tr>
+                    <th>Transaction ID</th>
+                    <th>Patient Details</th>
+                    <th>UPI VPA (Virtual Address)</th>
+                    <th>Amount</th>
+                    <th>Timestamp</th>
+                    <th>Gateway App</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="txnTableBody">
+                  <!-- Populated dynamically by reports.js -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination info -->
+            <div class="pagination no-print">
+              <span class="pagination-info">Showing entries from secure local ledger storage</span>
+              <div class="pagination-btns">
+                <button class="page-btn" disabled><span class="material-icons-round">chevron_left</span></button>
+                <div class="page-numbers">
+                  <div class="page-num active">1</div>
+                </div>
+                <button class="page-btn" disabled><span class="material-icons-round">chevron_right</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: PhonePe Connection & Webhook Simulator -->
+        <div style="display:flex; flex-direction:column; gap:24px; min-width:0;" class="no-print">
+          
+          <!-- PhonePe Connection Panel -->
+          <div class="widget glass-card phonepe-panel">
+            <div class="widget-header">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <img src="../assets/phonepe-mini.png" style="width:20px;height:20px;object-fit:contain" 
+                     onerror="this.src='https://img.icons8.com/color/48/bank-cards.png'"/>
+                <h3 style="color:#5F259F;">PhonePe Sync Engine</h3>
+              </div>
+            </div>
+
+            <!-- Expandable config fields -->
+            <div class="api-settings-toggle" id="apiSettingsToggle">
+              <span style="font-size:0.8rem; font-weight:700; color:var(--on-surface-var); display:flex; align-items:center; gap:6px;">
+                <span class="material-icons-round" style="font-size:16px;">settings</span> API Config Settings
+              </span>
+              <span class="material-icons-round" style="font-size:18px;">expand_more</span>
+            </div>
+
+            <form id="phonepeSettingsForm" class="api-config-fields" hidden>
+              <div class="form-group">
+                <label>Merchant ID (MID) *</label>
+                <input type="text" id="phonepeMerchantId" required style="background:var(--surface-low); border:1.5px solid var(--outline-var); padding:8px 10px; border-radius:var(--radius-sm);" />
+              </div>
+              <div class="form-group">
+                <label>Merchant Salt Key *</label>
+                <input type="password" id="phonepeSaltKey" required style="background:var(--surface-low); border:1.5px solid var(--outline-var); padding:8px 10px; border-radius:var(--radius-sm);" />
+              </div>
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label>Salt Index *</label>
+                  <input type="number" id="phonepeSaltIndex" min="1" max="100" required style="background:var(--surface-low); border:1.5px solid var(--outline-var); padding:8px 10px; border-radius:var(--radius-sm);" />
+                </div>
+                <div class="form-group">
+                  <label>Host Environment</label>
+                  <select style="background:var(--surface-low); border:1.5px solid var(--outline-var); padding:8px 10px; border-radius:var(--radius-sm); font-weight:600;">
+                    <option>Live Hermes Production</option>
+                    <option>Sandbox UAT Sandbox</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>LIVE WEBHOOK SYNC ENDPOINT</label>
+                <input type="text" id="phonepeEndpoint" required style="background:var(--surface-low); border:1.5px solid var(--outline-var); padding:8px 10px; border-radius:var(--radius-sm); font-size:0.75rem;" />
+              </div>
+              <button type="submit" class="btn-primary btn-sm" style="margin-top:4px; width:100%;">
+                <span class="material-icons-round">save</span> Save API Keys
+              </button>
+            </form>
+
+            <!-- Sync Controls -->
+            <div class="sync-btn-container">
+              <button class="btn-primary" id="syncBtn" onclick="syncPhonePeHistory()" 
+                      style="background:#5F259F; box-shadow: 0 2px 12px rgba(95, 37, 159, 0.3); width:100%; display:flex; justify-content:center; gap:8px;">
+                <span class="material-icons-round">sync</span> Sync PhonePe History
+              </button>
+              
+              <!-- Progress Loader -->
+              <div class="progress-bar-wrap" id="syncProgressWrap">
+                <div class="progress-bar-fill" id="syncProgressFill"></div>
+              </div>
+            </div>
+
+            <!-- Terminal Realtime Logs Console -->
+            <div style="font-size:0.75rem; font-weight:600; color:var(--on-surface-var); display:flex; align-items:center; gap:6px; margin-top:6px;">
+              <span class="material-icons-round" style="font-size:16px;">terminal</span> API Handshake Activity Console
+            </div>
+            <div class="api-console-log" id="apiConsoleLog">
+              <div class="log-entry">
+                <span class="log-time">--:--:--</span>
+                <span class="log-tag"><strong>[SYSTEM]</strong></span>
+                <span class="log-msg">HMS API Integration Logger running. Waiting for events...</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="../js/firebase-init.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/role-nav.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/reports.js"></script>
+</body>
+
+</html>

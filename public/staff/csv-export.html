@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>CSV Export – Wellness Medicals HMS</title>
+  <link rel="icon" type="image/jpeg" href="../assets/hms-logo.jpg">
+  <meta name="description" content="Export hospital data to CSV files for external analysis and record-keeping." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel='stylesheet' href='css/staff-theme.css' />
+  <style>
+    .export-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
+    .export-card { padding: 24px; display: flex; flex-direction: column; gap: 16px; transition: all 0.2s; }
+    .export-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+    .export-icon { width: 48px; height: 48px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .export-icon .material-icons-round { font-size: 24px; }
+    .export-card h3 { font-family: var(--font-head); font-size: 1.05rem; font-weight: 700; color: var(--on-surface); }
+    .export-card p { font-size: 0.82rem; color: var(--on-surface-var); flex: 1; }
+    .export-card .export-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .export-card .export-actions .btn-primary, .export-card .export-actions .btn-secondary { flex: 1; justify-content: center; }
+    .export-card .export-meta { font-size: 0.75rem; color: var(--outline); border-top: 1px solid var(--surface-mid); padding-top: 12px; margin-top: auto; }
+    .export-stats { display: flex; gap: 16px; margin-bottom: 24px; }
+    .export-stat { flex: 1; text-align: center; padding: 18px; }
+    .export-stat .stat-value { font-size: 1.6rem; }
+    .export-filters { overflow: hidden; max-height: 0; opacity: 0; transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease; margin: 0; }
+    .export-filters.open { max-height: 200px; opacity: 1; margin: 4px 0 8px; }
+    .export-filters .filter-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+    .export-filters .filter-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; }
+    .export-filters .filter-group label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--on-surface-var); }
+    .export-filters .filter-group input, .export-filters .filter-group select { background: var(--surface-low); border: 1.5px solid var(--outline-var); border-radius: var(--radius-sm); padding: 6px 10px; font-size: 0.82rem; font-family: var(--font-body); color: var(--on-surface); width: 100%; }
+    .export-filters .filter-group input:focus, .export-filters .filter-group select:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px var(--primary-soft); outline: none; }
+    .export-filters .filter-clear { background: none; border: none; color: var(--on-surface-var); padding: 6px 10px; font-size: 0.75rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; border-radius: var(--radius-sm); transition: all 0.15s; flex-shrink: 0; }
+    .export-filters .filter-clear:hover { color: var(--accent-red); background: rgba(239,68,68,0.06); }
+    .filter-toggle-btn { background: none; border: none; color: var(--on-surface-var); font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s; }
+    .filter-toggle-btn:hover { color: var(--primary-light); background: var(--primary-soft); }
+    .export-all-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 24px; margin-bottom: 24px; flex-wrap: wrap; }
+    .export-all-bar .btn-primary { flex-shrink: 0; }
+    .export-progress { display: none; align-items: center; gap: 12px; flex: 1; }
+    .export-progress.active { display: flex; }
+    .export-progress .progress-track { flex: 1; height: 8px; background: var(--surface-mid); border-radius: 999px; overflow: hidden; }
+    .export-progress .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary-light), var(--accent-blue)); width: 0%; transition: width 0.3s ease; border-radius: 999px; }
+    .export-progress .progress-label { font-size: 0.82rem; font-weight: 600; color: var(--on-surface-var); white-space: nowrap; }
+    .export-progress .progress-pct { font-size: 0.75rem; color: var(--outline); min-width: 36px; text-align: right; }
+    @media (max-width: 768px) { .export-grid { grid-template-columns: 1fr; } .export-stats { flex-direction: column; gap: 10px; } .export-all-bar { flex-direction: column; align-items: stretch; } .export-all-bar .btn-primary { width: 100%; justify-content: center; } .export-filters .filter-row { flex-direction: column; } .export-filters .filter-group { min-width: 0; } }
+  </style>
+</head>
+<body class="app-body">
+  <div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img src="../assets/hms-logo.jpg" alt="Wellness Medicals Logo" class="brand-icon" />
+      <div class="brand-text"><span class="brand-title">Wellness</span><span class="brand-sub">Medicals HMS</span></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <a href="https://techsiah.web.app" target="_blank" class="techsiah-badge">
+      <span class="techsiah-label">Powered by</span>
+      <svg class="logo-svg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs><linearGradient id="techsiah-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2563EB" /><stop offset="100%" stop-color="#3B82F6" /></linearGradient></defs>
+        <path d="M6 10C6 7.79086 7.79086 6 10 6H22C24.2091 6 26 7.79086 26 10V22C26 24.2091 24.2091 26 22 26H10C7.79086 26 6 24.2091 6 22V10Z" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M12 11H20" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M16 11V21" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <circle cx="21" cy="21" r="2" fill="#2563EB" />
+      </svg>
+      <span class="techsiah-text">Techsiah<span class="techsiah-dot">.</span></span>
+    </a>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="userAvatar">DS</div>
+      <div class="user-info"><span class="user-name" id="sidebarUserName">User</span><span class="user-role" id="sidebarUserRole">Role</span></div>
+      <button class="logout-btn" id="logoutBtn" title="Logout"><span class="material-icons-round">logout</span></button>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu"><span class="material-icons-round">menu</span></button>
+      <button class="mobile-search-toggle" id="mobileSearchToggle" aria-label="Toggle search"><span class="material-icons-round">search</span></button>
+      <div class="topbar-search">
+        <span class="material-icons-round search-icon">search</span>
+        <input type="text" id="globalSearch" placeholder="Search patients, appointments, doctors…" />
+      </div>
+      <div class="topbar-actions">
+        <button class="topbar-btn" id="notifBtn" aria-label="Notifications"><span class="material-icons-round">notifications</span><span class="badge">3</span></button>
+        <div class="topbar-avatar" id="topbarAvatar">DS</div>
+      </div>
+    </header>
+
+    <div class="mobile-search-bar" id="mobileSearchBar">
+      <div class="topbar-search">
+        <span class="material-icons-round search-icon">search</span>
+        <input type="text" id="globalSearchMobile" placeholder="Search patients, appointments, doctors…" />
+      </div>
+    </div>
+
+    <main class="page-body">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">CSV Export</h1>
+          <p class="page-sub">Download your hospital data as CSV files for analysis and record-keeping</p>
+        </div>
+        <div class="header-actions">
+          <span class="date-badge" id="todayDate"></span>
+        </div>
+      </div>
+
+      <div class="export-all-bar glass-card">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="material-icons-round" style="color:var(--primary-light);font-size:22px;">download</span>
+          <div><strong style="font-size:0.9rem;">Export All Data</strong><p style="font-size:0.78rem;color:var(--on-surface-var);">Download every collection at once</p></div>
+        </div>
+        <div class="export-progress" id="exportProgress">
+          <span class="progress-label" id="progressLabel">Exporting...</span>
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+          <span class="progress-pct" id="progressPct">0%</span>
+        </div>
+        <button class="btn-primary" id="exportAllBtn" onclick="exportAll()"><span class="material-icons-round">file_download</span> Export All</button>
+      </div>
+
+      <div class="export-stats">
+        <div class="stat-card export-stat" style="--accent:#0D9488">
+          <div class="stat-icon-wrap"><span class="material-icons-round">people</span></div>
+          <div class="stat-body">
+            <p class="stat-label">Patients</p>
+            <h2 class="stat-value" id="statPatients">—</h2>
+          </div>
+        </div>
+        <div class="stat-card export-stat" style="--accent:#3B82F6">
+          <div class="stat-icon-wrap"><span class="material-icons-round">event</span></div>
+          <div class="stat-body">
+            <p class="stat-label">Appointments</p>
+            <h2 class="stat-value" id="statAppointments">—</h2>
+          </div>
+        </div>
+        <div class="stat-card export-stat" style="--accent:#8B5CF6">
+          <div class="stat-icon-wrap"><span class="material-icons-round">medication</span></div>
+          <div class="stat-body">
+            <p class="stat-label">Inventory</p>
+            <h2 class="stat-value" id="statInventory">—</h2>
+          </div>
+        </div>
+        <div class="stat-card export-stat" style="--accent:#F59E0B">
+          <div class="stat-icon-wrap"><span class="material-icons-round">receipt</span></div>
+          <div class="stat-body">
+            <p class="stat-label">Transactions</p>
+            <h2 class="stat-value" id="statTransactions">—</h2>
+          </div>
+        </div>
+      </div>
+
+      <div class="export-grid">
+        <!-- Patients Export -->
+        <div class="export-card glass-card">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div class="export-icon" style="background:rgba(13,148,136,0.12);color:#0D9488"><span class="material-icons-round">people</span></div>
+            <div style="flex:1"><h3>Patients</h3><p style="font-size:0.78rem;color:var(--on-surface-var);margin-top:2px;">All registered patient records</p></div>
+            <button class="filter-toggle-btn" onclick="toggleFilters('patients')" title="Filter options"><span class="material-icons-round">tune</span></button>
+          </div>
+          <div class="export-filters" id="filters-patients">
+            <div class="filter-row">
+              <div class="filter-group"><label>Status</label><select id="filter-patients-status"><option value="">All</option><option value="stable">Stable</option><option value="critical">Critical</option><option value="recovering">Recovering</option><option value="discharged">Discharged</option></select></div>
+              <div class="filter-group"><label>Department</label><select id="filter-patients-dept"><option value="">All</option><option>Cardiology</option><option>Pediatrics</option><option>Orthopedics</option><option>Oncology</option><option>Neurology</option><option>General Surgery</option></select></div>
+              <button class="filter-clear" onclick="clearFilters('patients')"><span class="material-icons-round" style="font-size:14px;">close</span> Clear</button>
+            </div>
+          </div>
+          <div class="export-actions">
+            <button class="btn-primary btn-sm" onclick="exportCSV('patients')"><span class="material-icons-round">download</span> Export CSV</button>
+          </div>
+          <div class="export-meta"><span id="metaPatients">—</span></div>
+        </div>
+
+        <!-- Appointments Export -->
+        <div class="export-card glass-card">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div class="export-icon" style="background:rgba(59,130,246,0.12);color:#3B82F6"><span class="material-icons-round">event</span></div>
+            <div style="flex:1"><h3>Appointments</h3><p style="font-size:0.78rem;color:var(--on-surface-var);margin-top:2px;">Scheduled and past appointments</p></div>
+            <button class="filter-toggle-btn" onclick="toggleFilters('appointments')" title="Filter options"><span class="material-icons-round">tune</span></button>
+          </div>
+          <div class="export-filters" id="filters-appointments">
+            <div class="filter-row">
+              <div class="filter-group"><label>From</label><input type="date" id="filter-appointments-from" /></div>
+              <div class="filter-group"><label>To</label><input type="date" id="filter-appointments-to" /></div>
+              <div class="filter-group"><label>Status</label><select id="filter-appointments-status"><option value="">All</option><option value="confirmed">Confirmed</option><option value="pending">Pending</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div>
+              <button class="filter-clear" onclick="clearFilters('appointments')"><span class="material-icons-round" style="font-size:14px;">close</span> Clear</button>
+            </div>
+          </div>
+          <div class="export-actions">
+            <button class="btn-primary btn-sm" onclick="exportCSV('appointments')"><span class="material-icons-round">download</span> Export CSV</button>
+          </div>
+          <div class="export-meta"><span id="metaAppointments">—</span></div>
+        </div>
+
+        <!-- Pharmacy Inventory Export -->
+        <div class="export-card glass-card">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div class="export-icon" style="background:rgba(139,92,246,0.12);color:#8B5CF6"><span class="material-icons-round">medication</span></div>
+            <div style="flex:1"><h3>Pharmacy Inventory</h3><p style="font-size:0.78rem;color:var(--on-surface-var);margin-top:2px;">Medicine stock and inventory details</p></div>
+            <button class="filter-toggle-btn" onclick="toggleFilters('inventory')" title="Filter options"><span class="material-icons-round">tune</span></button>
+          </div>
+          <div class="export-filters" id="filters-inventory">
+            <div class="filter-row">
+              <div class="filter-group"><label>Category</label><select id="filter-inventory-cat"><option value="">All</option><option>Tablet</option><option>Capsule</option><option>Syrup</option><option>Injection</option><option>Ointment</option><option>Drop</option><option>Inhaler</option><option>IV Fluid</option></select></div>
+              <div class="filter-group"><label>Status</label><select id="filter-inventory-status"><option value="">All</option><option value="in-stock">In Stock</option><option value="low-stock">Low Stock</option><option value="out-of-stock">Out of Stock</option></select></div>
+              <button class="filter-clear" onclick="clearFilters('inventory')"><span class="material-icons-round" style="font-size:14px;">close</span> Clear</button>
+            </div>
+          </div>
+          <div class="export-actions">
+            <button class="btn-primary btn-sm" onclick="exportCSV('inventory')"><span class="material-icons-round">download</span> Export CSV</button>
+          </div>
+          <div class="export-meta"><span id="metaInventory">—</span></div>
+        </div>
+
+        <!-- Lab Reports Export -->
+        <div class="export-card glass-card">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div class="export-icon" style="background:rgba(16,185,129,0.12);color:#10B981"><span class="material-icons-round">biotech</span></div>
+            <div style="flex:1"><h3>Lab Reports</h3><p style="font-size:0.78rem;color:var(--on-surface-var);margin-top:2px;">Lab orders, tests, and results</p></div>
+            <button class="filter-toggle-btn" onclick="toggleFilters('lab')" title="Filter options"><span class="material-icons-round">tune</span></button>
+          </div>
+          <div class="export-filters" id="filters-lab">
+            <div class="filter-row">
+              <div class="filter-group"><label>From</label><input type="date" id="filter-lab-from" /></div>
+              <div class="filter-group"><label>To</label><input type="date" id="filter-lab-to" /></div>
+              <div class="filter-group"><label>Status</label><select id="filter-lab-status"><option value="">All</option><option value="pending">Pending</option><option value="in-progress">In Progress</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div>
+              <button class="filter-clear" onclick="clearFilters('lab')"><span class="material-icons-round" style="font-size:14px;">close</span> Clear</button>
+            </div>
+          </div>
+          <div class="export-actions">
+            <button class="btn-primary btn-sm" onclick="exportCSV('lab')"><span class="material-icons-round">download</span> Export CSV</button>
+          </div>
+          <div class="export-meta"><span id="metaLab">—</span></div>
+        </div>
+
+        <!-- Billing / Transactions Export -->
+        <div class="export-card glass-card">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div class="export-icon" style="background:rgba(245,158,11,0.12);color:#F59E0B"><span class="material-icons-round">receipt</span></div>
+            <div style="flex:1"><h3>Billing & Transactions</h3><p style="font-size:0.78rem;color:var(--on-surface-var);margin-top:2px;">Payment transactions and billing records</p></div>
+            <button class="filter-toggle-btn" onclick="toggleFilters('transactions')" title="Filter options"><span class="material-icons-round">tune</span></button>
+          </div>
+          <div class="export-filters" id="filters-transactions">
+            <div class="filter-row">
+              <div class="filter-group"><label>From</label><input type="date" id="filter-transactions-from" /></div>
+              <div class="filter-group"><label>To</label><input type="date" id="filter-transactions-to" /></div>
+              <div class="filter-group"><label>Status</label><select id="filter-transactions-status"><option value="">All</option><option value="success">Success</option><option value="pending">Pending</option><option value="failed">Failed</option><option value="refunded">Refunded</option></select></div>
+              <button class="filter-clear" onclick="clearFilters('transactions')"><span class="material-icons-round" style="font-size:14px;">close</span> Clear</button>
+            </div>
+          </div>
+          <div class="export-actions">
+            <button class="btn-primary btn-sm" onclick="exportCSV('transactions')"><span class="material-icons-round">download</span> Export CSV</button>
+          </div>
+          <div class="export-meta"><span id="metaTransactions">—</span></div>
+        </div>
+
+        <!-- Doctors Export -->
+        <div class="export-card glass-card">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div class="export-icon" style="background:rgba(236,72,153,0.12);color:#EC4899"><span class="material-icons-round">medical_services</span></div>
+            <div><h3>Doctors</h3><p style="font-size:0.78rem;color:var(--on-surface-var);margin-top:2px;">Doctor profiles and consultation records</p></div>
+          </div>
+          <div class="export-actions">
+            <button class="btn-primary btn-sm" onclick="exportCSV('doctors')"><span class="material-icons-round">download</span> Export CSV</button>
+          </div>
+          <div class="export-meta"><span id="metaDoctors">—</span></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="../js/firebase-init.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/role-nav.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/csv-export.js"></script>
+</body>
+</html>

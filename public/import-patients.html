@@ -1,42 +1,6 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Import Patients - Wellness Medicals</title>
-  <link rel="stylesheet" href="css/main.css">
-  <style>
-    body { font-family: var(--font-body); background: var(--bg); color: var(--on-bg); padding: 40px; }
-    .import-card { max-width: 600px; margin: 0 auto; background: var(--surface); padding: 30px; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); text-align: center; }
-    h1 { color: var(--primary); margin-bottom: 20px; }
-    #log { text-align: left; background: var(--surface-mid); padding: 15px; border-radius: var(--radius-sm); margin-top: 20px; max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 0.85rem; }
-    .progress-bar { width: 100%; height: 20px; background: var(--surface-high); border-radius: 10px; overflow: hidden; margin-top: 20px; }
-    .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
-    .auth-warning { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 16px; font-size: 0.85rem; }
-  </style>
-  <!-- Load SheetJS CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-</head>
-<body>
-  <div class="import-card">
-    <h1>Patient Database Importer</h1>
-    <div class="auth-warning">
-      <strong>⚠ Admin/Staff Access Required:</strong> You must be logged in as an Admin or Staff to use this tool.
-    </div>
-    <p>Import <strong>Patients.xlsx</strong> from the server to your live Firebase patients collection.</p>
+<html lang="en"><head><meta charset="UTF-8"><title>Redirecting to your portal...</title><script>
+(function(){try{var u=JSON.parse(sessionStorage.getItem("hms_session")||"null");if(u&&u.role){var m={Admin:"/admin/import-patients.html",Doctor:"/doctor/import-patients.html",Staff:"/staff/import-patients.html",Pharmacist:"/pharmacist/import-patients.html","Lab Tech":"/labtech/import-patients.html"};if(m[u.role]){location.href=m[u.role];return}}}catch(_){}
+location.href="/"})()
 
-    <button id="startBtn" class="btn-primary" style="margin-top: 20px; padding: 12px 24px; font-size: 1.1rem; cursor:pointer;" disabled>
-      Authenticating...
-    </button>
-
-    <div class="progress-bar" style="display:none;" id="progressWrap">
-      <div class="progress-fill" id="progressFill"></div>
-    </div>
-
-    <div id="log">Waiting to start...</div>
-  </div>
-
-  <script type="module" src="js/firebase-init.js"></script>
-  <script type="module" src="js/import-patients.js"></script>
-</body>
-</html>
+</script></head><body><p>Redirecting to your portal...</p></body></html>

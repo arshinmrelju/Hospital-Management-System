@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Executive Cockpit – Wellness Medicals HMS</title>
+  <link rel="icon" type="image/jpeg" href="../assets/hms-logo.jpg">
+  <meta name="description" content="Hospital-wide administrative overview, billing statistics, and resource metrics." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel='stylesheet' href='css/admin-theme.css' />
+</head>
+
+<body class="app-body">
+
+  <!-- Ambient Background Orbs -->
+  <div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img src="../assets/hms-logo.jpg" alt="Wellness Medicals Logo" class="brand-icon" />
+      <div class="brand-text">
+        <span class="brand-title">Wellness</span>
+        <span class="brand-sub">Medicals HMS</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+
+    <!-- Techsiah Branding -->
+    <a href="https://techsiah.web.app" target="_blank" class="techsiah-badge">
+      <span class="techsiah-label">Powered by</span>
+      <svg class="logo-svg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="techsiah-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#2563EB" />
+            <stop offset="100%" stop-color="#3B82F6" />
+          </linearGradient>
+        </defs>
+        <path d="M6 10C6 7.79086 7.79086 6 10 6H22C24.2091 6 26 7.79086 26 10V22C26 24.2091 24.2091 26 22 26H10C7.79086 26 6 24.2091 6 22V10Z" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M12 11H20" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M16 11V21" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <circle cx="21" cy="21" r="2" fill="#2563EB" />
+      </svg>
+      <span class="techsiah-text">Techsiah<span class="techsiah-dot">.</span></span>
+    </a>
+
+    <div class="sidebar-user">
+      <div class="user-avatar" id="userAvatar">DS</div>
+      <div class="user-info">
+        <span class="user-name" id="sidebarUserName">Dr. Sarah Mitchell</span>
+        <span class="user-role" id="sidebarUserRole">Chief Surgeon · Admin</span>
+      </div>
+      <button class="logout-btn" id="logoutBtn" title="Logout">
+        <span class="material-icons-round">logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+        <span class="material-icons-round">menu</span>
+      </button>
+      <button class="mobile-search-toggle" id="mobileSearchToggle" aria-label="Toggle search">
+        <span class="material-icons-round">search</span>
+      </button>
+      <div class="topbar-search">
+        <span class="material-icons-round search-icon">search</span>
+        <input type="text" id="globalSearch" placeholder="Search patients, financial ledgers, system logs..." />
+      </div>
+      <div class="topbar-actions">
+        <button class="topbar-btn" id="notifBtn" aria-label="Notifications">
+          <span class="material-icons-round">notifications</span>
+          <span class="badge" id="notifBadge">3</span>
+        </button>
+        <div class="topbar-avatar" id="topbarAvatar">DS</div>
+      </div>
+    </header>
+
+  <!-- Mobile Search Bar -->
+  <div class="mobile-search-bar" id="mobileSearchBar">
+    <div class="topbar-search">
+      <span class="material-icons-round search-icon">search</span>
+      <input type="text" id="globalSearchMobile" placeholder="Search patients, appointments, doctors…" />
+    </div>
+  </div>
+
+    <!-- Page Body -->
+    <main class="page-body">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Hospital Overview</h1>
+          <p class="page-sub" id="dashboardGreeting">Welcome back, Dr. Sarah Mitchell!</p>
+        </div>
+        <div class="header-actions">
+          <span class="date-badge" id="todayDate"></span>
+          <button class="btn-primary btn-sm" onclick="location.href='reports.html'">
+            <span class="material-icons-round">analytics</span> Open Financial Audit
+          </button>
+        </div>
+      </div>
+
+      <!-- Smart Filter Bar -->
+      <div class="smart-filter" id="adminSmartFilter" style="margin-bottom: 24px;">
+        <div class="smart-filter-top">
+          <div class="sf-label">
+            <span class="material-icons-round">tune</span>
+            Filter Operations
+          </div>
+          <div class="sf-chips">
+            <button class="sf-chip active" onclick="sfChipSelect(this,'admin','today')">Today</button>
+            <button class="sf-chip" onclick="sfChipSelect(this,'admin','yesterday')">Yesterday</button>
+            <button class="sf-chip" onclick="sfChipSelect(this,'admin','7days')">Last 7 Days</button>
+            <button class="sf-chip" onclick="sfChipSelect(this,'admin','month')">This Month</button>
+            <button class="sf-chip custom-range-chip" onclick="sfChipSelect(this,'admin','custom')">
+              <span class="material-icons-round" style="font-size:13px">date_range</span> Custom
+            </button>
+          </div>
+          <span class="sf-result-badge" id="adminResultBadge">
+            <span class="material-icons-round">analytics</span>
+            <span id="adminResultCount">Active</span>
+          </span>
+        </div>
+        <div class="smart-filter-custom" id="adminCustomRange">
+          <div class="sf-input-group">
+            <label>From</label>
+            <div class="sf-input-row">
+              <input type="date" class="sf-date-input" id="adminStartDate" />
+              <input type="time" class="sf-time-input" id="adminStartTime" />
+            </div>
+          </div>
+          <div class="sf-range-arrow"><span class="material-icons-round">arrow_forward</span></div>
+          <div class="sf-input-group">
+            <label>To</label>
+            <div class="sf-input-row">
+              <input type="date" class="sf-date-input" id="adminEndDate" />
+              <input type="time" class="sf-time-input" id="adminEndTime" />
+            </div>
+          </div>
+          <div class="sf-actions">
+            <button class="sf-apply-btn" onclick="sfApplyCustom('admin')">
+              <span class="material-icons-round">check</span> Apply
+            </button>
+            <button class="sf-clear-btn" onclick="sfClearFilter('admin')">
+              <span class="material-icons-round">close</span> Clear
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="stats-grid">
+        <div class="stat-card" style="--accent:#4338ca">
+          <div class="stat-icon-wrap"><span class="material-icons-round">groups</span></div>
+          <div class="stat-body">
+            <p class="stat-label">Total Patients</p>
+            <h2 class="stat-value counter" data-target="0">0</h2>
+            <p class="stat-delta positive"><span class="material-icons-round">trending_up</span>+12.4% this month</p>
+          </div>
+        </div>
+        <div class="stat-card" style="--accent:#3B82F6">
+          <div class="stat-icon-wrap"><span class="material-icons-round">payments</span></div>
+          <div class="stat-body">
+            <p class="stat-label">Today's UPI Revenue</p>
+            <h2 class="stat-value counter" data-target="0">₹0</h2>
+            <p class="stat-delta positive"><span class="material-icons-round">check_circle</span>Reconciled live</p>
+          </div>
+        </div>
+        <div class="stat-card" style="--accent:#F59E0B">
+          <div class="stat-icon-wrap"><span class="material-icons-round">pending_actions</span></div>
+          <div class="stat-body">
+            <p class="stat-label">Lab Orders Pending</p>
+            <h2 class="stat-value counter" data-target="0">0</h2>
+            <p class="stat-delta negative"><span class="material-icons-round">warning</span>Awaiting pathology</p>
+          </div>
+        </div>
+        <div class="stat-card" style="--accent:#10B981">
+          <div class="stat-icon-wrap"><span class="material-icons-round">medical_services</span></div>
+          <div class="stat-body">
+            <p class="stat-label">Available Doctors</p>
+            <h2 class="stat-value counter" data-target="0">0</h2>
+            <p class="stat-delta positive"><span class="material-icons-round">link</span>On-Duty Live</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dashboard Tabs -->
+      <div class="dashboard-tabs">
+        <button class="dashboard-tab-btn active" onclick="switchDashboardTab('tab-admissions', event)">Admissions Trend</button>
+        <button class="dashboard-tab-btn" onclick="switchDashboardTab('tab-operations', event)">Operations Log</button>
+        <button class="dashboard-tab-btn" onclick="switchDashboardTab('tab-department', event)">Department Load</button>
+        <button class="dashboard-tab-btn" onclick="switchDashboardTab('tab-status', event)">Overall Patient Status</button>
+        <button class="dashboard-tab-btn" onclick="switchDashboardTab('tab-bed', event)">Bed Occupancy</button>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div class="dashboard-tab-content">
+        <!-- TAB 1: Admissions Trend -->
+        <div class="dashboard-tab-pane active" id="tab-admissions">
+          <div class="widget glass-card chart-widget">
+            <div class="widget-header">
+              <h3>Hospital Admissions Trend</h3>
+            </div>
+            <div class="chart-container" style="position:relative; height:250px;">
+              <canvas id="adminAdmissionsChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: Global Operations Log -->
+        <div class="dashboard-tab-pane" id="tab-operations">
+          <div class="widget glass-card activity-widget">
+            <div class="widget-header">
+              <h3>Global Operations Log</h3>
+            </div>
+            <ul class="activity-list" style="list-style: none; padding: 0; margin: 0; display:flex; flex-direction:column; gap:16px;">
+              <li class="activity-item" style="display:flex; align-items:center; gap:12px;">
+                <div class="activity-icon login" style="width:36px; height:36px; border-radius:50%; background:var(--primary-soft); color:var(--primary-light); display:flex; align-items:center; justify-content:center;"><span class="material-icons-round">login</span></div>
+                <div class="activity-body" style="flex:1;">
+                  <strong>Staff Check-in</strong>
+                  <p style="font-size:0.8rem; color:var(--on-surface-var)">Nurse Priya Kapoor checked in at Reception Desk</p>
+                </div><span class="activity-time" style="font-size:0.75rem; color:var(--outline)">8:00 AM</span>
+              </li>
+              <li class="activity-item" style="display:flex; align-items:center; gap:12px;">
+                <div class="activity-icon med" style="width:36px; height:36px; border-radius:50%; background:var(--primary-soft); color:var(--primary-light); display:flex; align-items:center; justify-content:center;"><span class="material-icons-round">medication</span></div>
+                <div class="activity-body" style="flex:1;">
+                  <strong>Inventory Restocked</strong>
+                  <p style="font-size:0.8rem; color:var(--on-surface-var)">Pharmacy inventory updated (Metformin, Ibuprofen)</p>
+                </div><span class="activity-time" style="font-size:0.75rem; color:var(--outline)">7:45 AM</span>
+              </li>
+              <li class="activity-item" style="display:flex; align-items:center; gap:12px;">
+                <div class="activity-icon lab" style="width:36px; height:36px; border-radius:50%; background:var(--primary-soft); color:var(--primary-light); display:flex; align-items:center; justify-content:center;"><span class="material-icons-round">science</span></div>
+                <div class="activity-body" style="flex:1;">
+                  <strong>Lab Scanner Calibrated</strong>
+                  <p style="font-size:0.8rem; color:var(--on-surface-var)">Hematology digital analyzer calibration test passed</p>
+                </div><span class="activity-time" style="font-size:0.75rem; color:var(--outline)">7:00 AM</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- TAB 3: Department Load -->
+        <div class="dashboard-tab-pane" id="tab-department">
+          <div class="widget glass-card dept-widget">
+            <div class="widget-header">
+              <h3>Department Load</h3>
+            </div>
+            <div class="dept-list" style="display:flex; flex-direction:column; gap:14px; margin-top:12px;">
+              <div class="dept-item" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                <span class="dept-name" style="font-weight:600; width:90px;">Cardiology</span>
+                <div class="dept-bar-wrap" style="flex:1; height:8px; background:var(--surface-high); border-radius:99px; overflow:hidden;">
+                  <div class="dept-bar" style="width:78%; height:100%; background:var(--primary-light); border-radius:99px;"></div>
+                </div><span class="dept-pct" style="font-size:0.82rem; font-weight:700;">78%</span>
+              </div>
+              <div class="dept-item" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                <span class="dept-name" style="font-weight:600; width:90px;">Emergency</span>
+                <div class="dept-bar-wrap" style="flex:1; height:8px; background:var(--surface-high); border-radius:99px; overflow:hidden;">
+                  <div class="dept-bar" style="width:92%; height:100%; background:#EF4444; border-radius:99px;"></div>
+                </div><span class="dept-pct" style="font-size:0.82rem; font-weight:700; color:#EF4444;">92%</span>
+              </div>
+              <div class="dept-item" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                <span class="dept-name" style="font-weight:600; width:90px;">Laboratory</span>
+                <div class="dept-bar-wrap" style="flex:1; height:8px; background:var(--surface-high); border-radius:99px; overflow:hidden;">
+                  <div class="dept-bar" style="width:45%; height:100%; background:#0ea5e9; border-radius:99px;"></div>
+                </div><span class="dept-pct" style="font-size:0.82rem; font-weight:700;">45%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: Overall Patient Status -->
+        <div class="dashboard-tab-pane" id="tab-status">
+          <div class="widget glass-card donut-widget">
+            <div class="widget-header">
+              <h3>Overall Patient Status</h3>
+            </div>
+            <div class="donut-container" style="position:relative; height:200px; display:flex; justify-content:center; align-items:center;">
+              <canvas id="adminStatusChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 5: Bed Occupancy -->
+        <div class="dashboard-tab-pane" id="tab-bed">
+          <div class="widget glass-card bed-widget" style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
+            <div class="widget-header" style="width:100%;">
+              <h3>Bed Occupancy</h3>
+            </div>
+            <div class="bed-stat" style="text-align:center; padding:12px 0;">
+              <div class="bed-circle" style="width:110px; height:110px; border-radius:50%; border:5px solid var(--primary-light); border-top-color:var(--surface-high); display:flex; flex-direction:column; align-items:center; justify-content:center; margin:0 auto 12px;">
+                <span class="bed-num" style="font-size:1.6rem; font-weight:800; color:var(--primary-light)">218</span>
+                <span class="bed-total" style="font-size:0.75rem; color:var(--outline)">/ 280 beds</span>
+              </div>
+              <p class="bed-pct" style="font-weight:700; color:var(--on-surface)">77.8% Occupied</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="../js/firebase-init.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/role-nav.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/dashboard.js"></script>
+</body>
+
+</html>

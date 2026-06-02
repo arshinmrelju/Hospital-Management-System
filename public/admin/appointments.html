@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Appointments – Wellness Medicals HMS</title>
+  <link rel="icon" type="image/jpeg" href="../assets/hms-logo.jpg">
+  <meta name="description" content="Schedule and manage patient appointments at Wellness Medicals." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel='stylesheet' href='css/admin-theme.css' />
+  <link rel="stylesheet" href="../css/appointments.css" />
+</head>
+<body class="app-body">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img src="../assets/hms-logo.jpg" alt="Wellness Medicals Logo" class="brand-icon" />
+      <div class="brand-text"><span class="brand-title">Wellness</span><span class="brand-sub">Medicals HMS</span></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+        <!-- Techsiah Branding -->
+    <a href="https://techsiah.web.app" target="_blank" class="techsiah-badge">
+      <span class="techsiah-label">Powered by</span>
+      <svg class="logo-svg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="techsiah-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#2563EB" />
+            <stop offset="100%" stop-color="#3B82F6" />
+          </linearGradient>
+        </defs>
+        <path d="M6 10C6 7.79086 7.79086 6 10 6H22C24.2091 6 26 7.79086 26 10V22C26 24.2091 24.2091 26 22 26H10C7.79086 26 6 24.2091 6 22V10Z" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M12 11H20" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M16 11V21" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <circle cx="21" cy="21" r="2" fill="#2563EB" />
+      </svg>
+      <span class="techsiah-text">Techsiah<span class="techsiah-dot">.</span></span>
+    </a>
+<div class="sidebar-user">
+      <div class="user-avatar" id="userAvatar">DS</div>
+      <div class="user-info"><span class="user-name" id="sidebarUserName">Dr. Sarah Mitchell</span><span class="user-role" id="sidebarUserRole">Chief Surgeon · Admin</span></div>
+      <button class="logout-btn" id="logoutBtn"><span class="material-icons-round">logout</span></button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle"><span class="material-icons-round">menu</span></button>
+      <button class="mobile-search-toggle" id="mobileSearchToggle" aria-label="Toggle search"><span class="material-icons-round">search</span></button>
+      <div class="topbar-search">
+        <span class="material-icons-round search-icon">search</span>
+        <input type="text" id="apptSearch" placeholder="Search appointments…" oninput="filterAppointments()" />
+      </div>
+      <div class="topbar-actions">
+        <button class="topbar-btn"><span class="material-icons-round">notifications</span><span class="badge">3</span></button>
+        <div class="topbar-avatar" id="topbarAvatar">DS</div>
+      </div>
+    </header>
+
+  <!-- Mobile Search Bar -->
+  <div class="mobile-search-bar" id="mobileSearchBar">
+    <div class="topbar-search">
+      <span class="material-icons-round search-icon">search</span>
+      <input type="text" id="globalSearchMobile" placeholder="Search patients, appointments, doctors…" />
+    </div>
+  </div>
+
+    <main class="page-body">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Appointments</h1>
+          <p class="page-sub" id="apptDateSub">Today's Schedule</p>
+        </div>
+        <div class="header-actions">
+          <div class="view-toggle">
+            <button class="view-btn active" id="listViewBtn" onclick="setView('list')"><span class="material-icons-round">view_list</span></button>
+            <button class="view-btn" id="calViewBtn" onclick="setView('calendar')"><span class="material-icons-round">calendar_month</span></button>
+          </div>
+          <button class="btn-secondary" onclick="openSpotVisit()">
+            <span class="material-icons-round">person_add</span> Spot Visit
+          </button>
+          <button class="btn-primary" onclick="openBookAppointment()">
+            <span class="material-icons-round">add</span> Book Appointment
+          </button>
+        </div>
+      </div>
+
+      <!-- Calendar Strip -->
+      <div class="widget glass-card calendar-strip-widget">
+        <div class="cal-header">
+          <button class="cal-nav" id="prevWeek" onclick="navigateWeek(-1)"><span class="material-icons-round">chevron_left</span></button>
+          <div class="cal-month-year" id="calMonthYear"></div>
+          <button class="cal-nav" id="nextWeek" onclick="navigateWeek(1)"><span class="material-icons-round">chevron_right</span></button>
+        </div>
+        <div class="cal-days" id="calDays"></div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar glass-card">
+        <div class="filter-chips">
+          <button class="chip active" onclick="setApptFilter(this,'all')">All</button>
+          <button class="chip" onclick="setApptFilter(this,'confirmed')"><span class="status-dot confirmed"></span>Confirmed</button>
+          <button class="chip" onclick="setApptFilter(this,'pending')"><span class="status-dot pending"></span>Pending</button>
+          <button class="chip" onclick="setApptFilter(this,'completed')"><span class="status-dot completed"></span>Completed</button>
+          <button class="chip" onclick="setApptFilter(this,'cancelled')"><span class="status-dot cancelled"></span>Cancelled</button>
+        </div>
+        <select class="filter-select" id="doctorFilter" onchange="filterAppointments()">
+          <option value="">All Doctors</option>
+          <option>Dr. Mitchell</option>
+          <option>Dr. Vance</option>
+          <option>Dr. Lee</option>
+          <option>Dr. Patel</option>
+          <option>Dr. Chen</option>
+        </select>
+      </div>
+
+      <!-- List View -->
+      <div id="listView">
+        <div class="timeline" id="appointmentTimeline">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Calendar View -->
+      <div id="calView" hidden>
+        <div class="widget glass-card calendar-grid-widget">
+          <div class="cal-grid" id="calendarGrid"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Book Appointment Modal -->
+  <div class="modal-overlay" id="bookApptModal" onclick="closeModal(event,'bookApptModal')">
+    <div class="modal glass-card">
+      <div class="modal-header">
+        <h2 id="apptModalTitle">Book Appointment</h2>
+        <button class="modal-close" onclick="closeModal(null,'bookApptModal')"><span class="material-icons-round">close</span></button>
+      </div>
+      <form id="bookApptForm" class="modal-form" onsubmit="submitBookAppt(event)">
+        <div class="form-group"><label>Patient *</label>
+          <div class="custom-autocomplete" id="patientAutocomplete">
+            <input type="text" id="apptPatient" placeholder="Type to search patient name or phone..." required autocomplete="off" />
+            <span class="material-icons-round autocomplete-icon">arrow_drop_down</span>
+            <div class="autocomplete-dropdown" id="patientDropdown">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Doctor *</label>
+            <select id="apptDoctor" required>
+              <option value="">Select doctor</option>
+              <option>Dr. Mitchell</option>
+              <option>Dr. Vance</option>
+              <option>Dr. Lee</option>
+              <option>Dr. Patel</option>
+              <option>Dr. Chen</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Department</label>
+            <select id="apptDept">
+              <option value="">Auto-assign</option>
+              <option>Cardiology</option>
+              <option>Pediatrics</option>
+              <option>Orthopedics</option>
+              <option>Neurology</option>
+              <option>General Surgery</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Date *</label><input type="date" id="apptDate" required /></div>
+          <div class="form-group"><label>Time *</label><input type="time" id="apptTime" required /></div>
+        </div>
+        <div class="form-group"><label>Type</label>
+          <select id="apptType"><option>Consultation</option><option>Walk-in</option><option>Follow-up</option><option>Emergency</option><option>Lab</option><option>Surgery</option></select>
+        </div>
+        <div class="form-group"><label>Notes</label><textarea id="apptNotes" rows="2" placeholder="Reason for visit…"></textarea></div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal(null,'bookApptModal')">Cancel</button>
+          <button type="submit" class="btn-primary" id="apptSubmitBtn">Confirm Booking</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="../js/firebase-init.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/role-nav.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/appointments.js"></script>
+</body>
+</html>

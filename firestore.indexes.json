@@ -120,40 +120,6 @@
         { "fieldPath": "timestamp", "order": "DESCENDING" }
       ]
     },
-    {
-      "collectionGroup": "sync_logs",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "status", "order": "ASCENDING" },
-        { "fieldPath": "timestamp", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "sync_logs",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "patientId", "order": "ASCENDING" },
-        { "fieldPath": "timestamp", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "patients",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "syncToGoogle", "order": "ASCENDING" },
-        { "fieldPath": "syncStatus", "order": "ASCENDING" },
-        { "fieldPath": "syncRetryCount", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "patients",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "syncToGoogle", "order": "ASCENDING" },
-        { "fieldPath": "syncStatus", "order": "ASCENDING" },
-        { "fieldPath": "syncLastAttempt", "order": "DESCENDING" }
-      ]
-    }
   ],
   "fieldOverrides": [
     {

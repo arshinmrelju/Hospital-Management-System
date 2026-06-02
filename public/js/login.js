@@ -1,5 +1,7 @@
 'use strict';
 
+const EXPECTED_ROLE = document.body.getAttribute('data-expected-role') || null;
+
 const pwInput = document.getElementById('password');
 const pwIcon = document.getElementById('pwIcon');
 document.getElementById('togglePw')?.addEventListener('click', () => {
@@ -37,7 +39,13 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
     const auth = window.HMS_AUTH;
     if (!auth) throw new Error('Auth system not initialized');
 
-    const userProfile = await auth.login(email, password);
+    let userProfile;
+    if (EXPECTED_ROLE) {
+      userProfile = await auth.loginWithRole(email, password, EXPECTED_ROLE);
+    } else {
+      userProfile = await auth.login(email, password);
+    }
+
     const sessionData = {
       uid: userProfile.uid,
       email: userProfile.email,
@@ -54,6 +62,16 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
   } catch (err) {
     btn.classList.remove('loading');
     let message = 'Invalid credentials. Please try again.';
+    if (err.message && err.message.startsWith('ACCESS_DENIED:')) {
+      message = err.message.replace('ACCESS_DENIED:', '');
+      errorMsg.innerHTML = `<span class="material-icons-round">block</span> ${message.replace(/[<>&"']/g, '')}`;
+      errorMsg.classList.add('visible');
+      const form = document.getElementById('loginForm');
+      form.style.animation = 'none';
+      void form.offsetWidth;
+      form.style.animation = 'shake 0.4s ease';
+      return;
+    }
     if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
       message = 'Invalid email or password.';
     } else if (err.code === 'auth/too-many-requests') {
@@ -78,7 +96,6 @@ const style = document.createElement('style');
 style.textContent = '@keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)} }';
 document.head.appendChild(style);
 
-// If already logged in (session in sessionStorage or Firebase Auth restores), redirect
 (async () => {
   try {
     if (window._authReady) await window._authReady;
@@ -87,7 +104,9 @@ document.head.appendChild(style);
   if (existing) {
     try {
       const u = JSON.parse(existing);
-      if (u && u.redirect && u.redirect !== window.location.href) location.href = u.redirect;
+      if (u && u.redirect && !window.location.pathname.includes('login')) {
+        location.href = u.redirect;
+      }
     } catch (_) { }
   }
 })();

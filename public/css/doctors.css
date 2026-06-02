@@ -448,6 +448,45 @@
   border-left: 3px solid var(--accent-red) !important;
 }
 
+@media (max-width: 768px) {
+  .doc-stats-row { flex-wrap: wrap; gap: 8px; }
+  .doc-stat-box { flex: 1 1 calc(50% - 8px); padding: 14px 8px; }
+  .doc-stat-box h3 { font-size: 1.3rem; }
+  .doc-stat-box .material-icons-round { font-size: 22px; margin-bottom: 4px; }
+
+  .patient-consult-header { flex-direction: column; gap: 16px; text-align: center; padding: 16px; }
+  .patient-consult-info { flex-direction: column; text-align: center; }
+  .consult-actions { width: 100%; justify-content: center; flex-wrap: wrap; }
+  .avatar-large { width: 48px; height: 48px; font-size: 1.2rem; }
+
+  .apt-item { flex-wrap: wrap; gap: 10px; padding: 12px; }
+  .apt-time { min-width: 60px; font-size: 0.85rem; }
+  .apt-patient { font-size: 0.9rem; }
+  .apt-actions { width: 100%; justify-content: flex-end; }
+
+  .med-item { flex-wrap: wrap; gap: 10px; padding: 12px; }
+  .med-info { flex: 1 1 100%; }
+  .med-item .btn-primary { width: 100%; justify-content: center; }
+
+  .consultation-grid { gap: 16px; }
+  .consult-col { padding: 16px; min-height: auto; }
+  .col-title { font-size: 1rem; }
+
+  .med-entry-row { flex-wrap: wrap; }
+  .med-entry-row input { flex: 1 1 100%; }
+  .dose-chip span { padding: 8px 4px; font-size: 0.75rem; }
+}
+@media (max-width: 480px) {
+  .workspace-grid { gap: 16px; }
+  .full-height-card { min-height: auto; }
+  .card-header { flex-direction: column; gap: 12px; align-items: flex-start; }
+  .card-header h2 { font-size: 1rem; }
+  .apt-item { padding: 10px; }
+  .apt-time { font-size: 0.78rem; min-width: 50px; }
+  .consult-col { padding: 12px; }
+  .consult-input { font-size: 0.85rem; }
+}
+
 /* --- Prescription Search Box Styling --- */
 .med-input-wrap {
   position: relative;

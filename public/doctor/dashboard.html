@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Physician Workspace – Wellness Medicals HMS</title>
+  <link rel="icon" type="image/jpeg" href="../assets/hms-logo.jpg">
+  <meta name="description" content="Clinical workspace, patient consulting, and electronic medical prescriptions." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel='stylesheet' href='css/doctor-theme.css' />
+  <style>
+    /* Premium upgrades for prescription box */
+    .prescription-builder {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(5, 150, 105, 0.04));
+      border: 1.5px solid rgba(5, 150, 105, 0.2);
+    }
+    .queue-list-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--surface-low);
+      border-radius: var(--radius-md);
+      margin-bottom: 8px;
+      border: 1px solid var(--outline-var);
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .queue-list-item:hover {
+      background: var(--surface-mid);
+      transform: translateX(4px);
+      border-color: var(--primary-light);
+    }
+    .queue-list-item.active {
+      background: var(--primary-soft);
+      border-color: var(--primary-light);
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.08);
+    }
+    .medicine-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface-mid);
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    .medicine-tag button {
+      background: none;
+      border: none;
+      color: var(--accent-red);
+      cursor: pointer;
+      display: inline-flex;
+      padding: 0;
+    }
+  </style>
+</head>
+
+<body class="app-body">
+
+  <!-- Ambient Background Orbs -->
+  <div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img src="../assets/hms-logo.jpg" alt="Wellness Medicals Logo" class="brand-icon" />
+      <div class="brand-text">
+        <span class="brand-title">Wellness</span>
+        <span class="brand-sub">Medicals HMS</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+
+    <!-- Techsiah Branding -->
+    <a href="https://techsiah.web.app" target="_blank" class="techsiah-badge">
+      <span class="techsiah-label">Powered by</span>
+      <svg class="logo-svg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="techsiah-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#2563EB" />
+            <stop offset="100%" stop-color="#3B82F6" />
+          </linearGradient>
+        </defs>
+        <path d="M6 10C6 7.79086 7.79086 6 10 6H22C24.2091 6 26 7.79086 26 10V22C26 24.2091 24.2091 26 22 26H10C7.79086 26 6 24.2091 6 22V10Z" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M12 11H20" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M16 11V21" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <circle cx="21" cy="21" r="2" fill="#2563EB" />
+      </svg>
+      <span class="techsiah-text">Techsiah<span class="techsiah-dot">.</span></span>
+    </a>
+
+    <div class="sidebar-user">
+      <div class="user-avatar" id="userAvatar">JV</div>
+      <div class="user-info">
+        <span class="user-name" id="sidebarUserName">Dr. Julian Vance</span>
+        <span class="user-role" id="sidebarUserRole">Cardiologist</span>
+      </div>
+      <button class="logout-btn" id="logoutBtn" title="Logout">
+        <span class="material-icons-round">logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+        <span class="material-icons-round">menu</span>
+      </button>
+      <button class="mobile-search-toggle" id="mobileSearchToggle" aria-label="Toggle search">
+        <span class="material-icons-round">search</span>
+      </button>
+      <div class="topbar-search">
+        <span class="material-icons-round search-icon">search</span>
+        <input type="text" id="globalSearch" placeholder="Search patients in queue, diagnoses..." />
+      </div>
+      <div class="topbar-actions">
+        <button class="topbar-btn" id="notifBtn" aria-label="Notifications">
+          <span class="material-icons-round">notifications</span>
+          <span class="badge" id="notifBadge">2</span>
+        </button>
+        <div class="topbar-avatar" id="topbarAvatar">JV</div>
+      </div>
+    </header>
+
+  <!-- Mobile Search Bar -->
+  <div class="mobile-search-bar" id="mobileSearchBar">
+    <div class="topbar-search">
+      <span class="material-icons-round search-icon">search</span>
+      <input type="text" id="globalSearchMobile" placeholder="Search patients, appointments, doctors…" />
+    </div>
+  </div>
+
+    <!-- Page Body -->
+    <main class="page-body">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Doctor's Workspace</h1>
+          <p class="page-sub" id="dashboardGreeting">Welcome back, Dr. Julian Vance! Healing environment active.</p>
+        </div>
+        <div class="header-actions">
+          <span class="date-badge" id="todayDate"></span>
+        </div>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="stats-grid">
+        <div class="stat-card" style="--accent:#059669">
+          <div class="stat-icon-wrap"><span class="material-icons-round">person</span></div>
+          <div class="stat-body">
+            <p class="stat-label">Active Consults</p>
+            <h2 class="stat-value counter" data-target="0">0</h2>
+            <p class="stat-delta positive"><span class="material-icons-round">trending_up</span>4 waiting in queue</p>
+          </div>
+        </div>
+        <div class="stat-card" style="--accent:#3B82F6">
+          <div class="stat-icon-wrap"><span class="material-icons-round">check_circle</span></div>
+          <div class="stat-body">
+            <p class="stat-label">Completed Today</p>
+            <h2 class="stat-value counter" data-target="0">0</h2>
+            <p class="stat-delta positive"><span class="material-icons-round">speed</span>Excellent workflow pace</p>
+          </div>
+        </div>
+        <div class="stat-card" style="--accent:#F59E0B">
+          <div class="stat-icon-wrap"><span class="material-icons-round">science</span></div>
+          <div class="stat-body">
+            <p class="stat-label">Lab Reports Pending</p>
+            <h2 class="stat-value counter" data-target="0">0</h2>
+            <p class="stat-delta" style="color:var(--accent-amber);"><span class="material-icons-round">hourglass_empty</span>Awaiting path lab scan</p>
+          </div>
+        </div>
+        <div class="stat-card" style="--accent:#ea580c">
+          <div class="stat-icon-wrap"><span class="material-icons-round">assignment_turned_in</span></div>
+          <div class="stat-body">
+            <p class="stat-label">Prescriptions Issued</p>
+            <h2 class="stat-value counter" data-target="0">0</h2>
+            <p class="stat-delta positive"><span class="material-icons-round">forward</span>Direct Pharmacy Sync</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dashboard Tabs -->
+      <div class="dashboard-tabs">
+        <button class="dashboard-tab-btn active" onclick="switchDashboardTab('tab-queue', event)">Consultation Queue</button>
+        <button class="dashboard-tab-btn" onclick="switchDashboardTab('tab-file', event)">Patient Clinical File</button>
+        <button class="dashboard-tab-btn" onclick="switchDashboardTab('tab-prescription', event)">Digital Prescription</button>
+        <button class="dashboard-tab-btn" onclick="switchDashboardTab('tab-vitals', event)">Vitals Clipboard</button>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div class="dashboard-tab-content">
+        <!-- TAB 1: Consultation Queue -->
+        <div class="dashboard-tab-pane active" id="tab-queue">
+          <div class="widget glass-card">
+            <div class="widget-header" style="flex-direction:column; align-items:stretch; gap:10px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3>Today's Patient Queue</h3>
+                <span class="badge-status confirmed" style="text-transform:none;">Live Check-in Link</span>
+              </div>
+              <!-- Smart Filter Bar -->
+              <div class="smart-filter" id="docSmartFilter">
+                <div class="smart-filter-top">
+                  <div class="sf-label">
+                    <span class="material-icons-round">tune</span>
+                    Filter Queue
+                  </div>
+                  <div class="sf-chips">
+                    <button class="sf-chip active" onclick="sfChipSelect(this,'doc','today')">Today</button>
+                    <button class="sf-chip" onclick="sfChipSelect(this,'doc','yesterday')">Yesterday</button>
+                    <button class="sf-chip" onclick="sfChipSelect(this,'doc','7days')">Last 7 Days</button>
+                    <button class="sf-chip" onclick="sfChipSelect(this,'doc','month')">This Month</button>
+                    <button class="sf-chip custom-range-chip" onclick="sfChipSelect(this,'doc','custom')">
+                      <span class="material-icons-round" style="font-size:13px">date_range</span> Custom
+                    </button>
+                  </div>
+                  <span class="sf-result-badge" id="docResultBadge">
+                    <span class="material-icons-round">people</span>
+                    <span id="docResultCount">18 consults</span>
+                  </span>
+                </div>
+                <div class="smart-filter-custom" id="docCustomRange">
+                  <div class="sf-input-group">
+                    <label>From</label>
+                    <div class="sf-input-row">
+                      <input type="date" class="sf-date-input" id="docStartDate" />
+                      <input type="time" class="sf-time-input" id="docStartTime" />
+                    </div>
+                  </div>
+                  <div class="sf-range-arrow"><span class="material-icons-round">arrow_forward</span></div>
+                  <div class="sf-input-group">
+                    <label>To</label>
+                    <div class="sf-input-row">
+                      <input type="date" class="sf-date-input" id="docEndDate" />
+                      <input type="time" class="sf-time-input" id="docEndTime" />
+                    </div>
+                  </div>
+                  <div class="sf-actions">
+                    <button class="sf-apply-btn" onclick="sfApplyCustom('doc')">
+                      <span class="material-icons-round">check</span> Apply
+                    </button>
+                    <button class="sf-clear-btn" onclick="sfClearFilter('doc')">
+                      <span class="material-icons-round">close</span> Clear
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div id="patientQueueContainer" style="margin-top:12px;">
+              <!-- Loaded Dynamically by doctor-dashboard.js -->
+              <p style="padding:12px; font-size:0.875rem; text-align:center; color:var(--on-surface-var)">Loading patients queue...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: Patient Clinical File -->
+        <div class="dashboard-tab-pane" id="tab-file">
+          <div class="widget glass-card">
+            <div class="widget-header">
+              <h3>Patient Clinical File</h3>
+            </div>
+            <div id="activePatientProfile" style="padding:12px 6px;">
+              <div style="text-align:center; padding:24px; color:var(--outline);">
+                <span class="material-icons-round" style="font-size:36px; color:var(--outline-var)">contact_page</span>
+                <p style="font-size:0.82rem; margin-top:8px;">Select a patient from the queue to view clinical history, vitals, and write prescriptions.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: Digital Prescription -->
+        <div class="dashboard-tab-pane" id="tab-prescription">
+          <div class="widget glass-card prescription-builder">
+            <div class="widget-header">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="material-icons-round" style="color:var(--primary-light)">edit_note</span>
+                <h3>Digital Prescription Generator</h3>
+              </div>
+              <span class="badge-status stable">APOTHECARY SYNCED</span>
+            </div>
+
+            <form id="presBuilderForm" style="display:flex; flex-direction:column; gap:14px; margin-top:12px;">
+              <div class="form-group">
+                <label>Diagnosing Physician</label>
+                <input type="text" value="Dr. Julian Vance (Cardiology)" disabled style="background:var(--surface-low); border:1.5px solid var(--outline-var); padding:8px 10px; border-radius:var(--radius-sm);" />
+              </div>
+              <div class="form-group">
+                <label>Diagnosis Notes *</label>
+                <input type="text" id="presDiagnosis" placeholder="e.g. Chronic Hypertension, Type-2 Diabetes..." required style="background:var(--surface); border:1.5px solid var(--outline-var); padding:8px 10px; border-radius:var(--radius-sm);" />
+              </div>
+
+              <!-- Add drug interface -->
+              <div class="form-row-2" style="display:grid; grid-template-columns:1.8fr 1fr; gap:10px;">
+                <div class="form-group">
+                  <label>Select Medicine</label>
+                  <select id="presMedSelect" style="background:var(--surface); border:1.5px solid var(--outline-var); padding:8px 10px; border-radius:var(--radius-sm); font-weight:600;">
+                    <option value="Metformin 500mg">Metformin 500mg (Antidiabetic)</option>
+                    <option value="Atorvastatin 10mg">Atorvastatin 10mg (Lipid-lowering)</option>
+                    <option value="Amlodipine 5mg">Amlodipine 5mg (Antihypertensive)</option>
+                    <option value="Amoxicillin 250mg">Amoxicillin 250mg (Antibiotic)</option>
+                    <option value="Pantoprazole 40mg">Pantoprazole 40mg (Antacid)</option>
+                    <option value="Paracetamol 650mg">Paracetamol 650mg (Analgesic)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Dosage Instruction</label>
+                  <input type="text" id="presDosage" placeholder="e.g. 1-0-1 after meals" style="background:var(--surface); border:1.5px solid var(--outline-var); padding:8px 10px; border-radius:var(--radius-sm);" />
+                </div>
+              </div>
+              
+              <button type="button" class="btn-secondary btn-sm" onclick="addMedicationToScript()" style="align-self:flex-start;">
+                <span class="material-icons-round">add</span> Add Drug Item
+              </button>
+
+              <div class="form-group" style="margin-top:4px;">
+                <label>Prescribed Medication List</label>
+                <div id="selectedMedsList" style="min-height:50px; background:var(--surface-low); border:1px solid var(--outline-var); border-radius:var(--radius-sm); padding:10px; display:flex; flex-wrap:wrap; gap:8px; align-content:flex-start;">
+                  <span style="font-size:0.8rem; color:var(--outline); font-style:italic;">No drugs added yet. Enter items above.</span>
+                </div>
+              </div>
+
+              <button type="submit" class="btn-primary" style="background:var(--primary-light); width:100%; display:flex; justify-content:center; gap:8px; margin-top:8px;">
+                <span class="material-icons-round">send</span> Send Prescription to Pharmacy
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- TAB 4: Vitals Clipboard -->
+        <div class="dashboard-tab-pane" id="tab-vitals">
+          <div class="widget glass-card">
+            <div class="widget-header">
+              <h3>Physician Vitals Clipboard</h3>
+            </div>
+            <div class="notes-body" style="padding-top:10px;">
+              <textarea id="doctorNotes" placeholder="Jot down general reminders, diagnostic targets, patient comments..."
+                style="width:100%;height:120px;border:1.5px solid var(--outline-var);background:var(--surface-low);border-radius:var(--radius-md);padding:12px;font-size:0.85rem;resize:none;"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="../js/firebase-init.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/role-nav.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/doctor-dashboard.js"></script>
+</body>
+
+</html>

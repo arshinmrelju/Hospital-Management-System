@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Lab – Wellness Medicals HMS</title>
+  <link rel="icon" type="image/jpeg" href="../assets/hms-logo.jpg">
+  <meta name="description" content="Laboratory test management and results portal for Wellness Medicals." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel='stylesheet' href='css/admin-theme.css' />
+  <link rel="stylesheet" href="../css/lab.css" />
+</head>
+<body class="app-body">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img src="../assets/hms-logo.jpg" alt="Wellness Medicals Logo" class="brand-icon" />
+      <div class="brand-text"><span class="brand-title">Wellness</span><span class="brand-sub">Medicals HMS</span></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+        <!-- Techsiah Branding -->
+    <a href="https://techsiah.web.app" target="_blank" class="techsiah-badge">
+      <span class="techsiah-label">Powered by</span>
+      <svg class="logo-svg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="techsiah-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#2563EB" />
+            <stop offset="100%" stop-color="#3B82F6" />
+          </linearGradient>
+        </defs>
+        <path d="M6 10C6 7.79086 7.79086 6 10 6H22C24.2091 6 26 7.79086 26 10V22C26 24.2091 24.2091 26 22 26H10C7.79086 26 6 24.2091 6 22V10Z" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M12 11H20" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M16 11V21" stroke="url(#techsiah-grad)" stroke-width="2.5" stroke-linecap="round" />
+        <circle cx="21" cy="21" r="2" fill="#2563EB" />
+      </svg>
+      <span class="techsiah-text">Techsiah<span class="techsiah-dot">.</span></span>
+    </a>
+<div class="sidebar-user">
+      <div class="user-avatar" id="userAvatar">DS</div>
+      <div class="user-info"><span class="user-name" id="sidebarUserName">Dr. Sarah Mitchell</span><span class="user-role" id="sidebarUserRole">Chief Surgeon · Admin</span></div>
+      <button class="logout-btn" id="logoutBtn"><span class="material-icons-round">logout</span></button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle"><span class="material-icons-round">menu</span></button>
+      <button class="mobile-search-toggle" id="mobileSearchToggle" aria-label="Toggle search"><span class="material-icons-round">search</span></button>
+      <div class="topbar-search">
+        <span class="material-icons-round search-icon">search</span>
+        <input type="text" id="labSearch" placeholder="Search tests, patients…" oninput="filterLab()" />
+      </div>
+      <div class="topbar-actions">
+        <button class="topbar-btn"><span class="material-icons-round">notifications</span><span class="badge">3</span></button>
+        <div class="topbar-avatar" id="topbarAvatar">DS</div>
+      </div>
+    </header>
+
+  <!-- Mobile Search Bar -->
+  <div class="mobile-search-bar" id="mobileSearchBar">
+    <div class="topbar-search">
+      <span class="material-icons-round search-icon">search</span>
+      <input type="text" id="globalSearchMobile" placeholder="Search patients, appointments, doctors…" />
+    </div>
+  </div>
+
+    <main class="page-body">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Laboratory</h1>
+          <p class="page-sub">Test orders, results, and reports</p>
+        </div>
+        <button class="btn-primary" onclick="openModal('orderTestModal')">
+          <span class="material-icons-round">add</span> Order Test
+        </button>
+      </div>
+
+      <!-- Lab Stats -->
+      <div class="stats-grid">
+        <div class="stat-card" style="--accent:#0D9488">
+          <div class="stat-icon-wrap"><span class="material-icons-round">science</span></div>
+          <div class="stat-body"><p class="stat-label">Tests Today</p><h2 class="stat-value">0</h2><p class="stat-delta positive">0 completed</p></div>
+        </div>
+        <div class="stat-card" style="--accent:#F59E0B">
+          <div class="stat-icon-wrap"><span class="material-icons-round">pending</span></div>
+          <div class="stat-body"><p class="stat-label">Pending Results</p><h2 class="stat-value">0</h2><p class="stat-delta negative">Awaiting analysis</p></div>
+        </div>
+        <div class="stat-card" style="--accent:#3B82F6">
+          <div class="stat-icon-wrap"><span class="material-icons-round">check_circle</span></div>
+          <div class="stat-body"><p class="stat-label">Results Ready</p><h2 class="stat-value">0</h2><p class="stat-delta positive">Ready for review</p></div>
+        </div>
+        <div class="stat-card" style="--accent:#EF4444">
+          <div class="stat-icon-wrap"><span class="material-icons-round">flag</span></div>
+          <div class="stat-body"><p class="stat-label">Critical Values</p><h2 class="stat-value">0</h2><p class="stat-delta negative">Immediate attention</p></div>
+        </div>
+      </div>
+
+      <!-- Tab Bar -->
+      <div class="tab-bar glass-card">
+        <button class="tab-btn active" onclick="switchTab(this,'lab-orders')">Test Orders</button>
+        <button class="tab-btn" onclick="switchTab(this,'lab-results')">Results</button>
+        <button class="tab-btn" onclick="switchTab(this,'lab-reports')">Reports</button>
+      </div>
+
+      <!-- Test Orders -->
+      <div class="tab-content" id="tab-lab-orders">
+        <div class="widget glass-card">
+          <div class="filter-bar" style="border:0;padding:0 0 16px">
+            <div class="filter-chips">
+              <button class="chip active" onclick="filterLabStatus(this,'all')">All</button>
+              <button class="chip" onclick="filterLabStatus(this,'ordered')"><span class="status-dot pending"></span>Ordered</button>
+              <button class="chip" onclick="filterLabStatus(this,'processing')"><span class="status-dot confirmed"></span>Processing</button>
+              <button class="chip" onclick="filterLabStatus(this,'ready')"><span class="status-dot completed"></span>Ready</button>
+              <button class="chip" onclick="filterLabStatus(this,'critical')"><span class="status-dot cancelled"></span>Critical</button>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table class="data-table" id="labTable">
+              <thead>
+                <tr>
+                  <th>Test ID</th>
+                  <th>Patient</th>
+                  <th>Test Type</th>
+                  <th>Ordered By</th>
+                  <th>Ordered At</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="labTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results Tab -->
+      <div class="tab-content" id="tab-lab-results" hidden>
+        <div class="lab-results-grid" id="labResultsGrid"></div>
+      </div>
+
+      <!-- Reports Tab -->
+      <div class="tab-content" id="tab-lab-reports" hidden>
+        <div class="widget glass-card">
+          <div class="widget-header"><h3>Generated Lab Reports</h3></div>
+          <div class="reports-list" id="labReportsList"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Order Test Modal -->
+  <div class="modal-overlay" id="orderTestModal" onclick="closeModal(event,'orderTestModal')">
+    <div class="modal glass-card">
+      <div class="modal-header">
+        <h2>Order Lab Test</h2>
+        <button class="modal-close" onclick="closeModal(null,'orderTestModal')"><span class="material-icons-round">close</span></button>
+      </div>
+      <form class="modal-form" onsubmit="submitOrderTest(event)">
+        <div class="form-group"><label>Patient *</label>
+          <div class="custom-autocomplete" id="labPatientAutocomplete">
+            <input type="text" id="labPatient" placeholder="Type to search patient name or phone..." required autocomplete="off" />
+            <div class="autocomplete-dropdown" id="labPatientDropdown"></div>
+          </div>
+        </div>
+        <div class="form-group"><label>Ordering Doctor *</label>
+          <select id="labDoctor" required><option value="">Select doctor</option><option>Dr. Mitchell</option><option>Dr. Vance</option><option>Dr. Lee</option><option>Dr. Patel</option></select>
+        </div>
+        <div class="form-group"><label>Test Type(s) *</label>
+          <div class="test-checkboxes">
+            <label class="check-item"><input type="checkbox" name="tests" value="CBC" /> Complete Blood Count (CBC)</label>
+            <label class="check-item"><input type="checkbox" name="tests" value="BMP" /> Basic Metabolic Panel</label>
+            <label class="check-item"><input type="checkbox" name="tests" value="LFT" /> Liver Function Test</label>
+            <label class="check-item"><input type="checkbox" name="tests" value="Urine" /> Urinalysis</label>
+            <label class="check-item"><input type="checkbox" name="tests" value="Lipid" /> Lipid Panel</label>
+            <label class="check-item"><input type="checkbox" name="tests" value="Thyroid" /> Thyroid Function</label>
+            <label class="check-item"><input type="checkbox" name="tests" value="Culture" /> Culture & Sensitivity</label>
+            <label class="check-item"><input type="checkbox" name="tests" value="Xray" /> X-Ray / Imaging</label>
+          </div>
+        </div>
+        <div class="form-group"><label>Priority</label>
+          <select id="labPriority"><option>Routine</option><option>Urgent</option><option>STAT (Emergency)</option></select>
+        </div>
+        <div class="form-group"><label>Notes</label><textarea id="labNotes" rows="2" placeholder="Clinical notes or special instructions…"></textarea></div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal(null,'orderTestModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Order Tests</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Result Detail Modal -->
+  <div class="modal-overlay" id="labResultModal" onclick="closeModal(event,'labResultModal')">
+    <div class="modal glass-card wide-modal" id="labResultContent"></div>
+  </div>
+
+  <script type="module" src="../js/firebase-init.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/role-nav.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/lab.js"></script>
+</body>
+</html>

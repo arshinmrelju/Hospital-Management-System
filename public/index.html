@@ -2,99 +2,121 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Wellness Medicals – Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Wellness Medicals – Portal Selector</title>
   <link rel="icon" type="image/jpeg" href="assets/hms-logo.jpg">
-  <meta name="description" content="Secure login portal for Wellness Medicals Hospital Management System." />
+  <meta name="description" content="Select your role to access the Wellness Medicals Hospital Management System portal." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/login.css" />
+  <style>
+    .selector-body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+    .selector-container { max-width: 1000px; width: 100%; text-align: center; }
+    .selector-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+    .selector-sub { font-size: 0.88rem; color: var(--on-surface-var); margin-bottom: 32px; }
+    .portal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .portal-card { background: var(--surface-low); border: 1px solid var(--outline-var); border-radius: var(--radius-lg); padding: 24px 16px; text-align: center; cursor: pointer; transition: all 0.25s; text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .portal-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.12); }
+    .portal-card .card-icon { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; }
+    .portal-card .card-label { font-weight: 700; font-size: 0.92rem; color: var(--on-surface); }
+    .portal-card .card-desc { font-size: 0.75rem; color: var(--on-surface-var); line-height: 1.4; }
+    .portal-card.admin .card-icon { background: rgba(37,99,235,0.12); color: #2563EB; }
+    .portal-card.admin:hover { border-color: #2563EB; }
+    .portal-card.doctor .card-icon { background: rgba(13,148,136,0.12); color: #0D9488; }
+    .portal-card.doctor:hover { border-color: #0D9488; }
+    .portal-card.staff .card-icon { background: rgba(124,58,237,0.12); color: #7C3AED; }
+    .portal-card.staff:hover { border-color: #7C3AED; }
+    .portal-card.pharmacist .card-icon { background: rgba(217,119,6,0.12); color: #D97706; }
+    .portal-card.pharmacist:hover { border-color: #D97706; }
+    .portal-card.labtech .card-icon { background: rgba(225,29,72,0.12); color: #E11D48; }
+    .portal-card.labtech:hover { border-color: #E11D48; }
+    .brand-top { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px; }
+    .brand-top img { width: 42px; height: 42px; border-radius: 50%; }
+    @media (max-width: 500px) { .portal-grid { grid-template-columns: repeat(2, 1fr); } }
+  </style>
 </head>
-<body class="login-body">
+<body class="login-body selector-body">
   <div class="ambient-bg">
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
     <div class="orb orb-3"></div>
   </div>
 
-  <div class="login-container">
-    <div class="brand-panel">
-      <div class="brand-logo">
-        <img src="assets/hms-logo.jpg" alt="Wellness Medicals Logo" class="logo-icon" />
+  <div class="selector-container">
+    <div class="brand-top">
+      <img src="assets/hms-logo.jpg" alt="Wellness Medicals Logo" />
+      <div>
+        <h1 class="selector-title">Wellness Medicals</h1>
+        <p class="selector-sub">Select your portal to sign in</p>
       </div>
-      <h1 class="brand-name">Wellness Medicals</h1>
-      <p class="brand-tagline">Integrated Hospital Management System</p>
     </div>
 
-    <div class="form-panel glass-card">
-      <div class="form-header">
-        <h2>Welcome back</h2>
-        <p>Sign in to your account to continue</p>
-      </div>
-
-      <form id="loginForm" class="login-form" novalidate>
-        <div class="form-group">
-          <label for="email">Email / Employee ID</label>
-          <div class="input-wrapper">
-            <span class="material-icons-round input-icon">alternate_email</span>
-            <input type="email" id="email" placeholder="Enter your email" autocomplete="username" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="password">Password</label>
-          <div class="input-wrapper">
-            <span class="material-icons-round input-icon">lock</span>
-            <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
-            <button type="button" class="toggle-pw" id="togglePw" aria-label="Toggle password visibility">
-              <span class="material-icons-round" id="pwIcon">visibility</span>
-            </button>
-          </div>
-        </div>
-        <div class="form-row">
-          <label class="checkbox-label">
-            <input type="checkbox" id="rememberMe" />
-            <span class="checkmark"></span>Remember me
-          </label>
-          <a href="#" class="forgot-link" id="forgotPwLink">Forgot password?</a>
-        </div>
-
-        <div class="error-msg" id="errorMsg" aria-live="polite"></div>
-
-        <button type="submit" class="btn-primary btn-login" id="loginBtn">
-          <span class="btn-text">Sign In</span>
-          <span class="material-icons-round btn-arrow">arrow_forward</span>
-          <div class="btn-loader" id="btnLoader"></div>
-        </button>
-      </form>
-
-      <p class="login-footer">
-        Wellness Medicals HMS &copy; 2026 &middot; <a href="#">Privacy Policy</a> &middot; <a href="#">Support</a>
-        <span class="powered-by-wrapper">
-          Powered by
-          <a href="https://techsiah.web.app" target="_blank" class="techsiah-badge-login">
-            <svg class="logo-svg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="techsiah-grad-login" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#2563EB" />
-                  <stop offset="100%" stop-color="#3B82F6" />
-                </linearGradient>
-              </defs>
-              <path d="M6 10C6 7.79086 7.79086 6 10 6H22C24.2091 6 26 7.79086 26 10V22C26 24.2091 24.2091 26 22 26H10C7.79086 26 6 24.2091 6 22V10Z" stroke="url(#techsiah-grad-login)" stroke-width="2.5" stroke-linecap="round" />
-              <path d="M12 11H20" stroke="url(#techsiah-grad-login)" stroke-width="2.5" stroke-linecap="round" />
-              <path d="M16 11V21" stroke="url(#techsiah-grad-login)" stroke-width="2.5" stroke-linecap="round" />
-              <circle cx="21" cy="21" r="2" fill="#2563EB" />
-            </svg>
-            <span class="techsiah-text">Techsiah<span class="techsiah-dot">.</span></span>
-          </a>
-        </span>
-      </p>
+    <div class="portal-grid">
+      <a href="login-admin.html" class="portal-card admin">
+        <div class="card-icon"><span class="material-icons-round">admin_panel_settings</span></div>
+        <div class="card-label">Admin Portal</div>
+        <div class="card-desc">System administration, reports, and full control</div>
+      </a>
+      <a href="login-doctor.html" class="portal-card doctor">
+        <div class="card-icon"><span class="material-icons-round">medical_services</span></div>
+        <div class="card-label">Doctor Portal</div>
+        <div class="card-desc">Clinical workspace, patients, and prescriptions</div>
+      </a>
+      <a href="login-staff.html" class="portal-card staff">
+        <div class="card-icon"><span class="material-icons-round">front_desk</span></div>
+        <div class="card-label">Reception Portal</div>
+        <div class="card-desc">Patient registration, appointments, and front desk</div>
+      </a>
+      <a href="login-pharmacist.html" class="portal-card pharmacist">
+        <div class="card-icon"><span class="material-icons-round">medication</span></div>
+        <div class="card-label">Pharmacy Portal</div>
+        <div class="card-desc">Inventory, billing, and prescription dispensing</div>
+      </a>
+      <a href="login-labtech.html" class="portal-card labtech">
+        <div class="card-icon"><span class="material-icons-round">biotech</span></div>
+        <div class="card-label">Lab Portal</div>
+        <div class="card-desc">Test orders, results, and specimen tracking</div>
+      </a>
     </div>
+
+    <p class="login-footer" style="justify-content:center">
+      Wellness Medicals HMS &copy; 2026 &middot;
+      <span class="powered-by-wrapper">
+        Powered by
+        <a href="https://techsiah.web.app" target="_blank" class="techsiah-badge-login">
+          <svg class="logo-svg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="techsiah-grad-login" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#2563EB" />
+                <stop offset="100%" stop-color="#3B82F6" />
+              </linearGradient>
+            </defs>
+            <path d="M6 10C6 7.79086 7.79086 6 10 6H22C24.2091 6 26 7.79086 26 10V22C26 24.2091 24.2091 26 22 26H10C7.79086 26 6 24.2091 6 22V10Z" stroke="url(#techsiah-grad-login)" stroke-width="2.5" stroke-linecap="round" />
+            <path d="M12 11H20" stroke="url(#techsiah-grad-login)" stroke-width="2.5" stroke-linecap="round" />
+            <path d="M16 11V21" stroke="url(#techsiah-grad-login)" stroke-width="2.5" stroke-linecap="round" />
+            <circle cx="21" cy="21" r="2" fill="#2563EB" />
+          </svg>
+          <span class="techsiah-text">Techsiah<span class="techsiah-dot">.</span></span>
+        </a>
+      </span>
+    </p>
   </div>
 
   <script type="module" src="js/firebase-init.js"></script>
-  <script src="js/login.js"></script>
+  <script>
+    (async () => {
+      try { if (window._authReady) await window._authReady; } catch (_) {}
+      const existing = sessionStorage.getItem('hms_session');
+      if (existing) {
+        try {
+          const u = JSON.parse(existing);
+          if (u && u.redirect) location.href = u.redirect;
+        } catch (_) {}
+      }
+    })();
+  </script>
 </body>
 </html>

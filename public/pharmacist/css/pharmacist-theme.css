@@ -1,0 +1,5 @@
+.portal-pharmacy { --portal-accent: #D97706; --portal-accent-soft: rgba(217,119,6,0.1); --portal-accent-light: #FBBF24; }
+.portal-pharmacy .sidebar-brand .brand-title { color: var(--portal-accent); }
+.portal-pharmacy .nav-item.active { background: var(--portal-accent-soft); border-right: 3px solid var(--portal-accent); color: var(--portal-accent); }
+.portal-pharmacy .nav-item.active .material-icons-round { color: var(--portal-accent); }
+.portal-pharmacy .stat-card { border-top: 3px solid var(--portal-accent); }

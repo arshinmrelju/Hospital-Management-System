@@ -185,6 +185,16 @@
 }
 
 /* Print Invoice Overlay styling */
+@media (max-width: 480px) {
+  .reports-layout { gap: 16px; margin-top: 16px; }
+  .chart-container-rep { height: 200px; }
+  .donut-container-rep { height: 200px; }
+  .api-console-log { font-size: 0.72rem; padding: 10px; max-height: 120px; }
+  .api-config-fields { padding: 12px; }
+  .phonepe-panel .btn-primary { width: 100%; justify-content: center; }
+  .txn-id-badge { font-size: 0.72rem; }
+}
+
 @media print {
   body * {
     visibility: hidden;

@@ -178,3 +178,11 @@
 @media (max-width: 700px) {
   .grid-3 { grid-template-columns: 1fr; }
 }
+@media (max-width: 480px) {
+  .chart-container { height: 200px; }
+  .donut-container { height: 150px; }
+  .activity-item { flex-wrap: wrap; gap: 8px; }
+  .activity-time { width: 100%; padding-left: 48px; }
+  .bed-circle { width: 80px; height: 80px; }
+  .bed-num { font-size: 1.4rem; }
+}
