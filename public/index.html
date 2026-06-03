@@ -534,9 +534,18 @@
       if (existing) {
         try {
           const u = JSON.parse(existing);
-          if (u && u.redirect) location.href = u.redirect;
+          if (u && u.token && u.redirect) {
+            try {
+              const payload = JSON.parse(atob(u.token.split('.')[1]));
+              if (payload.exp * 1000 > Date.now()) {
+                location.href = u.redirect;
+                return;
+              }
+            } catch {}
+          }
         } catch (_) {}
       }
+      sessionStorage.removeItem('hms_session');
     })();
   </script>
 </body>
