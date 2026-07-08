@@ -1,5 +1,33 @@
 'use strict';
 
+var CACHE_TTL = 5 * 60 * 1000;
+var CACHE_KEY = 'hms_patients_cache';
+
+window.PatientCache = {
+  get: function() {
+    try {
+      var raw = localStorage.getItem(CACHE_KEY);
+      if (!raw) return null;
+      var cached = JSON.parse(raw);
+      if (Date.now() - cached.timestamp > CACHE_TTL) {
+        localStorage.removeItem(CACHE_KEY);
+        return null;
+      }
+      return cached.data;
+    } catch(e) {
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+  },
+  set: function(data) {
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ data: data, timestamp: Date.now() }));
+    } catch(e) {}
+  },
+  clear: function() {
+    try { localStorage.removeItem(CACHE_KEY); } catch(e) {}
+  }
+};
 
 let allPatients = []; window.allPatients = allPatients;
 let filteredPatients = [];
@@ -7,10 +35,6 @@ let currentPage = 1;
 const ROWS_PER_PAGE = 10;
 let activeFilter = 'all';
 let sortCol = null, sortDir = 1;
-
-// Firestore cursor-based pagination state
-let _lastPatientDoc = null;  // last Firestore doc snapshot
-let _hasMorePatients = false; // whether a next page exists
 
 
 function renderTable() {
@@ -285,7 +309,9 @@ function applyFilters() {
   renderTable();
 }
 
-function filterPatients() { applyFilters(); }
+function filterPatients() {
+  applyFilters();
+}
 window.filterPatients = filterPatients;
 
 function syncSearch(val) {
@@ -422,7 +448,7 @@ async function submitEditPatient(e) {
     if (idx !== -1) {
       allPatients[idx] = result.data;
       window.allPatients = allPatients;
-      if (window.PatientCache) PatientCache.updateCachedPatient(id, result.data);
+      PatientCache.clear();
     }
     closeModal(null, 'editPatientModal');
     applyFilters();
@@ -441,7 +467,7 @@ async function deletePatient(id) {
     allPatients = allPatients.filter(p => p.id != id);
     window.allPatients = allPatients;
     filteredPatients = filteredPatients.filter(p => p.id != id);
-    if (window.PatientCache) PatientCache.removeCachedPatient(id);
+    PatientCache.clear();
     applyFilters();
     toast('Patient record removed', 'warning', 'delete');
   } catch (err) {
@@ -482,54 +508,33 @@ function normalizePatients(rawList) {
   });
 }
 
-function updateSyncIndicator() {
-  var el = document.getElementById('syncIndicator');
-  if (!el) return;
-  var parent = el.closest('.sync-bar');
-  PatientCache.getCachedPatients().then(function(cached) {
-    if (!cached) {
-      el.innerHTML = '<span class="material-icons-round">sync_disabled</span> Not synced yet';
-      if (parent) { parent.className = 'sync-bar sync-bar--error'; }
-      return;
-    }
-    var label = '';
-    var d = new Date(cached.timestamp);
-    var diffMs = Date.now() - d;
-    var mins = Math.floor(diffMs / 60000);
-    if (mins < 1) label = 'Just now';
-    else if (mins < 60) label = mins + 'm ago';
-    else { var hrs = Math.floor(mins / 60); mins = mins % 60; label = hrs + 'h ' + mins + 'm ago'; }
-    el.innerHTML = '<span class="material-icons-round">' + (PatientCache.isStale(cached.timestamp) ? 'sync_problem' : 'sync') + '</span> Synced ' + label;
-    if (parent) {
-      if (PatientCache.isStale(cached.timestamp)) parent.className = 'sync-bar sync-bar--stale';
-      else parent.className = 'sync-bar';
-    }
-  });
-}
-
 function refreshPatients() {
-  PatientCache.clearCache().then(function() {
-    loadPatients(true);
-  });
+  PatientCache.clear();
+  loadPatients(true);
 }
 window.refreshPatients = refreshPatients;
 
 async function loadPatients(skipCache) {
   skipCache = skipCache || false;
-  _lastPatientDoc = null;
-  _hasMorePatients = false;
 
   const tbody = document.getElementById('patientTableBody');
   if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--on-surface-var)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px;color:var(--outline-var)">hourglass_empty</span>Loading patients...</td></tr>';
 
   try {
-    // First page: 10 records
-    const result = await window.API.getPatients({ limit: 10 });
+    if (!skipCache) {
+      var cached = PatientCache.get();
+      if (cached) {
+        allPatients = normalizePatients(cached);
+        window.allPatients = allPatients;
+        applyFilters();
+        return;
+      }
+    }
+
+    const result = await window.API.getPatients();
     allPatients = normalizePatients(result.data || []);
     window.allPatients = allPatients;
-    _lastPatientDoc = result.lastDoc || null;
-    _hasMorePatients = result.hasMore || false;
-    updateLoadMoreBar();
+    PatientCache.set(allPatients);
   } catch (e) {
     console.error('Failed to load patients:', e);
     const errMsg = e && e.message ? e.message : String(e);
@@ -538,51 +543,11 @@ async function loadPatients(skipCache) {
     if (tbody2) tbody2.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--error,#ef4444)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px">error_outline</span>Failed to load: ' + errMsg + '<br><button class="btn-secondary" style="margin-top:12px" onclick="loadPatients()">Retry</button></td></tr>';
     allPatients = [];
     window.allPatients = allPatients;
-    updateLoadMoreBar();
   }
 
   applyFilters();
 }
 window.loadPatients = loadPatients;
-
-/* Load the next page from Firestore and append results */
-async function loadMorePatients() {
-  if (!_hasMorePatients) return;
-  const btn = document.getElementById('loadMoreBtn');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="material-icons-round" style="animation:spin 1s linear infinite">sync</span> Loading...'; }
-
-  try {
-    const result = await window.API.getPatients({ limit: 10, lastDoc: _lastPatientDoc });
-    const newPatients = normalizePatients(result.data || []);
-    allPatients = [...allPatients, ...newPatients];
-    window.allPatients = allPatients;
-    _lastPatientDoc = result.lastDoc || null;
-    _hasMorePatients = result.hasMore || false;
-    if (typeof toast === 'function') toast(`Loaded ${newPatients.length} more patient${newPatients.length !== 1 ? 's' : ''}`, 'info');
-  } catch (e) {
-    console.error('loadMorePatients error:', e);
-    if (typeof toast === 'function') toast('Failed to load more patients', 'error');
-  }
-
-  if (btn) { btn.disabled = false; btn.innerHTML = '<span class="material-icons-round">expand_more</span> Load More Patients'; }
-  updateLoadMoreBar();
-  applyFilters();
-}
-window.loadMorePatients = loadMorePatients;
-
-/* Show/hide the Load More bar based on pagination state */
-function updateLoadMoreBar() {
-  const bar  = document.getElementById('loadMoreBar');
-  const info = document.getElementById('loadMoreInfo');
-  if (!bar) return;
-  if (_hasMorePatients) {
-    bar.style.display = 'block';
-    if (info) info.textContent = `Showing ${allPatients.length} patients · more available`;
-  } else {
-    bar.style.display = 'none';
-    if (info) info.textContent = '';
-  }
-}
 
 
 async function submitAddPatient(e) {
@@ -607,7 +572,7 @@ async function submitAddPatient(e) {
     const newP = result.data;
     allPatients.unshift(newP);
     window.allPatients = allPatients;
-    if (window.PatientCache) PatientCache.addCachedPatient(newP);
+    PatientCache.clear();
     applyFilters();
     closeModal(null, 'addPatientModal');
     document.getElementById('addPatientForm').reset();

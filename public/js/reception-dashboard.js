@@ -8,14 +8,6 @@
 let OPD_QUEUE = [];
 let filteredOpdQueue = null;
 
-/* --- Doctor Schedule (empty, to be loaded from API) --- */
-let DOCTOR_SCHEDULE = [];
-
-/* --- Bed Allocation Data by Ward (empty, to be loaded from API) --- */
-let WARDS = {};
-
-let currentWard = 'general';
-
 /* --- Render OPD Queue --- */
 function renderOpdQueue() {
   const list = document.getElementById('opdList');
@@ -113,74 +105,6 @@ async function checkInByToken(token) {
     renderOpdQueue();
     toast(`${patient.name} checked in successfully!`, 'success', 'how_to_reg');
   }
-}
-
-/* --- Render Bed Grid --- */
-function renderBedGrid(ward = currentWard) {
-  const grid = document.getElementById('bedGrid');
-  if (!grid) return;
-
-  const beds = WARDS[ward] || [];
-  const icons = { occupied: 'hotel', available: 'bed', reserved: 'bookmark', maintenance: 'build' };
-
-  grid.innerHTML = beds.map(bed => `
-    <div class="bed-cell ${bed.status}" onclick="toggleBed('${ward}', ${bed.num})" title="Bed ${bed.num} – ${bed.status.charAt(0).toUpperCase() + bed.status.slice(1)}">
-      <span class="material-icons-round">${icons[bed.status]}</span>
-      <span>${bed.num}</span>
-    </div>
-  `).join('');
-
-  updateBedCounts(ward);
-}
-
-function updateBedCounts(ward) {
-  const beds = WARDS[ward] || [];
-  const counts = beds.reduce((acc, b) => { acc[b.status] = (acc[b.status] || 0) + 1; return acc; }, {});
-  const el = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val || 0; };
-  el('bedAvailCount', counts.available);
-  el('bedOccupCount', counts.occupied);
-  el('bedResCount', counts.reserved);
-  el('bedMaintCount', counts.maintenance);
-}
-
-function toggleBed(ward, num) {
-  const bed = WARDS[ward]?.find(b => b.num === num);
-  if (!bed) return;
-  const cycle = { available: 'occupied', occupied: 'reserved', reserved: 'maintenance', maintenance: 'available' };
-  bed.status = cycle[bed.status] || 'available';
-  if (window.saveLocalWards) {
-    window.saveLocalWards(WARDS);
-  }
-  renderBedGrid(ward);
-  updateStats();
-  toast(`Bed ${num}: Status → ${bed.status}`, 'info', 'hotel');
-}
-
-/* --- Switch Ward Tab --- */
-function showWard(ward, btn) {
-  currentWard = ward;
-  document.querySelectorAll('[id^="ward-"]').forEach(b => b.classList.remove('active-ward'));
-  if (btn) btn.classList.add('active-ward');
-  renderBedGrid(ward);
-}
-
-/* --- Render Doctor Schedule --- */
-function renderDoctorSchedule() {
-  const list = document.getElementById('doctorScheduleList');
-  if (!list) return;
-
-  list.innerHTML = DOCTOR_SCHEDULE.map(doc => `
-    <div class="doc-schedule-row">
-      <div class="doc-avatar-sm">${doc.initials}</div>
-      <div>
-        <div class="doc-name">${doc.name}</div>
-        <div class="doc-dept">${doc.dept}</div>
-      </div>
-      <div class="doc-slots">
-        ${doc.slots.map(s => `<span class="slot-chip ${s.type}">${s.time}</span>`).join('')}
-      </div>
-    </div>
-  `).join('');
 }
 
 /* --- Patient Check-In Autocomplete Helpers --- */
@@ -315,28 +239,17 @@ function populateDoctorDropdown() {
   var sel = document.getElementById('ciDoctor');
   if (!sel) return;
 
-  // Build options from loaded DOCTOR_SCHEDULE
-  var docs = DOCTOR_SCHEDULE.filter(function(d) { return d && d.name; });
-
-  if (docs.length === 0) {
-    // Fallback: try loading from API
-    window.API.getDoctors({ limit: 100 }).then(function(res) {
-      var list = (res && res.data) ? res.data : [];
-      sel.innerHTML = list.length
-        ? list.map(function(d) {
-            var name = d.name || d.doctor_name || d.firstName + ' ' + d.lastName || 'Unknown';
-            return '<option value="' + esc(d.id || name) + '">Dr. ' + esc(name) + '</option>';
-          }).join('')
-        : '<option value="unassigned">Unassigned / Walk-in</option>';
-    }).catch(function() {
-      sel.innerHTML = '<option value="unassigned">Unassigned / Walk-in</option>';
-    });
-    return;
-  }
-
-  sel.innerHTML = docs.map(function(d) {
-    return '<option value="' + esc(d.name) + '">' + esc(d.name) + ' – ' + esc(d.dept || 'General') + '</option>';
-  }).join('');
+  window.API.getDoctors({ limit: 100 }).then(function(res) {
+    var list = (res && res.data) ? res.data : [];
+    sel.innerHTML = list.length
+      ? list.map(function(d) {
+          var name = d.name || d.doctor_name || d.firstName + ' ' + d.lastName || 'Unknown';
+          return '<option value="' + esc(d.id || name) + '">Dr. ' + esc(name) + '</option>';
+        }).join('')
+      : '<option value="unassigned">Unassigned / Walk-in</option>';
+  }).catch(function() {
+    sel.innerHTML = '<option value="unassigned">Unassigned / Walk-in</option>';
+  });
 }
 
 /* --- Open Check-In Modal --- */
@@ -447,26 +360,6 @@ async function bookAppointment(e) {
   updateStats();
 }
 
-/* --- Live Clock --- */
-function updateClock() {
-  const el = document.getElementById('currentTime');
-  if (el) {
-    el.textContent = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  }
-}
-
-/* --- Active Ward Button Style --- */
-const wardBtnStyle = `
-  .active-ward {
-    background: var(--primary-light) !important;
-    color: white !important;
-    border-color: var(--primary-light) !important;
-  }
-`;
-const s = document.createElement('style');
-s.textContent = wardBtnStyle;
-document.head.appendChild(s);
-
 /* --- API Data Loaders --- */
 async function loadOpdQueueFromFirestore() {
   try {
@@ -515,46 +408,10 @@ async function loadOpdQueueFromFirestore() {
   }
 }
 
-async function loadDoctorScheduleFromFirestore() {
-  try {
-    const response = await window.API.getSchedules();
-    if (!response.success) return;
-    const schedules = response.data || [];
-    DOCTOR_SCHEDULE = schedules.map(s => {
-      const name = s.name || s.doctor_name || 'Unknown';
-      const parts = name.split(' ');
-      return {
-        initials: parts.map(n => n[0]).join('').toUpperCase().slice(0, 2),
-        name,
-        dept: s.dept || s.department || 'General',
-        slots: (s.slots || s.shifts || []).map(slot => ({
-          time: slot.time || slot,
-          type: slot.type || 'morning'
-        }))
-      };
-    });
-  } catch (e) {
-    addConsoleLog('WARN', 'Could not load doctor schedule: ' + e.message);
-  }
-}
-
-async function loadWardsFromFirestore() {
-  try {
-    const result = await window.API.getWards();
-    if (result && result.data) {
-      Object.assign(WARDS, result.data);
-    }
-  } catch (e) {
-    addConsoleLog('WARN', 'Could not load wards: ' + e.message);
-  }
-}
-
-/* --- Load Patients for Autocomplete (paginated, up to 50 for autocomplete) --- */
 async function ensurePatientsLoaded() {
   if (window.allPatients && window.allPatients.length > 0) return;
   try {
-    // Load up to 50 patients for autocomplete; enough for a small clinic
-    var result = await window.API.getPatients({ limit: 50 });
+    var result = await window.API.getPatients();
     if (result && result.data) {
       window.allPatients = result.data;
     }
@@ -584,25 +441,9 @@ function updateStats() {
   var waitingDelta = document.querySelector('.stat-card[style*="--accent:#f59e0b"] .stat-delta');
   if (waitingDelta) waitingDelta.innerHTML = '<span class="material-icons-round">hourglass_empty</span>' + waiting.length + ' waiting now';
 
-  var bedEl = document.querySelector('.stat-card[style*="--accent:#10b981"] .stat-value');
-  var bedDelta = document.querySelector('.stat-card[style*="--accent:#10b981"] .stat-delta');
-  var avail = 0;
-  var totalBeds = 0;
-  Object.keys(WARDS).forEach(function(w) {
-    (WARDS[w] || []).forEach(function(b) {
-      totalBeds++;
-      if (b.status === 'available') avail++;
-    });
-  });
-  if (bedEl) {
-    if (window.animateCounter) window.animateCounter(bedEl, avail);
-    else bedEl.textContent = avail;
-  }
-  if (bedDelta && totalBeds > 0) bedDelta.innerHTML = '<span class="material-icons-round">check</span>' + (totalBeds - avail) + '/' + totalBeds + ' occupied';
-
   var todayApptsEl = document.querySelector('.stat-card[style*="--accent:#0284c7"] .stat-value');
   if (todayApptsEl) {
-    window.API.getAppointments({ limit: 200 }).then(function(resp) {
+    window.API.getAppointments().then(function(resp) {
       if (resp && resp.data) {
         var todayCount = resp.data.filter(function(a) { return a.appointment_date && a.appointment_date.slice(0,10) === todayStr; }).length;
         if (window.animateCounter) window.animateCounter(todayApptsEl, todayCount);
@@ -618,7 +459,7 @@ function updateStats() {
 /* --- DOMContentLoaded --- */
 document.addEventListener('DOMContentLoaded', async () => {
   await ensurePatientsLoaded();
-  await Promise.all([loadOpdQueueFromFirestore(), loadDoctorScheduleFromFirestore(), loadWardsFromFirestore()]);
+  await loadOpdQueueFromFirestore();
   updateStats();
 
   // Re-run stats after OPD queue is filtered
@@ -631,10 +472,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   } else {
     renderOpdQueue();
   }
-  renderBedGrid('general');
-  renderDoctorSchedule();
-  updateClock();
-  setInterval(updateClock, 1000);
 
   var dateEl = document.getElementById('apptDate');
   if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];

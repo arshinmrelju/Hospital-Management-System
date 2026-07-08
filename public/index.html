@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Reception Portal – Wellness Medicals HMS</title>
   <link rel="icon" type="image/jpeg" href="assets/hms-logo.jpg">
-  <meta name="description" content="Front-desk reception portal: OPD patient check-in, bed allocation board, and appointment scheduling." />
+  <meta name="description" content="Front-desk reception portal: OPD patient check-in and appointment scheduling." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -42,53 +42,6 @@
     .opd-status.waiting { background: rgba(245,158,11,0.1); color: #d97706; }
     .opd-status.urgent { background: rgba(239,68,68,0.1); color: #ef4444; }
 
-    /* Bed Allocation Grid */
-    .bed-grid {
-      display: grid;
-      grid-template-columns: repeat(8, 1fr);
-      gap: 8px;
-    }
-    .bed-cell {
-      aspect-ratio: 1;
-      border-radius: var(--radius-sm);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      border: 1.5px solid;
-      font-size: 0.65rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.18s;
-      gap: 2px;
-    }
-    .bed-cell.occupied { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.25); color: #ef4444; }
-    .bed-cell.available { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.25); color: #059669; }
-    .bed-cell.reserved { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.25); color: #d97706; }
-    .bed-cell.maintenance { background: rgba(100,116,139,0.08); border-color: rgba(100,116,139,0.25); color: #64748b; }
-    .bed-cell:hover { transform: scale(1.08); }
-    .bed-cell span.material-icons-round { font-size: 16px; }
-
-    /* Doctor Schedule */
-    .doc-schedule-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 11px 14px;
-      background: var(--surface-low);
-      border: 1px solid var(--outline-var);
-      border-radius: var(--radius-md);
-      margin-bottom: 8px;
-    }
-    .doc-avatar-sm { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-light), var(--primary-dark)); display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 0.78rem; flex-shrink: 0; }
-    .doc-name { font-weight: 700; font-size: 0.85rem; }
-    .doc-dept { font-size: 0.75rem; color: var(--on-surface-var); }
-    .doc-slots { margin-left: auto; display: flex; gap: 6px; }
-    .slot-chip { font-size: 0.68rem; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
-    .slot-chip.free { background: rgba(16,185,129,0.1); color: #059669; }
-    .slot-chip.booked { background: rgba(239,68,68,0.1); color: #ef4444; }
-    .slot-chip.break { background: rgba(100,116,139,0.1); color: #64748b; }
-
     /* Appointment Form */
     .appt-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
     .appt-form-row .form-group input,
@@ -108,6 +61,32 @@
 </head>
 
 <body class="app-body">
+
+  <!-- Login Overlay -->
+  <div class="modal-overlay active" id="loginOverlay">
+    <div class="modal-card" style="max-width:400px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Front Desk Access</h3>
+      </div>
+      <div class="modal-body">
+        <div style="text-align:center;margin-bottom:16px;">
+          <img src="assets/hms-logo.jpg" alt="Wellness Medicals" style="width:72px;height:72px;border-radius:50%;object-fit:cover;margin-bottom:8px;" />
+          <h2 style="font-size:1.1rem;font-weight:700;margin:0;">Wellness Medicals</h2>
+          <p style="font-size:0.85rem;color:var(--on-surface-var);margin:4px 0 0 0;">Enter access code to continue</p>
+        </div>
+        <form id="loginForm">
+          <div class="form-group">
+            <label>Access Code</label>
+            <input type="password" id="loginCodeInput" placeholder="Enter code..." autocomplete="off" style="width:100%;background:var(--surface);border:1.5px solid var(--outline-var);padding:12px 14px;border-radius:var(--radius-sm);font-size:1.1rem;text-align:center;letter-spacing:4px;font-weight:700;color:var(--on-surface);" />
+          </div>
+          <p id="loginError" style="display:none;color:#ef4444;font-size:0.82rem;font-weight:600;text-align:center;margin:8px 0 0 0;"></p>
+          <button type="submit" class="btn-primary" style="width:100%;justify-content:center;margin-top:16px;background:var(--primary-light);">
+            <span class="material-icons-round">login</span> Access System
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
 
   <!-- Ambient Background Orbs -->
   <div class="ambient-bg">
@@ -135,10 +114,7 @@
         <span class="material-icons-round">groups</span>
         <span class="nav-label">Patients</span>
       </a>
-      <a href="import.html" class="nav-item" id="nav-import">
-        <span class="material-icons-round">upload_file</span>
-        <span class="nav-label">Import Excel</span>
-      </a>
+
     </nav>
 
     <!-- Techsiah Branding -->
@@ -162,8 +138,8 @@
     <div class="sidebar-user">
       <div class="user-avatar" id="userAvatar">PK</div>
       <div class="user-info">
-        <span class="user-name" id="sidebarUserName">Priya Singh</span>
-        <span class="user-role" id="sidebarUserRole">Head Receptionist</span>
+        <span class="user-name" id="sidebarUserName">Front Desk</span>
+        <span class="user-role" id="sidebarUserRole">Wellness Medicals</span>
       </div>
     </div>
     </div>
@@ -182,7 +158,7 @@
       </button>
       <div class="topbar-search">
         <span class="material-icons-round search-icon">search</span>
-        <input type="text" id="globalSearch" placeholder="Search patients, appointments, bed numbers..." />
+        <input type="text" id="globalSearch" placeholder="Search patients, appointments..." />
       </div>
       <div class="topbar-actions">
         <button class="topbar-btn" id="notifBtn" aria-label="Notifications">
@@ -197,7 +173,7 @@
     <div class="mobile-search-bar" id="mobileSearchBar">
       <div class="topbar-search">
         <span class="material-icons-round search-icon">search</span>
-        <input type="text" id="globalSearchMobile" placeholder="Search patients, appointments, doctors…" />
+        <input type="text" id="globalSearchMobile" placeholder="Search patients, appointments…" />
       </div>
     </div>
 
@@ -234,14 +210,6 @@
             <p class="stat-delta" style="color:#d97706"><span class="material-icons-round">hourglass_empty</span>Avg. 18 min wait</p>
           </div>
         </div>
-        <div class="stat-card" style="--accent:#10b981">
-          <div class="stat-icon-wrap"><span class="material-icons-round">hotel</span></div>
-          <div class="stat-body">
-            <p class="stat-label">Beds Available</p>
-            <h2 class="stat-value counter" data-target="0">0</h2>
-            <p class="stat-delta positive"><span class="material-icons-round">check</span>218/280 occupied</p>
-          </div>
-        </div>
         <div class="stat-card" style="--accent:#0284c7">
           <div class="stat-icon-wrap"><span class="material-icons-round">event_available</span></div>
           <div class="stat-body">
@@ -256,8 +224,7 @@
       <div class="dashboard-tabs">
         <button class="dashboard-tab-btn active" onclick="switchDashboardTab('tab-opd', event)">OPD Queue</button>
         <button class="dashboard-tab-btn" onclick="switchDashboardTab('tab-book', event)">Book Appointment</button>
-        <button class="dashboard-tab-btn" onclick="switchDashboardTab('tab-bed', event)">Bed Allocation</button>
-        <button class="dashboard-tab-btn" onclick="switchDashboardTab('tab-schedule', event)">Doctor Schedule</button>
+
       </div>
 
       <!-- Tab Content Area -->
@@ -389,71 +356,6 @@
           </div>
         </div>
 
-        <!-- TAB 3: Bed Allocation Board -->
-        <div class="dashboard-tab-pane" id="tab-bed">
-          <div class="widget glass-card" id="bed-board">
-            <div class="widget-header">
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span class="material-icons-round" style="color:var(--primary-light)">hotel</span>
-                <h3>Bed Allocation Board</h3>
-              </div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:0.7rem;font-weight:700;">
-                <span style="color:#059669">■ Available</span>
-                <span style="color:#ef4444">■ Occupied</span>
-                <span style="color:#d97706">■ Reserved</span>
-                <span style="color:#64748b">■ Maintenance</span>
-              </div>
-            </div>
-
-            <!-- Ward Tabs -->
-            <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
-              <button class="btn-secondary btn-sm active-ward" id="ward-general" onclick="showWard('general', this)">General</button>
-              <button class="btn-secondary btn-sm" id="ward-icu" onclick="showWard('icu', this)">ICU</button>
-              <button class="btn-secondary btn-sm" id="ward-maternity" onclick="showWard('maternity', this)">Maternity</button>
-              <button class="btn-secondary btn-sm" id="ward-surgery" onclick="showWard('surgery', this)">Surgery</button>
-            </div>
-
-            <div id="bedGrid" class="bed-grid" style="margin-top: 14px;">
-              <!-- Dynamically rendered -->
-            </div>
-
-            <!-- Bed Status Summary -->
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px;text-align:center;">
-              <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:var(--radius-sm);padding:8px;">
-                <div style="font-size:1.1rem;font-weight:800;color:#059669" id="bedAvailCount">0</div>
-                <div style="font-size:0.7rem;color:var(--on-surface-var)">Available</div>
-              </div>
-              <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:8px;">
-                <div style="font-size:1.1rem;font-weight:800;color:#ef4444" id="bedOccupCount">0</div>
-                <div style="font-size:0.7rem;color:var(--on-surface-var)">Occupied</div>
-              </div>
-              <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:var(--radius-sm);padding:8px;">
-                <div style="font-size:1.1rem;font-weight:800;color:#d97706" id="bedResCount">0</div>
-                <div style="font-size:0.7rem;color:var(--on-surface-var)">Reserved</div>
-              </div>
-              <div style="background:rgba(100,116,139,0.08);border:1px solid rgba(100,116,139,0.2);border-radius:var(--radius-sm);padding:8px;">
-                <div style="font-size:1.1rem;font-weight:800;color:#64748b" id="bedMaintCount">0</div>
-                <div style="font-size:0.7rem;color:var(--on-surface-var)">Maintenance</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- TAB 4: Doctor Schedule -->
-        <div class="dashboard-tab-pane" id="tab-schedule">
-          <div class="widget glass-card" id="schedule">
-            <div class="widget-header">
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span class="material-icons-round" style="color:var(--primary-light)">calendar_today</span>
-                <h3>Doctors On-Duty Today</h3>
-              </div>
-              <span style="font-size:0.75rem;color:var(--on-surface-var);" id="currentTime"></span>
-            </div>
-            <div id="doctorScheduleList" style="margin-top:12px;max-height:300px;overflow-y:auto;">
-              <!-- Dynamically rendered -->
-            </div>
-          </div>
-        </div>
       </div>
     </main>
   </div>
@@ -518,12 +420,8 @@
     </div>
   </div>
 
-  <!-- Firebase Compat SDK (v9 compat build – works with CDN, no bundler needed) -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <!-- HMS Firebase Config + API Layer -->
-  <script src="js/firebase-config.js"></script>
-  <script src="js/firebase-api.js"></script>
+  <!-- HMS Sheets API Layer -->
+  <script src="js/sheets-api.js"></script>
   <script src="js/app.js"></script>
   <script src="js/reception-dashboard.js"></script>
 </body>

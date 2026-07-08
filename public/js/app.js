@@ -1,35 +1,84 @@
 'use strict';
 
-// Setup default session for the receptionist
-if (!sessionStorage.getItem('hms_session')) {
-  sessionStorage.setItem('hms_session', JSON.stringify({
-    uid: "mock-reception-id",
-    email: "reception@wellness.com",
-    name: "Priya Singh",
-    title: "Head Receptionist",
-    phone: "9876543214",
-    role: "Staff",
-    token: "mock-token",
-    redirect: "index.html"
-  }));
-}
+window.esc = function(s) {
+  if (s == null) return '';
+  var div = document.createElement('div');
+  div.appendChild(document.createTextNode(String(s)));
+  return div.innerHTML;
+};
+
+var AUTH_DURATION_MS = 12 * 60 * 60 * 1000;
 
 window.HMS = {
-  getUser() {
-    try { return JSON.parse(sessionStorage.getItem('hms_session') || 'null'); }
-    catch (_) { return null; }
+  isAuthenticated() {
+    var stored = localStorage.getItem('hms_auth');
+    if (!stored) return false;
+    try {
+      var parsed = JSON.parse(stored);
+      if (parsed.code === 'WMP01' && Date.now() - parsed.timestamp < AUTH_DURATION_MS) {
+        return true;
+      }
+    } catch (_) {}
+    localStorage.removeItem('hms_auth');
+    return false;
   },
-  setUser(user) { sessionStorage.setItem('hms_session', JSON.stringify(user)); },
+  login(code) {
+    if (code === 'WMP01') {
+      localStorage.setItem('hms_auth', JSON.stringify({ code: 'WMP01', timestamp: Date.now() }));
+      return true;
+    }
+    return false;
+  },
   logout() {
-    sessionStorage.removeItem('hms_session');
-    location.href = 'index.html';
+    localStorage.removeItem('hms_auth');
+    location.reload();
   },
   requireAuth() {
-    return this.getUser();
+    return this.isAuthenticated();
   }
 };
 const HMS = window.HMS;
 window.HMS_READY = Promise.resolve();
+/* --- Code-based Login --- */
+function initLoginOverlay() {
+  var overlay = document.getElementById('loginOverlay');
+  if (!overlay) return;
+
+  if (HMS.isAuthenticated()) {
+    overlay.classList.remove('active');
+    return;
+  }
+
+  overlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+
+  var input = document.getElementById('loginCodeInput');
+  var error = document.getElementById('loginError');
+  var form = document.getElementById('loginForm');
+
+  if (!form || !input) return;
+
+  form.onsubmit = function(e) {
+    e.preventDefault();
+    var code = input.value.trim();
+    if (HMS.login(code)) {
+      overlay.classList.remove('active');
+      document.body.style.overflow = '';
+      input.value = '';
+      if (error) error.style.display = 'none';
+    } else {
+      if (error) {
+        error.textContent = 'Invalid code. Please try again.';
+        error.style.display = 'block';
+      }
+      input.value = '';
+      input.focus();
+    }
+  };
+
+  input.focus();
+}
+
 window.addConsoleLog = function addConsoleLog(type, msg) {
   if (typeof console !== 'undefined') console.log('[' + type + '] ' + msg);
 };
@@ -173,20 +222,12 @@ function initNotifications() {
 }
 
 function initPortalTheme() {
-  const user = HMS.getUser();
-  if (!user) return;
-  const role = user.role;
-  document.body.classList.remove('portal-admin', 'portal-doctor', 'portal-pharmacy', 'portal-lab', 'portal-reception');
-  if (role === 'Admin') document.body.classList.add('portal-admin');
-  else if (role === 'Doctor') document.body.classList.add('portal-doctor');
-  else if (role === 'Pharmacist') document.body.classList.add('portal-pharmacy');
-  else if (role === 'Lab Tech') document.body.classList.add('portal-lab');
-  else document.body.classList.add('portal-reception');
+  document.body.classList.remove('portal-admin', 'portal-doctor', 'portal-pharmacy', 'portal-lab');
+  document.body.classList.add('portal-reception');
 }
 
 function initUserDisplay() {
-  const user = HMS.getUser();
-  if (!user) return;
+  if (!HMS.isAuthenticated()) return;
 
   /* Load portals.css if not already loaded */
   if (!document.getElementById('portals-stylesheet')) {
@@ -197,23 +238,17 @@ function initUserDisplay() {
     document.head.appendChild(link);
   }
 
-  const nameEl = document.getElementById('sidebarUserName');
-  const roleEl = document.getElementById('sidebarUserRole');
   const avatarEl = document.getElementById('userAvatar');
   const topbarAvatarEl = document.getElementById('topbarAvatar');
-  const initials = (user.name || 'User').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  if (nameEl) nameEl.textContent = user.name || 'User';
-  if (roleEl) roleEl.textContent = user.title ? `${user.title} Â· ${user.role}` : user.role;
-  if (avatarEl) avatarEl.textContent = initials;
-  if (topbarAvatarEl) topbarAvatarEl.textContent = initials;
+  if (avatarEl) avatarEl.textContent = 'FD';
+  if (topbarAvatarEl) topbarAvatarEl.textContent = 'FD';
+
+  const nameEl = document.getElementById('sidebarUserName');
+  const roleEl = document.getElementById('sidebarUserRole');
+  if (nameEl) nameEl.textContent = 'Front Desk';
+  if (roleEl) roleEl.textContent = 'Wellness Medicals';
 
   initPortalTheme();
-
-  /* Render dynamic sidebar nav */
-  if (typeof renderSidebarNav === 'function') {
-    const currentPath = window.location.pathname.replace(/\.html$/, '');
-    renderSidebarNav(user.role, currentPath);
-  }
 }
 
 
@@ -229,8 +264,7 @@ function initGreeting() {
   if (!el) return;
   const h = new Date().getHours();
   const g = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
-  const user = HMS.getUser();
-  el.textContent = `${g}, ${user ? user.name.split(' ')[0] : 'User'}! Welcome to your workspace.`;
+  el.textContent = `${g}! Welcome to Front Desk.`;
 }
 
 function switchTab(btn, tabId) {
@@ -349,7 +383,21 @@ function sfExecutePortalClear(prefix) {
   else if (prefix === 'admin') { if (typeof clearAdminFilter === 'function') clearAdminFilter(); }
 }
 
+function checkApiReady() {
+  if (!SHEETS_API_URL) {
+    var body = document.querySelector('.page-body') || document.querySelector('main') || document.body;
+    if (body) {
+      body.innerHTML = '<div style="text-align:center;padding:80px 20px;"><span class="material-icons-round" style="font-size:64px;color:var(--error,#ef4444);margin-bottom:16px;">cloud_off</span><h2>API Not Configured</h2><p style="color:var(--on-surface-var);max-width:500px;margin:12px auto;">Set <code style="background:var(--surface-low);padding:2px 8px;border-radius:4px;">SHEETS_API_URL</code> in <code style="background:var(--surface-low);padding:2px 8px;border-radius:4px;">public/js/sheets-api.js</code> to your Apps Script deployment URL.</p><a href="scripts/README.md" style="color:var(--primary-light);font-weight:600;">See setup guide</a></div>';
+    }
+    return false;
+  }
+  return true;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  initLoginOverlay();
+  if (!HMS.isAuthenticated()) return;
+  if (!checkApiReady()) return;
   initSidebar();
   initNotifications();
   initUserDisplay();

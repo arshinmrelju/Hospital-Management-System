@@ -15,6 +15,32 @@
   <link rel="stylesheet" href="css/patients.css" />
 </head>
 <body class="app-body">
+  <!-- Login Overlay -->
+  <div class="modal-overlay active" id="loginOverlay">
+    <div class="modal-card" style="max-width:400px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Front Desk Access</h3>
+      </div>
+      <div class="modal-body">
+        <div style="text-align:center;margin-bottom:16px;">
+          <img src="assets/hms-logo.jpg" alt="Wellness Medicals" style="width:72px;height:72px;border-radius:50%;object-fit:cover;margin-bottom:8px;" />
+          <h2 style="font-size:1.1rem;font-weight:700;margin:0;">Wellness Medicals</h2>
+          <p style="font-size:0.85rem;color:var(--on-surface-var);margin:4px 0 0 0;">Enter access code to continue</p>
+        </div>
+        <form id="loginForm">
+          <div class="form-group">
+            <label>Access Code</label>
+            <input type="password" id="loginCodeInput" placeholder="Enter code..." autocomplete="off" style="width:100%;background:var(--surface);border:1.5px solid var(--outline-var);padding:12px 14px;border-radius:var(--radius-sm);font-size:1.1rem;text-align:center;letter-spacing:4px;font-weight:700;color:var(--on-surface);" />
+          </div>
+          <p id="loginError" style="display:none;color:#ef4444;font-size:0.82rem;font-weight:600;text-align:center;margin:8px 0 0 0;"></p>
+          <button type="submit" class="btn-primary" style="width:100%;justify-content:center;margin-top:16px;background:var(--primary-light);">
+            <span class="material-icons-round">login</span> Access System
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- Ambient Background -->
   <div class="ambient-bg">
     <div class="orb orb-1"></div>
@@ -35,10 +61,7 @@
         <span class="material-icons-round">groups</span>
         <span class="nav-label">Patients</span>
       </a>
-      <a href="import.html" class="nav-item" id="nav-import">
-        <span class="material-icons-round">upload_file</span>
-        <span class="nav-label">Import Excel</span>
-      </a>
+
     </nav>
     <!-- Techsiah Branding -->
     <a href="https://techsiah.web.app" target="_blank" class="techsiah-badge">
@@ -59,7 +82,7 @@
     </a>
     <div class="sidebar-user">
       <div class="user-avatar" id="userAvatar">PK</div>
-      <div class="user-info"><span class="user-name" id="sidebarUserName">Priya Singh</span><span class="user-role" id="sidebarUserRole">Head Receptionist</span></div>
+      <div class="user-info"><span class="user-name" id="sidebarUserName">Front Desk</span><span class="user-role" id="sidebarUserRole">Wellness Medicals</span></div>
     </div>
   </aside>
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -93,10 +116,6 @@
           <p class="page-sub">Showing <span id="patientCount">0</span> registered patients</p>
         </div>
         <div style="display:flex;gap:10px;align-items:center;">
-          <a href="import.html" class="btn-secondary" style="text-decoration:none;gap:6px;display:inline-flex;align-items:center;height:42px;padding:0 16px;border-radius:10px;font-weight:600;font-size:0.85rem;border:1px solid var(--outline);color:var(--text);background:var(--surface-mid);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--outline)'">
-            <span class="material-icons-round" style="font-size:20px;color:var(--primary)">upload_file</span>
-            Import Excel
-          </a>
           <button class="btn-primary" id="addPatientBtn" onclick="openModal('addPatientModal')">
             <span class="material-icons-round">person_add</span> Add Patient
           </button>
@@ -213,14 +232,7 @@
             <button class="page-btn" id="nextPage" onclick="changePage(1)"><span class="material-icons-round">chevron_right</span></button>
           </div>
         </div>
-        <!-- Load More from Firestore -->
-        <div id="loadMoreBar" style="display:none;text-align:center;padding:14px 0;">
-          <button id="loadMoreBtn" class="btn-secondary" onclick="loadMorePatients()" style="gap:8px;display:inline-flex;align-items:center;">
-            <span class="material-icons-round">expand_more</span>
-            Load More Patients
-          </button>
-          <span id="loadMoreInfo" style="display:block;margin-top:6px;font-size:0.75rem;color:var(--on-surface-var);"></span>
-        </div>
+
       </div>
     </main>
   </div>
@@ -326,12 +338,8 @@
     </div>
   </div>
 
-  <!-- Firebase Compat SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <!-- HMS Firebase Config + API Layer -->
-  <script src="js/firebase-config.js"></script>
-  <script src="js/firebase-api.js"></script>
+  <!-- HMS Sheets API Layer -->
+  <script src="js/sheets-api.js"></script>
   <script src="js/app.js"></script>
   <script src="js/patients.js"></script>
 </body>
