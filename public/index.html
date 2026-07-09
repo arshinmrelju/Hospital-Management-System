@@ -163,12 +163,16 @@
         <span class="material-icons-round">dashboard</span>
         <span class="nav-label">Dashboard</span>
       </a>
-      <a href="#" class="nav-item" id="nav-patients" onclick="switchPage('patients');return false">
-        <span class="material-icons-round">groups</span>
-        <span class="nav-label">Patients</span>
-      </a>
+<a href="#" class="nav-item" id="nav-patients" onclick="switchPage('patients');return false">
+            <span class="material-icons-round">groups</span>
+            <span class="nav-label">Patients</span>
+          </a>
+          <a href="admin.html" class="nav-item" id="nav-admin">
+            <span class="material-icons-round">admin_panel_settings</span>
+            <span class="nav-label">Admin</span>
+          </a>
 
-    </nav>
+        </nav>
 
     <!-- Techsiah Branding -->
     <a href="https://techsiah.web.app" target="_blank" class="techsiah-badge">
@@ -404,9 +408,7 @@
                 <div class="form-group">
                   <label>Select Doctor</label>
                   <select id="apptDoctor">
-                    <option>Dr. Rajesh Sharma (Cardiology)</option>
-                    <option>Dr. Anita Patel (Pediatrics)</option>
-                    <option>Dr. Sunil Verma (Orthopedics)</option>
+                    <option>Select a doctor...</option>
                   </select>
                 </div>
                 <div class="form-group">
@@ -474,12 +476,6 @@
           <div class="filter-selects">
             <select id="deptFilter" onchange="filterPatients()" class="filter-select">
               <option value="">All Departments</option>
-              <option>Cardiology</option>
-              <option>Pediatrics</option>
-              <option>Orthopedics</option>
-              <option>Oncology</option>
-              <option>Neurology</option>
-              <option>General Surgery</option>
             </select>
             <select id="statusFilter" onchange="filterPatients()" class="filter-select">
               <option value="">All Status</option>
@@ -661,7 +657,7 @@
         </div>
         <div class="form-row-2">
           <div class="form-group"><label>Department *</label>
-            <select id="pDept" required><option value="">Select</option><option>Cardiology</option><option>Pediatrics</option><option>Orthopedics</option><option>Oncology</option><option>Neurology</option><option>General Surgery</option></select>
+            <select id="pDept" required><option value="">Select</option></select>
           </div>
           <div class="form-group"><label>Admission Type *</label>
             <select id="pType" required><option value="">Select</option><option>Admitted</option><option>Outpatient</option></select>
@@ -704,7 +700,7 @@
         </div>
         <div class="form-row-2">
           <div class="form-group"><label>Department *</label>
-            <select id="editDept" required><option value="">Select</option><option>Cardiology</option><option>Pediatrics</option><option>Orthopedics</option><option>Oncology</option><option>Neurology</option><option>General Surgery</option></select>
+            <select id="editDept" required><option value="">Select</option></select>
           </div>
           <div class="form-group"><label>Admission Type *</label>
             <select id="editType" required><option value="">Select</option><option>Admitted</option><option>Outpatient</option></select>

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Admin Portal – Wellness Medicals HMS</title>
+  <link rel="icon" type="image/jpeg" href="assets/hms-logo.jpg">
+  <meta name="description" content="Admin portal: manage doctors, departments, and system settings." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" media="print" onload="this.media='all';this.onload=null" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/portals.css" />
+  <link rel="stylesheet" href="css/patients.css" />
+  <style>
+    :root { --admin-accent: #3B82F6; --admin-soft: rgba(59, 130, 246, 0.10); }
+    body.portal-admin .nav-item.active { background: var(--admin-soft) !important; color: var(--admin-accent) !important; }
+    body.portal-admin .nav-item.active::before { background: var(--admin-accent) !important; }
+    body.portal-admin .user-avatar { background: linear-gradient(135deg, var(--admin-accent), #1D4ED8) !important; }
+    body.portal-admin .btn-primary { background: var(--admin-accent); box-shadow: 0 2px 12px rgba(59, 130, 246, 0.30); }
+    body.portal-admin .btn-primary:hover { background: #2563EB; }
+    body.portal-admin .btn-secondary { color: var(--admin-accent); border-color: rgba(59, 130, 246, 0.25); background: var(--admin-soft); }
+    body.portal-admin .sidebar-nav .nav-item:hover:not(.active) { color: var(--admin-accent) !important; }
+    .admin-tab-bar { display: flex; gap: 4px; margin-bottom: 24px; background: var(--surface-mid); border-radius: var(--radius-lg); padding: 4px; }
+    .admin-tab { flex: 1; padding: 10px 16px; border: none; border-radius: var(--radius-md); font-weight: 600; font-size: 0.85rem; color: var(--on-surface-var); cursor: pointer; background: transparent; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .admin-tab.active { background: #fff; color: var(--admin-accent); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .admin-tab-pane { display: none; }
+    .admin-tab-pane.active { display: block; }
+    .admin-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 20px; }
+    .admin-stat, .admin-stat-card { padding: 16px 20px; background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: var(--glass-border); border-radius: var(--radius-lg); }
+    .admin-stat-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--on-surface-var); }
+    .admin-stat-value { font-size: 1.5rem; font-weight: 800; font-family: var(--font-head); color: var(--on-surface); margin-top: 2px; }
+    .admin-table-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .admin-search { display: flex; align-items: center; gap: 8px; background: var(--surface-low); border: 1.5px solid var(--outline-var); border-radius: var(--radius-full); padding: 6px 14px; flex: 1; max-width: 360px; }
+    .admin-search input { border: none; background: transparent; font-size: 0.85rem; flex: 1; color: var(--on-surface); }
+    .admin-search input::placeholder { color: var(--outline); }
+    .admin-search:focus-within { border-color: var(--admin-accent); box-shadow: 0 0 0 3px var(--admin-soft); }
+    .empty-state { text-align: center; padding: 48px 20px; color: var(--on-surface-var); }
+    .empty-state .material-icons-round { font-size: 48px; color: var(--outline-var); margin-bottom: 12px; }
+    .doctor-avatar-sm { width: 36px; height: 36px; border-radius: 50%; background: var(--admin-soft); color: var(--admin-accent); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.82rem; flex-shrink: 0; }
+    .doctor-cell { display: flex; align-items: center; gap: 10px; }
+    .badge-status.inactive, .badge-status.off { background: rgba(107,114,128,0.12); color: #6B7280; }
+  </style>
+</head>
+
+<body class="app-body portal-admin">
+
+  <div id="pageLoader">
+    <div class="loader-glass">
+      <div class="loader-logo-wrap">
+        <div class="loader-logo-ring">
+          <img src="assets/hms-logo.jpg" alt="Wellness Medicals" />
+        </div>
+      </div>
+      <div class="loader-heartbeat">
+        <svg width="120" height="40" viewBox="0 0 120 40" fill="none">
+          <path class="heartbeat-path" d="M0 20 H40 L45 10 L50 30 L55 15 L60 25 L65 20 H120" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h2 class="loader-title">Wellness Medicals</h2>
+      <p class="loader-subtitle">Hospital Management System</p>
+      <p class="loader-msg" id="loaderMsg">Initializing admin panel...</p>
+      <div class="loader-dots"><div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div></div>
+    </div>
+  </div>
+
+  <!-- Login Overlay -->
+  <div class="modal-overlay active" id="loginOverlay" style="background:linear-gradient(135deg, rgba(30,58,138,0.72) 0%, rgba(59,130,246,0.48) 100%);backdrop-filter:blur(18px);">
+    <div style="width:100%;max-width:400px;background:rgba(255,255,255,0.97);border-radius:28px;box-shadow:0 32px 80px rgba(30,58,138,0.28),0 0 0 1.5px rgba(59,130,246,0.18);overflow:hidden;animation:modalIn 0.36s cubic-bezier(0.34,1.56,0.64,1);">
+      <div style="background:linear-gradient(135deg,#1E3A8A 0%,#3B82F6 60%,#60A5FA 100%);padding:36px 32px 28px;text-align:center;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.06);pointer-events:none;"></div>
+        <div style="position:absolute;bottom:-20px;left:-20px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,0.05);pointer-events:none;"></div>
+        <div style="width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,0.15);border:3px solid rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 0 0 6px rgba(255,255,255,0.08);">
+          <img src="assets/hms-logo.jpg" alt="Wellness Medicals" style="width:64px;height:64px;border-radius:50%;object-fit:cover;display:block;" />
+        </div>
+        <h2 style="color:#fff;font-family:var(--font-head);font-size:1.25rem;font-weight:800;margin:0 0 4px;letter-spacing:-0.01em;">Wellness Medicals</h2>
+        <p style="color:rgba(255,255,255,0.78);font-size:0.82rem;margin:0;font-weight:500;">Admin · Management Portal</p>
+      </div>
+      <div style="padding:28px 32px 32px;">
+        <p style="text-align:center;font-size:0.82rem;color:var(--on-surface-var);margin:0 0 20px;line-height:1.5;">Enter your admin access code to continue.</p>
+        <form id="loginForm">
+          <div style="position:relative;margin-bottom:6px;">
+            <span class="material-icons-round" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--admin-accent);pointer-events:none;">lock</span>
+            <input type="password" id="loginCodeInput" placeholder="● ● ● ● ●" autocomplete="off"
+              style="width:100%;background:var(--surface-low);border:2px solid var(--outline-var);border-radius:var(--radius-md);padding:13px 14px 13px 44px;font-size:1.15rem;text-align:left;letter-spacing:5px;font-weight:700;color:var(--on-surface);transition:border-color 0.2s,box-shadow 0.2s;box-sizing:border-box;"
+              onfocus="this.style.borderColor='#3B82F6';this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.15)'"
+              onblur="this.style.borderColor='var(--outline-var)';this.style.boxShadow='none'" />
+          </div>
+          <p id="loginError" style="display:none;color:#ef4444;font-size:0.78rem;font-weight:600;text-align:center;margin:8px 0 0;padding:8px 12px;background:rgba(239,68,68,0.08);border-radius:var(--radius-sm);"></p>
+          <button type="submit" id="loginBtn"
+            style="width:100%;margin-top:18px;background:linear-gradient(135deg,#1E3A8A,#3B82F6);color:#fff;border:none;border-radius:var(--radius-md);padding:14px 20px;font-family:var(--font-body);font-size:0.95rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 6px 24px rgba(59,130,246,0.35);transition:all 0.2s;letter-spacing:0.02em;"
+            onmouseover="this.style.background='linear-gradient(135deg,#1E40AF,#2563EB)';this.style.transform='translateY(-1px)';this.style.boxShadow='0 10px 32px rgba(59,130,246,0.45)'"
+            onmouseout="this.style.background='linear-gradient(135deg,#1E3A8A,#3B82F6)';this.style.transform='translateY(0)';this.style.boxShadow='0 6px 24px rgba(59,130,246,0.35)'">
+            <span class="material-icons-round" style="font-size:18px;">login</span>
+            Access Admin Panel
+          </button>
+        </form>
+        <p style="text-align:center;margin:18px 0 0;font-size:0.72rem;color:var(--outline);">Wellness Medicals HMS · <span style="color:var(--admin-accent);font-weight:600;">Admin</span></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img src="assets/hms-logo.jpg" alt="Wellness Medicals Logo" class="brand-icon" />
+      <div class="brand-text">
+        <span class="brand-title">Wellness</span>
+        <span class="brand-sub">Medicals HMS</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav">
+      <a href="#" class="nav-item active" id="nav-doctors" onclick="switchAdminTab('tab-doctors', this);return false">
+        <span class="material-icons-round">local_hospital</span>
+        <span class="nav-label">Doctors</span>
+      </a>
+      <a href="#" class="nav-item" id="nav-departments" onclick="switchAdminTab('tab-departments', this);return false">
+        <span class="material-icons-round">business</span>
+        <span class="nav-label">Departments</span>
+      </a>
+      <div class="nav-divider"></div>
+      <a href="index.html" class="nav-item">
+        <span class="material-icons-round">arrow_back</span>
+        <span class="nav-label">Back to Reception</span>
+      </a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="userAvatar">AD</div>
+      <div class="user-info">
+        <span class="user-name" id="sidebarUserName">Admin</span>
+        <span class="user-role" id="sidebarUserRole">Wellness Medicals</span>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()" title="Logout">
+        <span class="material-icons-round">logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+        <span class="material-icons-round">menu</span>
+      </button>
+      <div class="topbar-search" style="visibility:hidden;">
+        <span class="material-icons-round search-icon">search</span>
+        <input type="text" placeholder="Search..." />
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-avatar" id="topbarAvatar">AD</div>
+      </div>
+    </header>
+
+    <main class="page-body">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Admin Management</h1>
+          <p class="page-sub" id="adminGreeting">Manage doctors, departments, and system settings.</p>
+        </div>
+        <div class="header-actions">
+          <span class="date-badge" id="todayDate"></span>
+        </div>
+      </div>
+
+      <!-- Admin Stats -->
+      <div class="admin-stats" id="adminStats">
+        <div class="admin-stat-card">
+          <div class="admin-stat-label">Total Doctors</div>
+          <div class="admin-stat-value" id="statDoctors">0</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="admin-stat-label">Available Doctors</div>
+          <div class="admin-stat-value" id="statAvailable">0</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="admin-stat-label">Departments</div>
+          <div class="admin-stat-value" id="statDepartments">0</div>
+        </div>
+      </div>
+
+      <!-- Tab Bar -->
+      <div class="admin-tab-bar">
+        <button class="admin-tab active" onclick="switchAdminTab('tab-doctors',this)">
+          <span class="material-icons-round">local_hospital</span> Doctors
+        </button>
+        <button class="admin-tab" onclick="switchAdminTab('tab-departments',this)">
+          <span class="material-icons-round">business</span> Departments
+        </button>
+      </div>
+
+      <!-- Doctors Tab -->
+      <div class="admin-tab-pane active" id="tab-doctors">
+        <div class="admin-table-toolbar">
+          <div class="admin-search">
+            <span class="material-icons-round" style="font-size:18px;color:var(--outline)">search</span>
+            <input type="text" id="doctorSearch" placeholder="Search doctors..." oninput="filterDoctors()" />
+          </div>
+          <button class="btn-primary btn-sm" onclick="openAddDoctorModal()">
+            <span class="material-icons-round">person_add</span> Add Doctor
+          </button>
+        </div>
+        <div class="widget glass-card table-widget">
+          <div class="table-scroll">
+            <table class="data-table" id="doctorTable">
+              <thead>
+                <tr>
+                  <th>Doctor</th>
+                  <th>Department</th>
+                  <th>Qualification</th>
+                  <th>Contact</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="doctorTableBody">
+                <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--on-surface-var)">Loading doctors...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Departments Tab -->
+      <div class="admin-tab-pane" id="tab-departments">
+        <div class="admin-table-toolbar">
+          <div class="admin-search">
+            <span class="material-icons-round" style="font-size:18px;color:var(--outline)">search</span>
+            <input type="text" id="deptSearch" placeholder="Search departments..." oninput="filterDepartments()" />
+          </div>
+          <button class="btn-primary btn-sm" onclick="openAddDeptModal()">
+            <span class="material-icons-round">add_business</span> Add Department
+          </button>
+        </div>
+        <div class="widget glass-card table-widget">
+          <div class="table-scroll">
+            <table class="data-table" id="deptTable">
+              <thead>
+                <tr>
+                  <th>Department</th>
+                  <th>Description</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="deptTableBody">
+                <tr><td colspan="4" style="text-align:center;padding:32px;color:var(--on-surface-var)">Loading departments...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <div id="toastContainer"></div>
+
+  <!-- Add Doctor Modal -->
+  <div class="modal-overlay" id="addDoctorModal" onclick="closeModal(event,'addDoctorModal')">
+    <div class="modal glass-card">
+      <div class="modal-header">
+        <h2>Add New Doctor</h2>
+        <button class="modal-close" onclick="closeModal(null,'addDoctorModal')"><span class="material-icons-round">close</span></button>
+      </div>
+      <form id="addDoctorForm" class="modal-form" onsubmit="submitAddDoctor(event)">
+        <div class="form-row-2">
+          <div class="form-group"><label>Full Name *</label><input type="text" id="docName" required /></div>
+          <div class="form-group"><label>Initials *</label><input type="text" id="docInitials" placeholder="e.g. RS" required /></div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Department *</label><select id="docDept" required><option value="">Select</option></select></div>
+          <div class="form-group"><label>Qualification</label><input type="text" id="docQual" placeholder="e.g. MD, DM Cardiology" /></div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Phone</label><input type="tel" id="docPhone" /></div>
+          <div class="form-group"><label>Email</label><input type="email" id="docEmail" /></div>
+        </div>
+        <div class="form-group"><label>Status</label>
+          <select id="docStatus">
+            <option value="available">Available</option>
+            <option value="busy">Busy</option>
+            <option value="off">Off Duty</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal(null,'addDoctorModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Add Doctor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Doctor Modal -->
+  <div class="modal-overlay" id="editDoctorModal" onclick="closeModal(event,'editDoctorModal')">
+    <div class="modal glass-card">
+      <div class="modal-header">
+        <h2 id="editDoctorTitle">Edit Doctor</h2>
+        <button class="modal-close" onclick="closeModal(null,'editDoctorModal')"><span class="material-icons-round">close</span></button>
+      </div>
+      <form id="editDoctorForm" class="modal-form" onsubmit="submitEditDoctor(event)">
+        <input type="hidden" id="editDocId" />
+        <div class="form-row-2">
+          <div class="form-group"><label>Full Name *</label><input type="text" id="editDocName" required /></div>
+          <div class="form-group"><label>Initials *</label><input type="text" id="editDocInitials" required /></div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Department *</label><select id="editDocDept" required><option value="">Select</option></select></div>
+          <div class="form-group"><label>Qualification</label><input type="text" id="editDocQual" /></div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Phone</label><input type="tel" id="editDocPhone" /></div>
+          <div class="form-group"><label>Email</label><input type="email" id="editDocEmail" /></div>
+        </div>
+        <div class="form-group"><label>Status</label>
+          <select id="editDocStatus">
+            <option value="available">Available</option>
+            <option value="busy">Busy</option>
+            <option value="off">Off Duty</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal(null,'editDoctorModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Department Modal -->
+  <div class="modal-overlay" id="addDeptModal" onclick="closeModal(event,'addDeptModal')">
+    <div class="modal glass-card">
+      <div class="modal-header">
+        <h2>Add New Department</h2>
+        <button class="modal-close" onclick="closeModal(null,'addDeptModal')"><span class="material-icons-round">close</span></button>
+      </div>
+      <form id="addDeptForm" class="modal-form" onsubmit="submitAddDept(event)">
+        <div class="form-group"><label>Department Name *</label><input type="text" id="deptName" required /></div>
+        <div class="form-group"><label>Description</label><textarea id="deptDesc" rows="2" placeholder="Brief description of the department"></textarea></div>
+        <div class="form-group"><label>Status</label>
+          <select id="deptStatus">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal(null,'addDeptModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Add Department</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Department Modal -->
+  <div class="modal-overlay" id="editDeptModal" onclick="closeModal(event,'editDeptModal')">
+    <div class="modal glass-card">
+      <div class="modal-header">
+        <h2 id="editDeptTitle">Edit Department</h2>
+        <button class="modal-close" onclick="closeModal(null,'editDeptModal')"><span class="material-icons-round">close</span></button>
+      </div>
+      <form id="editDeptForm" class="modal-form" onsubmit="submitEditDept(event)">
+        <input type="hidden" id="editDeptId" />
+        <div class="form-group"><label>Department Name *</label><input type="text" id="editDeptName" required /></div>
+        <div class="form-group"><label>Description</label><textarea id="editDeptDesc" rows="2"></textarea></div>
+        <div class="form-group"><label>Status</label>
+          <select id="editDeptStatus">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal(null,'editDeptModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/sheets-api.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+
+</html>

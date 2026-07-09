@@ -1,6 +1,6 @@
 'use strict';
 
-var SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbzFilVn6zNBwMk4Tboaqh7IAkG_jx50Djk8_N_ScyKS5Xvz5U7hE8S-RmPJ7iGG4ZDI0Q/exec';
+var SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbwADFT-ngCU-uvcm_xjykk2pjHy5MFjZyoMJ_hpyBTpWCr_fl6BN9JSIgwZo6r0DLMDmA/exec';
 
 var _patientsCache = null;
 var _appointmentsCache = null;
@@ -374,6 +374,63 @@ window.API = {
         ], fallback: true };
       }
     });
+  },
+
+  createDoctor: function(data) {
+    var q = { action: 'createDoctor' };
+    ['name','initials','dept','phone','email','qualification','status'].forEach(function(k) {
+      if (data[k]) q[k] = data[k];
+    });
+    return sheetsFetch(q);
+  },
+
+  updateDoctor: function(id, data) {
+    var q = { action: 'updateDoctor', id: id };
+    for (var k in data) {
+      if (data.hasOwnProperty(k)) q[k] = data[k];
+    }
+    return sheetsFetch(q);
+  },
+
+  deleteDoctor: function(id) {
+    return sheetsFetch({ action: 'deleteDoctor', id: id });
+  },
+
+  getDepartments: function() {
+    return sheetsFetch({ action: 'getDepartments' }).then(function(resp) {
+      if (resp.success && resp.data) {
+        return resp;
+      } else {
+        return { success: true, data: [
+          { id: 'DEP001', name: 'Cardiology', description: 'Heart and cardiovascular system', status: 'active' },
+          { id: 'DEP002', name: 'Pediatrics', description: 'Medical care for infants, children, and adolescents', status: 'active' },
+          { id: 'DEP003', name: 'Orthopedics', description: 'Musculoskeletal system', status: 'active' },
+          { id: 'DEP004', name: 'Oncology', description: 'Cancer diagnosis and treatment', status: 'active' },
+          { id: 'DEP005', name: 'Neurology', description: 'Nervous system disorders', status: 'active' },
+          { id: 'DEP006', name: 'General Surgery', description: 'Surgical procedures', status: 'active' }
+        ], fallback: true };
+      }
+    });
+  },
+
+  createDepartment: function(data) {
+    var q = { action: 'createDepartment' };
+    ['name','description','status'].forEach(function(k) {
+      if (data[k]) q[k] = data[k];
+    });
+    return sheetsFetch(q);
+  },
+
+  updateDepartment: function(id, data) {
+    var q = { action: 'updateDepartment', id: id };
+    for (var k in data) {
+      if (data.hasOwnProperty(k)) q[k] = data[k];
+    }
+    return sheetsFetch(q);
+  },
+
+  deleteDepartment: function(id) {
+    return sheetsFetch({ action: 'deleteDepartment', id: id });
   },
 
   getSchedules: function() {

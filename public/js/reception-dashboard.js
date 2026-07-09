@@ -244,20 +244,9 @@ function openNewPatient() {
 
 /* --- Populate Doctor Dropdown in Check-In Modal --- */
 function populateDoctorDropdown() {
-  var sel = document.getElementById('ciDoctor');
-  if (!sel) return;
-
-  window.API.getDoctors({ limit: 100 }).then(function (res) {
-    var list = (res && res.data) ? res.data : [];
-    sel.innerHTML = list.length
-      ? list.map(function (d) {
-        var name = d.name || d.doctor_name || d.firstName + ' ' + d.lastName || 'Unknown';
-        return '<option value="' + esc(d.id || name) + '">Dr. ' + esc(name) + '</option>';
-      }).join('')
-      : '<option value="unassigned">Unassigned / Walk-in</option>';
-  }).catch(function () {
-    sel.innerHTML = '<option value="unassigned">Unassigned / Walk-in</option>';
-  });
+  if (typeof window.populateDoctorDropdowns === 'function') {
+    window.populateDoctorDropdowns();
+  }
 }
 
 /* --- Open Check-In Modal --- */
@@ -516,4 +505,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
 
   initCheckinAutocomplete();
+
+  // Populate dynamic dropdowns
+  if (typeof window.populateAllDropdowns === 'function') window.populateAllDropdowns();
 });

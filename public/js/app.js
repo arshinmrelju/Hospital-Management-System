@@ -495,6 +495,50 @@ window.switchDashboardTab = function(tabId, event) {
   if (event && event.currentTarget) event.currentTarget.classList.add('active');
 };
 
+window.populateDepartmentSelects = function() {
+  window.API.getDepartments().then(function(resp) {
+    var depts = (resp && resp.data) || [];
+    var deptNames = depts.map(function(d) { return d.name; });
+    var selectIds = ['deptFilter', 'pDept', 'editDept'];
+    selectIds.forEach(function(id) {
+      var sel = document.getElementById(id);
+      if (!sel) return;
+      var currentVal = sel.value;
+      var defaultLabel = id === 'deptFilter' ? 'All Departments' : 'Select';
+      sel.innerHTML = '<option value="">' + defaultLabel + '</option>';
+      deptNames.forEach(function(n) {
+        sel.innerHTML += '<option' + (n === currentVal ? ' selected' : '') + '>' + esc(n) + '</option>';
+      });
+    });
+  });
+};
+
+window.populateAllDropdowns = function() {
+  if (typeof window.populateDepartmentSelects === 'function') window.populateDepartmentSelects();
+  if (typeof window.populateDoctorDropdowns === 'function') window.populateDoctorDropdowns();
+};
+
+window.populateDoctorDropdowns = function() {
+  window.API.getDoctors().then(function(resp) {
+    var docs = (resp && resp.data) || [];
+    var apptDoc = document.getElementById('apptDoctor');
+    if (apptDoc) {
+      apptDoc.innerHTML = docs.length
+        ? docs.map(function(d) {
+            return '<option value="' + esc(d.id) + '">' + esc(d.name) + ' (' + esc(d.dept) + ')</option>';
+          }).join('')
+        : '<option>No doctors available</option>';
+    }
+    var ciDoc = document.getElementById('ciDoctor');
+    if (ciDoc) {
+      ciDoc.innerHTML = '<option value="" disabled selected>Select Doctor</option>' +
+        docs.map(function(d) {
+          return '<option value="' + esc(d.id) + '">' + esc(d.name) + ' (' + esc(d.dept) + ')</option>';
+        }).join('');
+    }
+  });
+};
+
 /* --- Page Navigation (SPA) --- */
 window.switchPage = function(page) {
   document.querySelectorAll('.page-section').forEach(function(s) { s.classList.remove('active'); });

@@ -11,6 +11,13 @@ function doGet(e) {
   else if (action === 'getPatient') result = handleGetPatient(e);
   else if (action === 'getAppointments') result = handleGetAppointments(e);
   else if (action === 'getDoctors') result = handleGetDoctors(e);
+  else if (action === 'createDoctor') result = handleCreateDoctor(e);
+  else if (action === 'updateDoctor') result = handleUpdateDoctor(e);
+  else if (action === 'deleteDoctor') result = handleDeleteDoctor(e);
+  else if (action === 'getDepartments') result = handleGetDepartments(e);
+  else if (action === 'createDepartment') result = handleCreateDepartment(e);
+  else if (action === 'updateDepartment') result = handleUpdateDepartment(e);
+  else if (action === 'deleteDepartment') result = handleDeleteDepartment(e);
   else if (action === 'createPatient') result = handleCreatePatient(e);
   else if (action === 'updatePatient') result = handleUpdatePatient(e);
   else if (action === 'deletePatient') result = handleDeletePatient(e);
@@ -313,12 +320,214 @@ function handleDeleteAppointment(e) {
   return { success: false, error: 'Appointment not found' };
 }
 
+/* ─── HELPERS: Sheets ─── */
+
+function getOrCreateSheet(ss, name, headers) {
+  var s = ss.getSheetByName(name);
+  if (s) return s;
+  s = ss.insertSheet(name);
+  if (headers && headers.length) s.appendRow(headers);
+  return s;
+}
+
+function sheetToObjects(sheet) {
+  var rows = sheet.getDataRange().getValues();
+  if (!rows || rows.length < 2) return [];
+  var headers = rows[0];
+  var result = [];
+  for (var i = 1; i < rows.length; i++) {
+    var obj = {};
+    for (var j = 0; j < headers.length; j++) {
+      obj[headers[j]] = rows[i][j];
+    }
+    result.push(obj);
+  }
+  return result;
+}
+
+function appendRowToSheet(sheet, data, headers) {
+  var row = [];
+  for (var j = 0; j < headers.length; j++) {
+    row.push(data[headers[j]] !== undefined ? data[headers[j]] : '');
+  }
+  sheet.appendRow(row);
+}
+
+function findRowIndex(sheet, colName, value) {
+  var rows = sheet.getDataRange().getValues();
+  var headers = rows[0];
+  var col = headers.indexOf(colName);
+  if (col === -1) return -1;
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][col]) === String(value)) return i;
+  }
+  return -1;
+}
+
 /* ─── DOCTORS ─── */
 
+function getDoctorsSheet(ss) {
+  return getOrCreateSheet(ss, 'Doctors', ['id', 'name', 'initials', 'dept', 'phone', 'email', 'qualification', 'status', 'createdAt']);
+}
+
 function handleGetDoctors(e) {
-  return { success: true, data: [
-    { id: 'D001', initials: 'RS', name: 'Dr. Rajesh Sharma', dept: 'Cardiology' },
-    { id: 'D002', initials: 'AP', name: 'Dr. Anita Patel', dept: 'Pediatrics' },
-    { id: 'D003', initials: 'SV', name: 'Dr. Sunil Verma', dept: 'Orthopedics' }
-  ]};
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getDoctorsSheet(ss);
+  var data = sheetToObjects(sheet);
+  if (data.length === 0) {
+    // Seed default doctors
+    var defaults = [
+      { id: 'D001', initials: 'RS', name: 'Dr. Rajesh Sharma', dept: 'Cardiology', phone: '', email: '', qualification: 'MD, DM Cardiology', status: 'available' },
+      { id: 'D002', initials: 'AP', name: 'Dr. Anita Patel', dept: 'Pediatrics', phone: '', email: '', qualification: 'MD, Pediatrics', status: 'available' },
+      { id: 'D003', initials: 'SV', name: 'Dr. Sunil Verma', dept: 'Orthopedics', phone: '', email: '', qualification: 'MS, Orthopedics', status: 'available' }
+    ];
+    var headers = sheet.getDataRange().getValues()[0];
+    defaults.forEach(function(d) {
+      var now = new Date().toISOString();
+      d.createdAt = now;
+      appendRowToSheet(sheet, d, headers);
+    });
+    return { success: true, data: defaults };
+  }
+  return { success: true, data: data };
+}
+
+function handleCreateDoctor(e) {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getDoctorsSheet(ss);
+  var rows = sheet.getDataRange().getValues();
+  var headers = rows[0];
+  var maxId = 0;
+  for (var i = 1; i < rows.length; i++) {
+    var idStr = String(rows[i][headers.indexOf('id')] || 'D000');
+    var num = parseInt(idStr.replace('D', ''), 10);
+    if (!isNaN(num) && num > maxId) maxId = num;
+  }
+  var doctor = {
+    id: 'D' + String(maxId + 1).padStart(3, '0'),
+    name: e.parameter.name || '',
+    initials: e.parameter.initials || '',
+    dept: e.parameter.dept || '',
+    phone: e.parameter.phone || '',
+    email: e.parameter.email || '',
+    qualification: e.parameter.qualification || '',
+    status: e.parameter.status || 'available',
+    createdAt: new Date().toISOString()
+  };
+  appendRowToSheet(sheet, doctor, headers);
+  return { success: true, data: doctor };
+}
+
+function handleUpdateDoctor(e) {
+  var id = e.parameter.id;
+  if (!id) return { success: false, error: 'Doctor ID required' };
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getDoctorsSheet(ss);
+  var rows = sheet.getDataRange().getValues();
+  var headers = rows[0];
+  var idx = findRowIndex(sheet, 'id', id);
+  if (idx === -1) return { success: false, error: 'Doctor not found' };
+  var map = {
+    'name': 'name', 'initials': 'initials', 'dept': 'dept',
+    'phone': 'phone', 'email': 'email', 'qualification': 'qualification', 'status': 'status'
+  };
+  for (var key in map) {
+    if (e.parameter[key] !== undefined) {
+      var col = headers.indexOf(map[key]);
+      if (col >= 0) sheet.getRange(idx + 1, col + 1).setValue(e.parameter[key]);
+    }
+  }
+  return { success: true };
+}
+
+function handleDeleteDoctor(e) {
+  var id = e.parameter.id;
+  if (!id) return { success: false, error: 'Doctor ID required' };
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getDoctorsSheet(ss);
+  var idx = findRowIndex(sheet, 'id', id);
+  if (idx === -1) return { success: false, error: 'Doctor not found' };
+  sheet.deleteRow(idx + 1);
+  return { success: true };
+}
+
+/* ─── DEPARTMENTS ─── */
+
+function getDepartmentsSheet(ss) {
+  return getOrCreateSheet(ss, 'Departments', ['id', 'name', 'description', 'status', 'createdAt']);
+}
+
+function handleGetDepartments(e) {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getDepartmentsSheet(ss);
+  var data = sheetToObjects(sheet);
+  if (data.length === 0) {
+    var defaults = [
+      { id: 'DEP001', name: 'Cardiology', description: 'Heart and cardiovascular system', status: 'active' },
+      { id: 'DEP002', name: 'Pediatrics', description: 'Medical care for infants, children, and adolescents', status: 'active' },
+      { id: 'DEP003', name: 'Orthopedics', description: 'Musculoskeletal system', status: 'active' },
+      { id: 'DEP004', name: 'Oncology', description: 'Cancer diagnosis and treatment', status: 'active' },
+      { id: 'DEP005', name: 'Neurology', description: 'Nervous system disorders', status: 'active' },
+      { id: 'DEP006', name: 'General Surgery', description: 'Surgical procedures', status: 'active' }
+    ];
+    var headers = sheet.getDataRange().getValues()[0];
+    defaults.forEach(function(d) {
+      d.createdAt = new Date().toISOString();
+      appendRowToSheet(sheet, d, headers);
+    });
+    return { success: true, data: defaults };
+  }
+  return { success: true, data: data };
+}
+
+function handleCreateDepartment(e) {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getDepartmentsSheet(ss);
+  var rows = sheet.getDataRange().getValues();
+  var headers = rows[0];
+  var maxId = 0;
+  for (var i = 1; i < rows.length; i++) {
+    var idStr = String(rows[i][headers.indexOf('id')] || 'DEP000');
+    var num = parseInt(idStr.replace('DEP', ''), 10);
+    if (!isNaN(num) && num > maxId) maxId = num;
+  }
+  var dept = {
+    id: 'DEP' + String(maxId + 1).padStart(3, '0'),
+    name: e.parameter.name || '',
+    description: e.parameter.description || '',
+    status: e.parameter.status || 'active',
+    createdAt: new Date().toISOString()
+  };
+  appendRowToSheet(sheet, dept, headers);
+  return { success: true, data: dept };
+}
+
+function handleUpdateDepartment(e) {
+  var id = e.parameter.id;
+  if (!id) return { success: false, error: 'Department ID required' };
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getDepartmentsSheet(ss);
+  var rows = sheet.getDataRange().getValues();
+  var headers = rows[0];
+  var idx = findRowIndex(sheet, 'id', id);
+  if (idx === -1) return { success: false, error: 'Department not found' };
+  var map = { 'name': 'name', 'description': 'description', 'status': 'status' };
+  for (var key in map) {
+    if (e.parameter[key] !== undefined) {
+      var col = headers.indexOf(map[key]);
+      if (col >= 0) sheet.getRange(idx + 1, col + 1).setValue(e.parameter[key]);
+    }
+  }
+  return { success: true };
+}
+
+function handleDeleteDepartment(e) {
+  var id = e.parameter.id;
+  if (!id) return { success: false, error: 'Department ID required' };
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getDepartmentsSheet(ss);
+  var idx = findRowIndex(sheet, 'id', id);
+  if (idx === -1) return { success: false, error: 'Department not found' };
+  sheet.deleteRow(idx + 1);
+  return { success: true };
 }

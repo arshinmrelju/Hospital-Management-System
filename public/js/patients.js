@@ -648,4 +648,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!isSPA) _patientsInitialized = true;
   await loadPatients();
   if (typeof window.hideLoader === 'function') window.hideLoader();
+  if (typeof window.populateAllDropdowns === 'function') window.populateAllDropdowns();
 });
