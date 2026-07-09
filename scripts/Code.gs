@@ -25,6 +25,26 @@ function doGet(e) {
 
 /* ─── HELPERS ─── */
 
+function extractOpFromNotes(notes) {
+  if (!notes) return '';
+  var m = notes.match(/OP\s*No\.?\s*:?\s*(\d+)/i);
+  return m ? m[1] : '';
+}
+
+function findPatientRow(id, rows, headers) {
+  var idCol = headers.indexOf('ID');
+  var notesCol = headers.indexOf('Notes');
+  for (var i = 1; i < rows.length; i++) {
+    if (idCol >= 0 && String(rows[i][idCol]) === String(id)) return i;
+    if (notesCol >= 0) {
+      var notes = String(rows[i][notesCol] || '');
+      var op = extractOpFromNotes(notes);
+      if (op && String(op) === String(id)) return i;
+    }
+  }
+  return -1;
+}
+
 /* ─── PATIENTS ─── */
 
 function handleGetPatients(e) {
@@ -54,11 +74,12 @@ function handleGetPatients(e) {
     p.status = p['Status'] || 'stable';
     p.assigned_doctor = p['Assigned Doctor'] || '';
     p.uhid = p['UHID'] || '';
-    p.op_no = p['ID'] || p['UHID'] || '';
+    p.notes = p['Notes'] || '';
+    var opFromNotes = extractOpFromNotes(p.notes);
+    p.op_no = opFromNotes || p['ID'] || p['UHID'] || '';
+    p.id = p.op_no;
     p.last_visit = p['Last Visit'] || '';
     p.created_on = p['Created On'] || '';
-    p.notes = p['Notes'] || '';
-    p.id = p.op_no || 'P' + String(i);
 
     if (search) {
       var haystack = (p.fname + ' ' + p.lname + ' ' + p.contact + ' ' + p.op_no).toLowerCase();
@@ -77,31 +98,30 @@ function handleGetPatient(e) {
   var sheet = ss.getSheetByName('Patients') || ss.getSheets()[0];
   var rows = sheet.getDataRange().getValues();
   var headers = rows[0];
-  for (var i = 1; i < rows.length; i++) {
-    var rawId = String(rows[i][0] || '');
-    if (rawId === id) {
-      var p = {};
-      for (var j = 0; j < headers.length; j++) p[headers[j]] = rows[i][j];
-      p.id = p['ID'] || '';
-      p.fname = p['First Name'] || '';
-      p.lname = p['Last Name'] || '';
-      p.contact = String(p['Phone'] || '');
-      p.email = p['Email'] || '';
-      p.gender = p['Gender'] || '';
-      p.dob = p['DOB'] || '';
-      p.address = p['Address'] || '';
-      p.blood_group = p['Blood Group'] || 'Unknown';
-      p.department = p['Department'] || 'General';
-      p.patient_type = p['Admission Type'] || 'outpatient';
-      p.status = p['Status'] || 'stable';
-      p.assigned_doctor = p['Assigned Doctor'] || '';
-      p.uhid = p['UHID'] || '';
-      p.op_no = p['ID'] || p['UHID'] || '';
-      p.last_visit = p['Last Visit'] || '';
-      p.created_on = p['Created On'] || '';
-      p.notes = p['Notes'] || '';
-      return { success: true, data: p };
-    }
+  var rowIdx = findPatientRow(id, rows, headers);
+  if (rowIdx >= 0) {
+    var p = {};
+    for (var j = 0; j < headers.length; j++) p[headers[j]] = rows[rowIdx][j];
+    p.fname = p['First Name'] || '';
+    p.lname = p['Last Name'] || '';
+    p.contact = String(p['Phone'] || '');
+    p.email = p['Email'] || '';
+    p.gender = p['Gender'] || '';
+    p.dob = p['DOB'] || '';
+    p.address = p['Address'] || '';
+    p.blood_group = p['Blood Group'] || 'Unknown';
+    p.department = p['Department'] || 'General';
+    p.patient_type = p['Admission Type'] || 'outpatient';
+    p.status = p['Status'] || 'stable';
+    p.assigned_doctor = p['Assigned Doctor'] || '';
+    p.uhid = p['UHID'] || '';
+    p.notes = p['Notes'] || '';
+    var opFromNotes = extractOpFromNotes(p.notes);
+    p.op_no = opFromNotes || p['ID'] || p['UHID'] || '';
+    p.id = p.op_no;
+    p.last_visit = p['Last Visit'] || '';
+    p.created_on = p['Created On'] || '';
+    return { success: true, data: p };
   }
   return { success: false, error: 'Patient not found' };
 }
@@ -112,10 +132,15 @@ function handleCreatePatient(e) {
   var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   var row = [];
   var now = new Date();
-  var id = 'P' + String(now.getTime()).slice(-8);
+  var notes = e.parameter.notes || '';
+  var existingOp = extractOpFromNotes(notes);
+  var opNo = existingOp || String(now.getTime()).slice(-6);
+  if (!existingOp) {
+    notes = notes ? notes + '\nOP No: ' + opNo : 'OP No: ' + opNo;
+  }
   for (var j = 0; j < headers.length; j++) {
     var h = headers[j];
-    if (h === 'ID') row.push(id);
+    if (h === 'ID') row.push(opNo);
     else if (h === 'First Name') row.push(e.parameter.fname || '');
     else if (h === 'Last Name') row.push(e.parameter.lname || '');
     else if (h === 'Phone') row.push(e.parameter.contact || '');
@@ -131,11 +156,11 @@ function handleCreatePatient(e) {
     else if (h === 'UHID') row.push(e.parameter.uhid || '');
     else if (h === 'Last Visit') row.push(Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd'));
     else if (h === 'Created On') row.push(Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd'));
-    else if (h === 'Notes') row.push(e.parameter.notes || '');
+    else if (h === 'Notes') row.push(notes);
     else row.push('');
   }
   sheet.appendRow(row);
-  return { success: true, data: { id: id } };
+  return { success: true, data: { id: opNo, op_no: opNo } };
 }
 
 function handleUpdatePatient(e) {
@@ -145,23 +170,22 @@ function handleUpdatePatient(e) {
   var headers = rows[0];
   var idCol = headers.indexOf('ID');
   if (idCol === -1) return { success: false, error: 'ID column not found' };
-  for (var i = 1; i < rows.length; i++) {
-    if (String(rows[i][idCol]) === String(e.parameter.id)) {
-      var map = {
-        'fname': 'First Name', 'lname': 'Last Name', 'contact': 'Phone',
-        'email': 'Email', 'gender': 'Gender', 'dob': 'DOB', 'address': 'Address',
-        'blood_group': 'Blood Group', 'department': 'Department',
-        'patient_type': 'Admission Type', 'status': 'Status',
-        'assigned_doctor': 'Assigned Doctor', 'uhid': 'UHID', 'notes': 'Notes'
-      };
-      for (var key in map) {
-        if (e.parameter[key] !== undefined) {
-          var col = headers.indexOf(map[key]);
-          if (col >= 0) sheet.getRange(i + 1, col + 1).setValue(e.parameter[key]);
-        }
+  var i = findPatientRow(e.parameter.id, rows, headers);
+  if (i >= 0) {
+    var map = {
+      'fname': 'First Name', 'lname': 'Last Name', 'contact': 'Phone',
+      'email': 'Email', 'gender': 'Gender', 'dob': 'DOB', 'address': 'Address',
+      'blood_group': 'Blood Group', 'department': 'Department',
+      'patient_type': 'Admission Type', 'status': 'Status',
+      'assigned_doctor': 'Assigned Doctor', 'uhid': 'UHID', 'notes': 'Notes'
+    };
+    for (var key in map) {
+      if (e.parameter[key] !== undefined) {
+        var col = headers.indexOf(map[key]);
+        if (col >= 0) sheet.getRange(i + 1, col + 1).setValue(e.parameter[key]);
       }
-      return { success: true };
     }
+    return { success: true };
   }
   return { success: false, error: 'Patient not found' };
 }
@@ -173,11 +197,10 @@ function handleDeletePatient(e) {
   var headers = rows[0];
   var idCol = headers.indexOf('ID');
   if (idCol === -1) return { success: false, error: 'ID column not found' };
-  for (var i = 1; i < rows.length; i++) {
-    if (String(rows[i][idCol]) === String(e.parameter.id)) {
-      sheet.deleteRow(i + 1);
-      return { success: true };
-    }
+  var i = findPatientRow(e.parameter.id, rows, headers);
+  if (i >= 0) {
+    sheet.deleteRow(i + 1);
+    return { success: true };
   }
   return { success: false, error: 'Patient not found' };
 }

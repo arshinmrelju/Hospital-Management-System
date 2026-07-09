@@ -384,7 +384,7 @@ function viewPatient(id) {
         <div class="mini-avatar" style="width:64px;height:64px;font-size:1.3rem;background:linear-gradient(135deg,var(--primary-light),#2DD4BF);color:#fff">${esc((p.fname||'U')[0])}${esc((p.lname||'')[0])}</div>
         <div>
           <h3 style="font-family:var(--font-head);font-size:1.3rem;font-weight:800">${esc(p.fname)} ${esc(p.lname)}</h3>
-          <p style="color:var(--on-surface-var);font-size:.85rem">#${esc(p.id)} · ${esc(p.department)}</p>
+          <p style="color:var(--on-surface-var);font-size:.85rem">OP: ${esc(p.op_no || p.id)} · ${esc(p.department)}</p>
           <span class="badge-status ${p.status}" style="margin-top:8px">${esc(cap(p.status))}</span>
         </div>
       </div>
@@ -419,6 +419,7 @@ function editPatient(id) {
   document.getElementById('editBlood').value = p.blood_group || '';
   document.getElementById('editStatus').value = p.status || 'Active';
   if (document.getElementById('editGender')) document.getElementById('editGender').value = p.gender || '';
+  if (document.getElementById('editNotes')) document.getElementById('editNotes').value = p.notes || '';
   openModal('editPatientModal');
 }
 
@@ -436,6 +437,7 @@ async function submitEditPatient(e) {
     dob: document.getElementById('editDob').value,
     gender: document.getElementById('editGender')?.value || '',
     status: document.getElementById('editStatus').value,
+    notes: document.getElementById('editNotes')?.value || '',
   };
   const errors = validatePatientInput(raw);
   if (errors.length > 0) { toast(errors.join('. '), 'error'); return; }
@@ -561,6 +563,7 @@ async function submitAddPatient(e) {
     patient_type: document.getElementById('pType').value.toLowerCase(),
     blood_group: document.getElementById('pBlood').value || 'Unknown',
     dob: document.getElementById('pDob').value,
+    notes: document.getElementById('pNotes').value,
   };
   const errors = validatePatientInput(raw);
   if (errors.length > 0) { toast(errors.join('. '), 'error'); return; }

@@ -1,6 +1,6 @@
 'use strict';
 
-var SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbzcCT2Aj0TP4pdin-zcGwBMKqoMDartgjEUNfBtID9PNZbrI2HstCesRxUjsbJ8v64vbw/exec';
+var SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbwN7RK6ZLeKWEeDZWUxcH7BpeJH-88ZwXe0qNvZC_LNDEdbbF8pkKGhXRgB_hfE62SP/exec';
 
 var _patientsCache = null;
 var _appointmentsCache = null;
@@ -46,7 +46,13 @@ function sheetsFetch(params, callback) {
 }
 
 function normalizePatient(p) {
-  p.id = p.id || p.op_no || p.ID || '';
+  p.notes = p.notes || p['Notes'] || '';
+  if (!p.op_no && p.notes) {
+    var m = p.notes.match(/OP\s*No\.?\s*:?\s*(\d+)/i);
+    if (m) p.op_no = m[1];
+  }
+  p.op_no = p.op_no || p['ID'] || p.id || '';
+  p.id = p.op_no || p.id || p.ID || '';
   p.fname = p.fname || p['First Name'] || p.FirstName || p.Name || '';
   p.lname = p.lname || p['Last Name'] || p.LastName || '';
   p.contact = String(p.contact || p['Phone'] || p.Phone || p.phone || '');
@@ -59,9 +65,7 @@ function normalizePatient(p) {
   p.patient_type = p.patient_type || p['Admission Type'] || p.Admission_Type || 'outpatient';
   p.status = p.status || p['Status'] || p.Status || 'stable';
   p.assigned_doctor = p.assigned_doctor || p['Assigned Doctor'] || '';
-  p.op_no = p.op_no || p['ID'] || p.id || '';
   p.last_visit = p.last_visit || p['Last Visit'] || '';
-  p.notes = p.notes || p['Notes'] || '';
   return p;
 }
 
