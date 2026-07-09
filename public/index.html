@@ -9,8 +9,8 @@
   <meta name="description" content="Front-desk reception portal: OPD patient check-in and appointment scheduling." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" media="print" onload="this.media='all';this.onload=null" />
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/portals.css" />
@@ -60,30 +60,82 @@
   </style>
 </head>
 
-<body class="app-body">
+<body class="app-body portal-reception">
+
+  <!-- Glassmorphism Loader -->
+  <div id="pageLoader">
+    <div class="loader-glass">
+      <div class="loader-logo-wrap">
+        <div class="loader-logo-ring">
+          <img src="assets/hms-logo.jpg" alt="Wellness Medicals" />
+        </div>
+      </div>
+      <div class="loader-heartbeat">
+        <svg width="120" height="40" viewBox="0 0 120 40" fill="none">
+          <path class="heartbeat-path" d="M0 20 H40 L45 10 L50 30 L55 15 L60 25 L65 20 H120" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2 class="loader-title">Wellness Medicals</h2>
+      <p class="loader-subtitle">Hospital Management System</p>
+      <p class="loader-msg" id="loaderMsg">Initializing system...</p>
+      <div class="loader-dots">
+        <div class="loader-dot"></div>
+        <div class="loader-dot"></div>
+        <div class="loader-dot"></div>
+      </div>
+    </div>
+  </div>
+
 
   <!-- Login Overlay -->
-  <div class="modal-overlay active" id="loginOverlay">
-    <div class="modal-card" style="max-width:400px;">
-      <div class="modal-header">
-        <h3 class="modal-title">Front Desk Access</h3>
-      </div>
-      <div class="modal-body">
-        <div style="text-align:center;margin-bottom:16px;">
-          <img src="assets/hms-logo.jpg" alt="Wellness Medicals" style="width:72px;height:72px;border-radius:50%;object-fit:cover;margin-bottom:8px;" />
-          <h2 style="font-size:1.1rem;font-weight:700;margin:0;">Wellness Medicals</h2>
-          <p style="font-size:0.85rem;color:var(--on-surface-var);margin:4px 0 0 0;">Enter access code to continue</p>
+  <div class="modal-overlay active" id="loginOverlay" style="background:linear-gradient(135deg, rgba(0,72,64,0.72) 0%, rgba(13,148,136,0.48) 100%);backdrop-filter:blur(18px);">
+    <div id="loginCard" style="width:100%;max-width:400px;background:rgba(255,255,255,0.97);border-radius:28px;box-shadow:0 32px 80px rgba(0,80,70,0.28),0 0 0 1.5px rgba(13,148,136,0.18);overflow:hidden;animation:modalIn 0.36s cubic-bezier(0.34,1.56,0.64,1);">
+
+      <!-- Top Green Banner -->
+      <div style="background:linear-gradient(135deg, #00685f 0%, #0D9488 60%, #14b8a6 100%);padding:36px 32px 28px;text-align:center;position:relative;overflow:hidden;">
+        <!-- Decorative rings -->
+        <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.06);pointer-events:none;"></div>
+        <div style="position:absolute;bottom:-20px;left:-20px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,0.05);pointer-events:none;"></div>
+
+        <!-- Logo ring -->
+        <div style="width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,0.15);border:3px solid rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 0 0 6px rgba(255,255,255,0.08);">
+          <img src="assets/hms-logo.jpg" alt="Wellness Medicals" style="width:64px;height:64px;border-radius:50%;object-fit:cover;display:block;" />
         </div>
+
+        <h2 style="color:#fff;font-family:var(--font-head);font-size:1.25rem;font-weight:800;margin:0 0 4px;letter-spacing:-0.01em;">Wellness Medicals</h2>
+        <p style="color:rgba(255,255,255,0.78);font-size:0.82rem;margin:0;font-weight:500;">Reception · Front Desk Portal</p>
+      </div>
+
+      <!-- Form Body -->
+      <div style="padding:28px 32px 32px;">
+        <p style="text-align:center;font-size:0.82rem;color:var(--on-surface-var);margin:0 0 20px;line-height:1.5;">
+          Enter your access code to continue.
+        </p>
+
         <form id="loginForm">
-          <div class="form-group">
-            <label>Access Code</label>
-            <input type="password" id="loginCodeInput" placeholder="Enter code..." autocomplete="off" style="width:100%;background:var(--surface);border:1.5px solid var(--outline-var);padding:12px 14px;border-radius:var(--radius-sm);font-size:1.1rem;text-align:center;letter-spacing:4px;font-weight:700;color:var(--on-surface);" />
+          <!-- Input with lock icon -->
+          <div style="position:relative;margin-bottom:6px;">
+            <span class="material-icons-round" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--primary-light);pointer-events:none;">lock</span>
+            <input type="password" id="loginCodeInput" placeholder="● ● ● ● ●" autocomplete="off"
+              style="width:100%;background:var(--surface-low);border:2px solid var(--outline-var);border-radius:var(--radius-md);padding:13px 14px 13px 44px;font-size:1.15rem;text-align:left;letter-spacing:5px;font-weight:700;color:var(--on-surface);transition:border-color 0.2s,box-shadow 0.2s;box-sizing:border-box;"
+              onfocus="this.style.borderColor='#0D9488';this.style.boxShadow='0 0 0 3px rgba(13,148,136,0.15)'"
+              onblur="this.style.borderColor='var(--outline-var)';this.style.boxShadow='none'" />
           </div>
-          <p id="loginError" style="display:none;color:#ef4444;font-size:0.82rem;font-weight:600;text-align:center;margin:8px 0 0 0;"></p>
-          <button type="submit" class="btn-primary" style="width:100%;justify-content:center;margin-top:16px;background:var(--primary-light);">
-            <span class="material-icons-round">login</span> Access System
+
+          <p id="loginError" style="display:none;color:#ef4444;font-size:0.78rem;font-weight:600;text-align:center;margin:8px 0 0;padding:8px 12px;background:rgba(239,68,68,0.08);border-radius:var(--radius-sm);"></p>
+
+          <button type="submit" id="loginBtn"
+            style="width:100%;margin-top:18px;background:linear-gradient(135deg,#00685f,#0D9488);color:#fff;border:none;border-radius:var(--radius-md);padding:14px 20px;font-family:var(--font-body);font-size:0.95rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 6px 24px rgba(13,148,136,0.35);transition:all 0.2s;letter-spacing:0.02em;"
+            onmouseover="this.style.background='linear-gradient(135deg,#005a52,#0c8076)';this.style.transform='translateY(-1px)';this.style.boxShadow='0 10px 32px rgba(13,148,136,0.45)'"
+            onmouseout="this.style.background='linear-gradient(135deg,#00685f,#0D9488)';this.style.transform='translateY(0)';this.style.boxShadow='0 6px 24px rgba(13,148,136,0.35)'">
+            <span class="material-icons-round" style="font-size:18px;">login</span>
+            Access System
           </button>
         </form>
+
+        <p style="text-align:center;margin:18px 0 0;font-size:0.72rem;color:var(--outline);">
+          Wellness Medicals HMS · <span style="color:var(--primary-light);font-weight:600;">Reception</span>
+        </p>
       </div>
     </div>
   </div>
@@ -194,7 +246,7 @@
 
       <!-- KPI Stat Cards -->
       <div class="stats-grid">
-        <div class="stat-card" style="--accent:#ea580c">
+        <div class="stat-card" style="--accent:#00685f">
           <div class="stat-icon-wrap"><span class="material-icons-round">groups</span></div>
           <div class="stat-body">
             <p class="stat-label">OPD Patients Today</p>
@@ -202,15 +254,15 @@
             <p class="stat-delta positive"><span class="material-icons-round">trending_up</span>+12 vs yesterday</p>
           </div>
         </div>
-        <div class="stat-card" style="--accent:#f59e0b">
+        <div class="stat-card" style="--accent:#0D9488">
           <div class="stat-icon-wrap"><span class="material-icons-round">pending</span></div>
           <div class="stat-body">
             <p class="stat-label">Waiting in Queue</p>
             <h2 class="stat-value counter" data-target="0">0</h2>
-            <p class="stat-delta" style="color:#d97706"><span class="material-icons-round">hourglass_empty</span>Avg. 18 min wait</p>
+            <p class="stat-delta" style="color:var(--primary-light)"><span class="material-icons-round">hourglass_empty</span>Avg. 18 min wait</p>
           </div>
         </div>
-        <div class="stat-card" style="--accent:#0284c7">
+        <div class="stat-card" style="--accent:#004d46">
           <div class="stat-icon-wrap"><span class="material-icons-round">event_available</span></div>
           <div class="stat-body">
             <p class="stat-label">Today's Appointments</p>
@@ -238,7 +290,7 @@
                   <span class="material-icons-round" style="color:var(--primary-light)">how_to_reg</span>
                   <h3>OPD Queue Register</h3>
                 </div>
-                <span id="opdQueueCount" style="background:rgba(234,88,12,0.1);color:#ea580c;border-radius:20px;padding:3px 10px;font-size:0.72rem;font-weight:700;">Loading Waiting...</span>
+                <span id="opdQueueCount" style="background:rgba(13,148,136,0.1);color:#0D9488;border-radius:20px;padding:3px 10px;font-size:0.72rem;font-weight:700;">Loading Waiting...</span>
               </div>
               <!-- Smart Filter Bar -->
               <div class="smart-filter" id="opdSmartFilter">
@@ -289,7 +341,34 @@
               </div>
             </div>
             <div id="opdList" style="margin-top:12px;max-height:420px;overflow-y:auto;padding-right:4px;">
-              <p style="text-align:center;padding:20px;color:var(--outline);font-size:0.85rem">Loading queue...</p>
+              <!-- OPD Skeleton Cards -->
+              <div class="opd-skeleton">
+                <div class="opd-skeleton-num"></div>
+                <div class="opd-skeleton-body">
+                  <div class="opd-skeleton-line short"></div>
+                  <div class="opd-skeleton-line"></div>
+                  <div class="opd-skeleton-line xshort"></div>
+                </div>
+                <div class="opd-skeleton-badge"></div>
+              </div>
+              <div class="opd-skeleton">
+                <div class="opd-skeleton-num"></div>
+                <div class="opd-skeleton-body">
+                  <div class="opd-skeleton-line short" style="animation-delay:0.1s"></div>
+                  <div class="opd-skeleton-line" style="animation-delay:0.1s"></div>
+                  <div class="opd-skeleton-line xshort" style="animation-delay:0.4s"></div>
+                </div>
+                <div class="opd-skeleton-badge" style="animation-delay:0.2s"></div>
+              </div>
+              <div class="opd-skeleton">
+                <div class="opd-skeleton-num"></div>
+                <div class="opd-skeleton-body">
+                  <div class="opd-skeleton-line short" style="animation-delay:0.2s"></div>
+                  <div class="opd-skeleton-line" style="animation-delay:0.2s"></div>
+                  <div class="opd-skeleton-line xshort" style="animation-delay:0.5s"></div>
+                </div>
+                <div class="opd-skeleton-badge" style="animation-delay:0.25s"></div>
+              </div>
             </div>
           </div>
         </div>

@@ -55,7 +55,7 @@ function filterOpdQueue() {
   }
 
   const startTimestamp = new Date(`${startDate}T${startTime}`).getTime();
-  const endTimestamp = endDate 
+  const endTimestamp = endDate
     ? new Date(`${endDate}T${endTime}`).getTime()
     : new Date(`${startDate}T23:59:59`).getTime();
 
@@ -146,7 +146,7 @@ function initCheckinAutocomplete() {
   function renderOptions(query) {
     var q = (query || '').toLowerCase();
     var patients = window.allPatients || [];
-    var filtered = patients.filter(function(p) {
+    var filtered = patients.filter(function (p) {
       return patientFullName(p).toLowerCase().includes(q) || patientContact(p).toLowerCase().includes(q);
     });
     if (filtered.length === 0) {
@@ -155,7 +155,7 @@ function initCheckinAutocomplete() {
       return;
     }
     document.getElementById('ciPatientNotFound').style.display = 'none';
-    dropdown.innerHTML = filtered.map(function(p) {
+    dropdown.innerHTML = filtered.map(function (p) {
       var f = patientName(p);
       var l = patientLname(p);
       if (!f && !l) {
@@ -175,29 +175,29 @@ function initCheckinAutocomplete() {
       return '<div class="autocomplete-item" data-id="' + p.id + '" onclick="selectCheckinPatient(\'' + p.id + '\')">' +
         '<div class="ac-avatar">' + esc(initials) + '</div>' +
         '<div class="ac-info">' +
-          '<span class="ac-name">' + esc(f) + ' ' + esc(l) + '</span>' +
-          '<span class="ac-phone">' + esc(meta.join(' · ')) + '</span>' +
+        '<span class="ac-name">' + esc(f) + ' ' + esc(l) + '</span>' +
+        '<span class="ac-phone">' + esc(meta.join(' · ')) + '</span>' +
         '</div>' +
-      '</div>';
+        '</div>';
     }).join('');
   }
 
-  input.addEventListener('focus', function() { renderOptions(input.value); dropdown.classList.add('active'); });
-  input.addEventListener('input', function() {
+  input.addEventListener('focus', function () { renderOptions(input.value); dropdown.classList.add('active'); });
+  input.addEventListener('input', function () {
     ciSelectedPatient = null;
     document.getElementById('ciPatientId').value = '';
     document.getElementById('ciPatientInfo').style.display = 'none';
     renderOptions(input.value);
     dropdown.classList.add('active');
   });
-  document.addEventListener('click', function(e) {
+  document.addEventListener('click', function (e) {
     var wrapper = document.getElementById('ciPatientAutocomplete');
     if (wrapper && !wrapper.contains(e.target)) dropdown.classList.remove('active');
   });
 
-  window.selectCheckinPatient = function(id) {
+  window.selectCheckinPatient = function (id) {
     var patients = window.allPatients || [];
-    var p = patients.find(function(x) { return String(x.id) === String(id); });
+    var p = patients.find(function (x) { return String(x.id) === String(id); });
     if (!p) return;
     ciSelectedPatient = p;
     var f = patientName(p);
@@ -239,15 +239,15 @@ function populateDoctorDropdown() {
   var sel = document.getElementById('ciDoctor');
   if (!sel) return;
 
-  window.API.getDoctors({ limit: 100 }).then(function(res) {
+  window.API.getDoctors({ limit: 100 }).then(function (res) {
     var list = (res && res.data) ? res.data : [];
     sel.innerHTML = list.length
-      ? list.map(function(d) {
-          var name = d.name || d.doctor_name || d.firstName + ' ' + d.lastName || 'Unknown';
-          return '<option value="' + esc(d.id || name) + '">Dr. ' + esc(name) + '</option>';
-        }).join('')
+      ? list.map(function (d) {
+        var name = d.name || d.doctor_name || d.firstName + ' ' + d.lastName || 'Unknown';
+        return '<option value="' + esc(d.id || name) + '">Dr. ' + esc(name) + '</option>';
+      }).join('')
       : '<option value="unassigned">Unassigned / Walk-in</option>';
-  }).catch(function() {
+  }).catch(function () {
     sel.innerHTML = '<option value="unassigned">Unassigned / Walk-in</option>';
   });
 }
@@ -265,7 +265,7 @@ function openCheckInModal() {
   document.getElementById('ciComplaint').value = '';
   ciSelectedPatient = null;
   // Focus the search box
-  setTimeout(function() { if (input) input.focus(); }, 120);
+  setTimeout(function () { if (input) input.focus(); }, 120);
 }
 
 /* --- Patient Check-In (from modal) --- */
@@ -364,23 +364,22 @@ async function bookAppointment(e) {
 async function loadOpdQueueFromFirestore() {
   try {
     const response = await window.API.getAppointments({ limit: 50 });
-    if (!response.success) return;
-    const appointments = response.data || [];
+    const appointments = (response && response.success) ? (response.data || []) : [];
     var patientLookup = window.allPatients || [];
     OPD_QUEUE = appointments
-      .filter(a => a.type === 'OPD')
+      .filter(a => a.type === 'OPD' || a.type === 'OPD Consultation')
       .map((a, i) => {
         const tokenNum = a.token || i + 1;
         var name = a.patient_name || a.patientName || '';
-        var age = a.patientAge || a.age || '';
+        var age = a.patient_age || a.patientAge || a.age || '';
         var doctor = a.doctor || a.doctor_name || a.doctor_id || '';
         if ((!name || !doctor) && a.patient_id) {
-          var match = patientLookup.find(function(p) { return String(p.id) === String(a.patient_id); });
+          var match = patientLookup.find(function (p) { return String(p.id) === String(a.patient_id); });
           if (!match) {
-            match = patientLookup.find(function(p) { return patientFullName(p).toLowerCase() === String(a.patient_id).toLowerCase(); });
+            match = patientLookup.find(function (p) { return patientFullName(p).toLowerCase() === String(a.patient_id).toLowerCase(); });
           }
           if (!match) {
-            match = patientLookup.find(function(p) { return (p.contact || '').replace(/\s/g,'') === String(a.patient_id).replace(/\s/g,''); });
+            match = patientLookup.find(function (p) { return (p.contact || '').replace(/\s/g, '') === String(a.patient_id).replace(/\s/g, ''); });
           }
           if (match) {
             if (!name) name = patientFullName(match);
@@ -405,6 +404,8 @@ async function loadOpdQueueFromFirestore() {
       });
   } catch (e) {
     addConsoleLog('WARN', 'Could not load OPD queue: ' + e.message);
+  } finally {
+    renderOpdQueue();
   }
 }
 
@@ -423,8 +424,8 @@ async function ensurePatientsLoaded() {
 /* --- Update KPI Stat Cards --- */
 function updateStats() {
   var todayStr = new Date().toISOString().split('T')[0];
-  var todayOPD = OPD_QUEUE.filter(function(p) { return p.timestamp && p.timestamp.slice(0,10) === todayStr; });
-  
+  var todayOPD = OPD_QUEUE.filter(function (p) { return p.timestamp && p.timestamp.slice(0, 10) === todayStr; });
+
   var opdTotalEl = document.querySelector('.stat-card[style*="--accent:#ea580c"] .stat-value');
   if (opdTotalEl) {
     if (window.animateCounter) window.animateCounter(opdTotalEl, todayOPD.length);
@@ -432,7 +433,7 @@ function updateStats() {
   }
 
   var waitingEl = document.querySelector('.stat-card[style*="--accent:#f59e0b"] .stat-value');
-  var waiting = todayOPD.filter(function(p) { return p.status === 'waiting' || p.status === 'urgent'; });
+  var waiting = todayOPD.filter(function (p) { return p.status === 'waiting' || p.status === 'urgent'; });
   if (waitingEl) {
     if (window.animateCounter) window.animateCounter(waitingEl, waiting.length);
     else waitingEl.textContent = waiting.length;
@@ -443,28 +444,58 @@ function updateStats() {
 
   var todayApptsEl = document.querySelector('.stat-card[style*="--accent:#0284c7"] .stat-value');
   if (todayApptsEl) {
-    window.API.getAppointments().then(function(resp) {
+    window.API.getAppointments().then(function (resp) {
       if (resp && resp.data) {
-        var todayCount = resp.data.filter(function(a) { return a.appointment_date && a.appointment_date.slice(0,10) === todayStr; }).length;
+        var todayCount = resp.data.filter(function (a) { return a.appointment_date && a.appointment_date.slice(0, 10) === todayStr; }).length;
         if (window.animateCounter) window.animateCounter(todayApptsEl, todayCount);
         else todayApptsEl.textContent = todayCount;
-        
+
         var apptDelta = document.querySelector('.stat-card[style*="--accent:#0284c7"] .stat-delta');
         if (apptDelta) apptDelta.innerHTML = '<span class="material-icons-round">event</span>' + todayCount + ' today';
       }
-    }).catch(function() {});
+    }).catch(function () { });
   }
 }
 
 /* --- DOMContentLoaded --- */
 document.addEventListener('DOMContentLoaded', async () => {
+  // Apply dynamic user details and greeting
+  var stored = localStorage.getItem('hms_auth');
+  var userName = 'Priya';
+  if (stored) {
+    try {
+      var parsed = JSON.parse(stored);
+      if (parsed.name) userName = parsed.name.split(' ')[0];
+      var initials = parsed.name ? parsed.name.split(' ').map(n => n[0]).join('') : 'PK';
+      var userAvatar = document.getElementById('userAvatar');
+      var topbarAvatar = document.getElementById('topbarAvatar');
+      var sidebarUserName = document.getElementById('sidebarUserName');
+      if (userAvatar) userAvatar.textContent = initials;
+      if (topbarAvatar) topbarAvatar.textContent = initials;
+      if (sidebarUserName) sidebarUserName.textContent = parsed.name || 'Front Desk';
+    } catch (e) { }
+  }
+
+  var greeting = document.getElementById('dashboardGreeting');
+  if (greeting) {
+    var hr = new Date().getHours();
+    var greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+    greeting.textContent = 'Reception desk active. ' + greet + ', ' + userName + '!';
+  }
+
+  // Update today's date badge
+  var todayDateEl = document.getElementById('todayDate');
+  if (todayDateEl) {
+    todayDateEl.textContent = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
   await ensurePatientsLoaded();
   await loadOpdQueueFromFirestore();
   updateStats();
 
   // Re-run stats after OPD queue is filtered
   var origRender = renderOpdQueue;
-  renderOpdQueue = function() { origRender(); updateStats(); };
+  renderOpdQueue = function () { origRender(); updateStats(); };
 
   const todayChip = document.querySelector(`#opdSmartFilter .sf-chip[onclick*="'today'"]`);
   if (todayChip) {

@@ -1,4 +1,39 @@
-.portal-reception { --portal-accent: #16a34a; --portal-accent-soft: rgba(22,163,74,0.1); --portal-accent-light: #22c55e; }
-.portal-reception .nav-item.active { background: var(--portal-accent-soft); border-right: 3px solid var(--portal-accent); color: var(--portal-accent); }
-.portal-reception .nav-item.active .material-icons-round { color: var(--portal-accent); }
-.portal-reception .stat-card { border-top: 3px solid var(--portal-accent); }
+/* =========================================================
+   STAFF-THEME.CSS – Reception Portal Specific Theme Styles
+   Theme: Logo Green/Teal Color Harmony
+   ========================================================= */
+
+.portal-reception {
+  --portal-accent: #0D9488;
+  --portal-accent-soft: rgba(13, 148, 136, 0.10);
+  --portal-accent-light: #0D9488;
+  --portal-accent-dark: #00685f;
+}
+
+.portal-reception .nav-item.active {
+  background: var(--portal-accent-soft) !important;
+  color: var(--portal-accent) !important;
+}
+
+.portal-reception .nav-item.active::before {
+  background: var(--portal-accent) !important;
+}
+
+.portal-reception .nav-item.active .material-icons-round {
+  color: var(--portal-accent) !important;
+}
+
+.portal-reception .stat-card {
+  border-top: 3px solid var(--portal-accent) !important;
+}
+
+/* Row hover highlight matching the logo soft accent */
+.portal-reception .data-table tbody tr:hover {
+  background: rgba(13, 148, 136, 0.04) !important;
+}
+
+/* Topbar search focus highlight */
+.portal-reception .topbar-search:focus-within {
+  border-color: var(--portal-accent) !important;
+  box-shadow: 0 0 0 3px var(--portal-accent-soft) !important;
+}

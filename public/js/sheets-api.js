@@ -5,6 +5,43 @@ var SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbzFilVn6zNBwMk4Tbo
 var _patientsCache = null;
 var _appointmentsCache = null;
 
+// One-time purge of stale seed/demo data from localStorage
+(function() {
+  var purgeKey = 'hms_seed_purged_v2';
+  if (!localStorage.getItem(purgeKey)) {
+    localStorage.removeItem('hms_local_patients');
+    localStorage.removeItem('hms_local_appointments');
+    localStorage.removeItem('hms_patients_cache');
+    localStorage.setItem(purgeKey, '1');
+    console.info('HMS: Purged stale demo/seed data from localStorage.');
+  }
+})();
+
+// JSONP LocalStorage caching key helpers
+function getLocalData(key) {
+  try {
+    var raw = localStorage.getItem('hms_local_' + key);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function setLocalData(key, data) {
+  try {
+    localStorage.setItem('hms_local_' + key, JSON.stringify(data));
+  } catch (e) {}
+}
+
+// Fallback: return empty arrays (production — no seed data)
+function seedLocalPatients() {
+  return [];
+}
+
+function seedLocalAppointments() {
+  return [];
+}
+
 function sheetsFetch(params, callback) {
   if (!SHEETS_API_URL) {
     console.error('SHEETS_API_URL not configured. Set it above or see scripts/README.md');
@@ -19,7 +56,20 @@ function sheetsFetch(params, callback) {
   }
 
   var callbackName = 'scb' + String(Math.random()).slice(2);
+  
+  // Google Apps Script cold starts can take 30+ seconds — allow 45s
+  var timeoutId = setTimeout(function() {
+    if (window[callbackName]) {
+      console.warn('JSONP request timed out for action: ' + (params.action || 'unknown'));
+      delete window[callbackName];
+      var s = document.getElementById(callbackName);
+      if (s) s.parentNode.removeChild(s);
+      callback({ success: false, error: 'Request timed out' });
+    }
+  }, 45000);
+
   window[callbackName] = function(data) {
+    clearTimeout(timeoutId);
     delete window[callbackName];
     var s = document.getElementById(callbackName);
     if (s) s.parentNode.removeChild(s);
@@ -37,6 +87,7 @@ function sheetsFetch(params, callback) {
   script.id = callbackName;
   script.src = url;
   script.onerror = function() {
+    clearTimeout(timeoutId);
     delete window[callbackName];
     var s = document.getElementById(callbackName);
     if (s) s.parentNode.removeChild(s);
@@ -77,15 +128,34 @@ window.API = {
     return sheetsFetch(q).then(function(resp) {
       if (resp.success && resp.data) {
         _patientsCache = resp.data = resp.data.map(normalizePatient);
+        setLocalData('patients', resp.data); // sync local storage
+        return resp;
+      } else {
+        console.warn('Using LocalStorage patients fallback.');
+        var local = getLocalData('patients') || seedLocalPatients();
+        if (params.search) {
+          var search = params.search.toLowerCase();
+          local = local.filter(function(p) {
+            return (p.fname + ' ' + p.lname + ' ' + p.contact + ' ' + p.op_no).toLowerCase().indexOf(search) !== -1;
+          });
+        }
+        _patientsCache = local;
+        return { success: true, data: local, fallback: true };
       }
-      return resp;
     });
   },
 
   getPatient: function(id) {
     return sheetsFetch({ action: 'getPatient', id: id }).then(function(resp) {
-      if (resp.success && resp.data) resp.data = normalizePatient(resp.data);
-      return resp;
+      if (resp.success && resp.data) {
+        resp.data = normalizePatient(resp.data);
+        return resp;
+      } else {
+        var local = getLocalData('patients') || seedLocalPatients();
+        var found = local.filter(function(p) { return String(p.id) === String(id); });
+        if (found.length > 0) return { success: true, data: found[0], fallback: true };
+        return { success: false, error: 'Patient not found' };
+      }
     });
   },
 
@@ -94,7 +164,42 @@ window.API = {
     ['fname','lname','contact','email','gender','dob','address','blood_group','department','patient_type','status','assigned_doctor','notes'].forEach(function(k) {
       if (data[k]) q[k] = data[k];
     });
-    return sheetsFetch(q);
+    return sheetsFetch(q).then(function(resp) {
+      if (resp.success) {
+        return resp;
+      } else {
+        var local = getLocalData('patients') || seedLocalPatients();
+        var nextOp = 1001;
+        local.forEach(function(p) {
+          var num = parseInt(p.op_no || p.id, 10);
+          if (!isNaN(num) && num >= nextOp) nextOp = num + 1;
+        });
+        var now = new Date();
+        var notes = data.notes || '';
+        notes = notes ? notes + '\nOP No: ' + nextOp : 'OP No: ' + nextOp;
+        var newPatient = normalizePatient({
+          id: String(nextOp),
+          op_no: String(nextOp),
+          fname: data.fname || '',
+          lname: data.lname || '',
+          contact: data.contact || '',
+          email: data.email || '',
+          gender: data.gender || '',
+          dob: data.dob || '',
+          address: data.address || '',
+          blood_group: data.blood_group || 'Unknown',
+          department: data.department || 'General',
+          patient_type: data.patient_type || 'outpatient',
+          status: data.status || 'stable',
+          assigned_doctor: data.assigned_doctor || '',
+          last_visit: now.toISOString().split('T')[0],
+          notes: notes
+        });
+        local.push(newPatient);
+        setLocalData('patients', local);
+        return { success: true, data: { id: String(nextOp), op_no: String(nextOp) }, fallback: true };
+      }
+    });
   },
 
   updatePatient: function(id, data) {
@@ -102,19 +207,61 @@ window.API = {
     for (var k in data) {
       if (data.hasOwnProperty(k) && k !== 'id') q[k] = data[k];
     }
-    return sheetsFetch(q);
+    return sheetsFetch(q).then(function(resp) {
+      if (resp.success) {
+        return resp;
+      } else {
+        var local = getLocalData('patients') || seedLocalPatients();
+        var idx = -1;
+        for (var i = 0; i < local.length; i++) {
+          if (String(local[i].id) === String(id) || String(local[i].op_no) === String(id)) {
+            idx = i;
+            break;
+          }
+        }
+        if (idx >= 0) {
+          for (var key in data) {
+            if (data.hasOwnProperty(key) && key !== 'id') {
+              local[idx][key] = data[key];
+            }
+          }
+          setLocalData('patients', local);
+          return { success: true, fallback: true };
+        }
+        return { success: false, error: 'Patient not found' };
+      }
+    });
   },
 
   deletePatient: function(id) {
-    return sheetsFetch({ action: 'deletePatient', id: id });
+    return sheetsFetch({ action: 'deletePatient', id: id }).then(function(resp) {
+      if (resp.success) {
+        return resp;
+      } else {
+        var local = getLocalData('patients') || seedLocalPatients();
+        var originalLength = local.length;
+        local = local.filter(function(p) { return String(p.id) !== String(id) && String(p.op_no) !== String(id); });
+        if (local.length < originalLength) {
+          setLocalData('patients', local);
+          return { success: true, fallback: true };
+        }
+        return { success: false, error: 'Patient not found' };
+      }
+    });
   },
 
   getAppointments: function() {
     return sheetsFetch({ action: 'getAppointments' }).then(function(resp) {
       if (resp.success && resp.data) {
         _appointmentsCache = resp.data;
+        setLocalData('appointments', resp.data); // sync local storage
+        return resp;
+      } else {
+        console.warn('Using LocalStorage appointments fallback.');
+        var local = getLocalData('appointments') || seedLocalAppointments();
+        _appointmentsCache = local;
+        return { success: true, data: local, fallback: true };
       }
-      return resp;
     });
   },
 
@@ -122,7 +269,7 @@ window.API = {
     return window.API.getAppointments().then(function(resp) {
       if (resp.success && resp.data) {
         var found = resp.data.filter(function(a) { return String(a.id) === String(id); });
-        if (found.length > 0) return { success: true, data: found[0] };
+        if (found.length > 0) return { success: true, data: found[0], fallback: resp.fallback || false };
         return { success: false, error: 'Appointment not found' };
       }
       return resp;
@@ -134,7 +281,37 @@ window.API = {
     ['patient_id','patient_name','name','age','patientAge','doctor_id','doctor','doctor_name','appointment_date','appointment_time','type','status','reason','complaint'].forEach(function(k) {
       if (data[k]) q[k] = data[k];
     });
-    return sheetsFetch(q);
+    return sheetsFetch(q).then(function(resp) {
+      if (resp.success) {
+        return resp;
+      } else {
+        var local = getLocalData('appointments') || seedLocalAppointments();
+        var maxToken = 0;
+        local.forEach(function(a) {
+          if (a.token > maxToken) maxToken = a.token;
+        });
+        var now = new Date();
+        var id = 'A' + String(now.getTime()).slice(-8);
+        var newAppt = {
+          id: id,
+          token: maxToken + 1,
+          patient_id: data.patient_id || '',
+          patient_name: data.patient_name || data.name || '',
+          patient_age: data.patientAge || data.age || '',
+          doctor_id: data.doctor_id || '',
+          doctor_name: data.doctor || data.doctor_name || '',
+          appointment_date: data.appointment_date || now.toISOString().split('T')[0],
+          appointment_time: data.appointment_time || now.toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'}),
+          type: data.type || 'OPD',
+          status: data.status || 'waiting',
+          reason: data.reason || data.complaint || '',
+          createdAt: now.toISOString()
+        };
+        local.push(newAppt);
+        setLocalData('appointments', local);
+        return { success: true, data: { id: id, token: maxToken + 1 }, fallback: true };
+      }
+    });
   },
 
   updateAppointment: function(id, data) {
@@ -142,20 +319,72 @@ window.API = {
     for (var k in data) {
       if (data.hasOwnProperty(k)) q[k] = data[k];
     }
-    return sheetsFetch(q);
+    return sheetsFetch(q).then(function(resp) {
+      if (resp.success) {
+        return resp;
+      } else {
+        var local = getLocalData('appointments') || seedLocalAppointments();
+        var idx = -1;
+        for (var i = 0; i < local.length; i++) {
+          if (String(local[i].id) === String(id)) {
+            idx = i;
+            break;
+          }
+        }
+        if (idx >= 0) {
+          for (var key in data) {
+            if (data.hasOwnProperty(key)) {
+              local[idx][key] = data[key];
+            }
+          }
+          setLocalData('appointments', local);
+          return { success: true, fallback: true };
+        }
+        return { success: false, error: 'Appointment not found' };
+      }
+    });
   },
 
   deleteAppointment: function(id) {
-    return sheetsFetch({ action: 'deleteAppointment', id: id });
+    return sheetsFetch({ action: 'deleteAppointment', id: id }).then(function(resp) {
+      if (resp.success) {
+        return resp;
+      } else {
+        var local = getLocalData('appointments') || seedLocalAppointments();
+        var originalLength = local.length;
+        local = local.filter(function(a) { return String(a.id) !== String(id); });
+        if (local.length < originalLength) {
+          setLocalData('appointments', local);
+          return { success: true, fallback: true };
+        }
+        return { success: false, error: 'Appointment not found' };
+      }
+    });
   },
 
   getDoctors: function() {
-    return sheetsFetch({ action: 'getDoctors' });
+    return sheetsFetch({ action: 'getDoctors' }).then(function(resp) {
+      if (resp.success && resp.data) {
+        return resp;
+      } else {
+        return { success: true, data: [
+          { id: 'D001', initials: 'RS', name: 'Dr. Rajesh Sharma', dept: 'Cardiology' },
+          { id: 'D002', initials: 'AP', name: 'Dr. Anita Patel', dept: 'Pediatrics' },
+          { id: 'D003', initials: 'SV', name: 'Dr. Sunil Verma', dept: 'Orthopedics' }
+        ], fallback: true };
+      }
+    });
   },
 
   getSchedules: function() {
-    return sheetsFetch({ action: 'getDoctors' });
+    return sheetsFetch({ action: 'getDoctors' }).then(function(resp) {
+      if (resp.success && resp.data) {
+        return resp;
+      } else {
+        return { success: true, data: [], fallback: true };
+      }
+    });
   }
 };
 
-console.info('HMS: sheets-api.js loaded (JSONP mode). Set SHEETS_API_URL to your Apps Script URL.');
+console.info('HMS: sheets-api.js loaded (JSONP + Resilient Offline Fallback). Set SHEETS_API_URL to your Apps Script.');

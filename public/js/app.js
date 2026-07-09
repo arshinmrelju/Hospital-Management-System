@@ -24,7 +24,12 @@ window.HMS = {
   },
   login(code) {
     if (code === 'WMP01') {
-      localStorage.setItem('hms_auth', JSON.stringify({ code: 'WMP01', timestamp: Date.now() }));
+      localStorage.setItem('hms_auth', JSON.stringify({
+        code: 'WMP01',
+        name: 'Priya K',
+        role: 'Reception',
+        timestamp: Date.now()
+      }));
       return true;
     }
     return false;
@@ -50,6 +55,7 @@ function initLoginOverlay() {
   }
 
   overlay.classList.add('active');
+  if (typeof window.hideLoader === 'function') window.hideLoader();
   document.body.style.overflow = 'hidden';
 
   var input = document.getElementById('loginCodeInput');
@@ -406,6 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
   animateCounters();
   initMobileSearch();
   setTimeout(labelDynamicTables, 100);
+  window.hideLoader();
 });
 
 /* --- Global Search --- */
@@ -460,4 +467,94 @@ document.addEventListener('DOMContentLoaded', function() {
     if (patientSearch) { patientSearch.value = searchQ; patientSearch.dispatchEvent(new Event('input')); }
   }
 });
+
+
+// --- Page Loader Logic ---
+(function() {
+  var messages = [
+    'Initializing system...',
+    'Connecting to medical database...',
+    'Securing reception environment...',
+    'Loading patient registrations...',
+    'Syncing Google Sheets data...',
+    'Optimizing workspace view...',
+    'Welcome to Front Desk harmony!'
+  ];
+  var msgIndex = 0;
+  var intervalId = null;
+
+  function setMsg(text) {
+    var el = document.getElementById('loaderMsg');
+    if (!el) return;
+    el.style.opacity = '0';
+    setTimeout(function() {
+      el.textContent = text;
+      el.style.opacity = '1';
+    }, 300);
+  }
+
+  function rotateMessages() {
+    var el = document.getElementById('loaderMsg');
+    if (!el) return;
+    el.style.opacity = '0';
+    setTimeout(function() {
+      msgIndex = (msgIndex + 1) % messages.length;
+      el.textContent = messages[msgIndex];
+      el.style.opacity = '1';
+    }, 300);
+  }
+
+  function startRotation() {
+    var el = document.getElementById('loaderMsg');
+    if (!el) return;
+    el.textContent = messages[0];
+    el.style.transition = 'opacity 0.3s ease';
+    intervalId = setInterval(rotateMessages, 2000);
+  }
+
+  function stopRotation() {
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+  }
+
+  function showNetworkStatus() {
+    stopRotation();
+    if (!navigator.onLine) {
+      setMsg('No internet connection — please check your network');
+    } else {
+      setMsg('Still loading — check your connection or try reloading');
+    }
+  }
+
+  window.showLoader = function() {
+    var loader = document.getElementById('pageLoader');
+    if (loader) {
+      loader.classList.remove('hidden');
+      msgIndex = 0;
+      startRotation();
+    }
+  };
+
+  window.hideLoader = function() {
+    var loader = document.getElementById('pageLoader');
+    if (loader) {
+      stopRotation();
+      loader.classList.add('hidden');
+    }
+  };
+
+  // Start on load
+  var loader = document.getElementById('pageLoader');
+  if (loader && !loader.classList.contains('hidden')) {
+    startRotation();
+    // If not hidden within 3s, show network status update
+    setTimeout(function() {
+      if (!loader.classList.contains('hidden')) {
+        showNetworkStatus();
+      }
+    }, 3000);
+  }
+})();
 

@@ -134,6 +134,200 @@ select {
   box-shadow: var(--shadow-md);
 }
 
+/* --- Page Loader (Glassmorphism Animation System) --- */
+#pageLoader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #d5f5f0 0%, #f0fdfa 50%, #ccfbf1 100%);
+  transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+#pageLoader.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Glass card container */
+.loader-glass {
+  background: rgba(255,255,255,0.82);
+  border: 1px solid rgba(255,255,255,0.7);
+  border-radius: 32px;
+  box-shadow: 0 12px 40px rgba(0,80,70,0.08);
+  padding: 38px 48px 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: loaderGlassIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes loaderGlassIn {
+  from { opacity: 0; transform: scale(0.9) translateY(24px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Logo container with breathing pulse */
+.loader-logo-wrap {
+  position: relative;
+  margin-bottom: 32px;
+}
+.loader-logo-ring {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: rgba(13,148,136,0.08);
+  border: 2.5px solid rgba(13,148,136,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 10px rgba(13,148,136,0.04), 0 0 0 20px rgba(13,148,136,0.02);
+  animation: loaderPulse 2.4s ease-in-out infinite;
+}
+.loader-logo-ring img {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+@keyframes loaderPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 10px rgba(13,148,136,0.04), 0 0 0 20px rgba(13,148,136,0.02); }
+  50% { transform: scale(1.06); box-shadow: 0 0 0 16px rgba(13,148,136,0.07), 0 0 0 28px rgba(13,148,136,0.03); }
+}
+
+/* Heartbeat SVG line */
+.loader-heartbeat {
+  margin-bottom: 24px;
+}
+.loader-heartbeat svg {
+  overflow: visible;
+}
+.heartbeat-path {
+  stroke-dasharray: 300;
+  stroke-dashoffset: 300;
+  animation: heartDraw 1.8s ease-in-out infinite;
+  stroke: var(--primary-light);
+}
+@keyframes heartDraw {
+  0% { stroke-dashoffset: 300; opacity: 0.3; }
+  50% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: -300; opacity: 0.3; }
+}
+
+/* Title */
+.loader-title {
+  color: var(--primary-dark);
+  font-family: var(--font-head);
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin: 0 0 4px;
+}
+.loader-subtitle {
+  color: var(--on-surface-var);
+  font-size: 0.82rem;
+  font-weight: 500;
+  margin: 0 0 24px;
+  opacity: 0.75;
+}
+
+/* Rotating warm messages */
+.loader-msg {
+  color: var(--primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  min-height: 22px;
+  margin-bottom: 20px;
+  letter-spacing: 0.01em;
+  transition: opacity 0.4s ease;
+}
+
+/* Three animated dots */
+.loader-dots {
+  display: flex;
+  gap: 8px;
+}
+.loader-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  opacity: 0.4;
+  animation: dotBounce 1.4s ease-in-out infinite;
+}
+.loader-dot:nth-child(2) { animation-delay: 0.2s; }
+.loader-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dotBounce {
+  0%, 80%, 100% { transform: scale(0.7); opacity: 0.3; }
+  40% { transform: scale(1.1); opacity: 1; }
+}
+
+/* --- Glass Skeleton Shimmer (Loading Animation) --- */
+.skeleton-row td {
+  padding: 14px 16px !important;
+}
+.skeleton-cell {
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(13,148,136,0.06) 25%, rgba(13,148,136,0.14) 50%, rgba(13,148,136,0.06) 75%);
+  background-size: 200% 100%;
+  animation: glassShimmer 1.8s ease-in-out infinite;
+}
+@keyframes glassShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.skeleton-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, rgba(13,148,136,0.06) 25%, rgba(13,148,136,0.14) 50%, rgba(13,148,136,0.06) 75%);
+  background-size: 200% 100%;
+  animation: glassShimmer 1.8s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+/* Skeleton OPD card */
+.opd-skeleton {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 16px;
+  border: 1px solid rgba(13,148,136,0.08);
+  border-radius: var(--radius-md);
+  margin-bottom: 8px;
+  background: rgba(255,255,255,0.5);
+}
+.opd-skeleton-num {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, rgba(13,148,136,0.06) 25%, rgba(13,148,136,0.14) 50%, rgba(13,148,136,0.06) 75%);
+  background-size: 200% 100%;
+  animation: glassShimmer 1.8s ease-in-out infinite;
+  flex-shrink: 0;
+}
+.opd-skeleton-body { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.opd-skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(13,148,136,0.06) 25%, rgba(13,148,136,0.14) 50%, rgba(13,148,136,0.06) 75%);
+  background-size: 200% 100%;
+  animation: glassShimmer 1.8s ease-in-out infinite;
+}
+.opd-skeleton-line.short { width: 60%; }
+.opd-skeleton-line.xshort { width: 35%; }
+.opd-skeleton-badge {
+  width: 60px;
+  height: 22px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, rgba(13,148,136,0.06) 25%, rgba(13,148,136,0.14) 50%, rgba(13,148,136,0.06) 75%);
+  background-size: 200% 100%;
+  animation: glassShimmer 1.8s ease-in-out infinite;
+}
 /* --- Buttons --- */
 .btn-primary {
   display: inline-flex;

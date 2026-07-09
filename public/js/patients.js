@@ -520,34 +520,66 @@ async function loadPatients(skipCache) {
   skipCache = skipCache || false;
 
   const tbody = document.getElementById('patientTableBody');
-  if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--on-surface-var)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px;color:var(--outline-var)">hourglass_empty</span>Loading patients...</td></tr>';
+  var hasRenderedCache = false;
+
+  if (!skipCache) {
+    var cached = PatientCache.get();
+    if (cached && cached.length > 0) {
+      allPatients = normalizePatients(cached);
+      window.allPatients = allPatients;
+      applyFilters();
+      hasRenderedCache = true;
+    }
+  }
+
+  // If we haven't rendered cached data, show the skeleton loader
+  if (!hasRenderedCache && tbody) {
+    var skeletonHTML = '';
+    for (var i = 0; i < 5; i++) {
+      skeletonHTML += '<tr class="skeleton-row">' +
+        '<td><div class="skeleton-cell" style="width:20px;"></div></td>' +
+        '<td><div class="skeleton-cell" style="width:60px;"></div></td>' +
+        '<td>' +
+          '<div style="display:flex;align-items:center;gap:10px;">' +
+            '<div class="skeleton-avatar"></div>' +
+            '<div style="flex:1;display:flex;flex-direction:column;gap:6px;">' +
+              '<div class="skeleton-cell" style="width:120px;"></div>' +
+              '<div class="skeleton-cell" style="width:70px;height:10px;"></div>' +
+            '</div>' +
+          '</div>' +
+        '</td>' +
+        '<td><div class="skeleton-cell" style="width:90px;"></div></td>' +
+        '<td><div class="skeleton-cell" style="width:80px;"></div></td>' +
+        '<td><div class="skeleton-cell" style="width:100px;"></div></td>' +
+        '<td><div class="skeleton-cell" style="width:60px;height:22px;border-radius:12px;"></div></td>' +
+        '<td>' +
+          '<div style="display:flex;gap:6px;">' +
+            '<div class="skeleton-cell" style="width:30px;height:30px;border-radius:6px;"></div>' +
+            '<div class="skeleton-cell" style="width:30px;height:30px;border-radius:6px;"></div>' +
+            '<div class="skeleton-cell" style="width:30px;height:30px;border-radius:6px;"></div>' +
+          '</div>' +
+        '</td>' +
+      '</tr>';
+    }
+    tbody.innerHTML = skeletonHTML;
+  }
 
   try {
-    if (!skipCache) {
-      var cached = PatientCache.get();
-      if (cached) {
-        allPatients = normalizePatients(cached);
-        window.allPatients = allPatients;
-        applyFilters();
-        return;
-      }
-    }
-
     const result = await window.API.getPatients();
     allPatients = normalizePatients(result.data || []);
     window.allPatients = allPatients;
     PatientCache.set(allPatients);
+    applyFilters();
   } catch (e) {
     console.error('Failed to load patients:', e);
     const errMsg = e && e.message ? e.message : String(e);
-    if (typeof toast === 'function') toast('Could not load patients: ' + errMsg, 'error');
-    const tbody2 = document.getElementById('patientTableBody');
-    if (tbody2) tbody2.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--error,#ef4444)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px">error_outline</span>Failed to load: ' + errMsg + '<br><button class="btn-secondary" style="margin-top:12px" onclick="loadPatients()">Retry</button></td></tr>';
-    allPatients = [];
-    window.allPatients = allPatients;
+    if (!hasRenderedCache) {
+      if (typeof toast === 'function') toast('Could not load patients: ' + errMsg, 'error');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--error,#ef4444)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px">error_outline</span>Failed to load: ' + errMsg + '<br><button class="btn-secondary" style="margin-top:12px" onclick="loadPatients()">Retry</button></td></tr>';
+      allPatients = [];
+      window.allPatients = allPatients;
+    }
   }
-
-  applyFilters();
 }
 window.loadPatients = loadPatients;
 
@@ -602,6 +634,7 @@ async function submitAddPatient(e) {
   submitBtn.textContent = 'Register Patient';
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  loadPatients();
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadPatients();
+  if (typeof window.hideLoader === 'function') window.hideLoader();
 });
