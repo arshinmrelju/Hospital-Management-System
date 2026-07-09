@@ -579,7 +579,7 @@ async function submitAddPatient(e) {
     applyFilters();
     closeModal(null, 'addPatientModal');
     document.getElementById('addPatientForm').reset();
-    toast(`Patient ${newP.fname} ${newP.lname} registered!`, 'success');
+    toast(`Patient ${raw.fname} ${raw.lname} registered! OP No: ${newP.op_no || newP.id}`, 'success');
   } catch (err) {
     toast('Failed to register patient: ' + err.message, 'error');
   }
