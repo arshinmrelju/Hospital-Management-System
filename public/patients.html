@@ -116,7 +116,7 @@
           <p class="page-sub">Showing <span id="patientCount">0</span> registered patients</p>
         </div>
         <div style="display:flex;gap:10px;align-items:center;">
-          <button class="btn-primary" id="addPatientBtn" onclick="openModal('addPatientModal')">
+          <button class="btn-primary" id="addPatientBtn" onclick="openAddPatientModal()">
             <span class="material-icons-round">person_add</span> Add Patient
           </button>
         </div>
@@ -245,6 +245,11 @@
         <button class="modal-close" onclick="closeModal(null,'addPatientModal')"><span class="material-icons-round">close</span></button>
       </div>
       <form id="addPatientForm" class="modal-form" onsubmit="submitAddPatient(event)">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:10px 14px;background:var(--primary-soft);border-radius:var(--radius-md)">
+          <span class="material-icons-round" style="color:var(--primary-light)">confirmation_number</span>
+          <span style="font-size:.82rem;color:var(--on-surface-var)">OP Number:</span>
+          <span id="pOpNo" style="font-weight:800;font-size:1rem;color:var(--primary-light)">—</span>
+        </div>
         <div class="form-row-2">
           <div class="form-group"><label>First Name *</label><input type="text" id="pFirstName" required /></div>
           <div class="form-group"><label>Last Name *</label><input type="text" id="pLastName" required /></div>

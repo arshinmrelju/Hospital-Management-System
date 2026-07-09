@@ -552,6 +552,21 @@ async function loadPatients(skipCache) {
 window.loadPatients = loadPatients;
 
 
+function getNextOpNo() {
+  var maxOp = 0;
+  (window.allPatients || []).forEach(function(p) {
+    var num = parseInt(p.op_no || p.id, 10);
+    if (!isNaN(num) && num > maxOp) maxOp = num;
+  });
+  return String(maxOp + 1);
+}
+
+function openAddPatientModal() {
+  document.getElementById('pOpNo').textContent = getNextOpNo();
+  openModal('addPatientModal');
+}
+window.openAddPatientModal = openAddPatientModal;
+
 async function submitAddPatient(e) {
   e.preventDefault();
   const raw = {
