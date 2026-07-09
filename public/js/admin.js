@@ -24,6 +24,7 @@
     if (!overlay) return;
     if (HMS && HMS.isAuthenticated()) {
       overlay.classList.remove('active');
+      initAdmin();
       return;
     }
     overlay.classList.add('active');
@@ -381,6 +382,7 @@
   /* ─── Init ─── */
   function initAdmin() {
     if (typeof window.hideLoader === 'function') window.hideLoader();
+    console.info('[Admin] Initializing admin panel...');
 
     var dateEl = document.getElementById('todayDate');
     if (dateEl) dateEl.textContent = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -409,11 +411,11 @@
       });
     }
 
-    loadDoctors().then(function() {
-      loadDepartments().then(function() {
-        populateDeptSelects();
-        if (typeof window.populateAllDropdowns === 'function') window.populateAllDropdowns();
-      });
+    // Load data in parallel
+    Promise.all([loadDoctors(), loadDepartments()]).then(function() {
+      populateDeptSelects();
+      if (typeof window.populateAllDropdowns === 'function') window.populateAllDropdowns();
+      console.info('[Admin] Data loaded successfully.');
     });
   }
 
