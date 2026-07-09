@@ -230,8 +230,16 @@ function initCheckinAutocomplete() {
 function openNewPatient() {
   closeModal(null, 'checkInModal');
   var searchQ = document.getElementById('ciPatientSearch')?.value.trim();
-  var target = 'patients.html' + (searchQ ? '?search=' + encodeURIComponent(searchQ) : '');
-  window.location.href = target;
+  if (typeof switchPage === 'function') {
+    switchPage('patients');
+    setTimeout(function() {
+      var btn = document.querySelector('#page-patients #addPatientBtn');
+      if (btn) btn.click();
+    }, 150);
+  } else {
+    var target = 'patients.html' + (searchQ ? '?search=' + encodeURIComponent(searchQ) : '');
+    window.location.href = target;
+  }
 }
 
 /* --- Populate Doctor Dropdown in Check-In Modal --- */

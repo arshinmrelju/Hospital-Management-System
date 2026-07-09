@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/portals.css" />
   <link rel="stylesheet" href="css/staff-theme.css" />
+  <link rel="stylesheet" href="css/patients.css" />
   <style>
     /* --- Reception Portal Premium Styles --- */
     .opd-card {
@@ -158,11 +159,11 @@
     </div>
 
     <nav class="sidebar-nav" id="sidebarNav">
-      <a href="index.html" class="nav-item active" id="nav-dashboard">
+      <a href="#" class="nav-item active" id="nav-dashboard" onclick="switchPage('dashboard');return false">
         <span class="material-icons-round">dashboard</span>
         <span class="nav-label">Dashboard</span>
       </a>
-      <a href="patients.html" class="nav-item" id="nav-patients">
+      <a href="#" class="nav-item" id="nav-patients" onclick="switchPage('patients');return false">
         <span class="material-icons-round">groups</span>
         <span class="nav-label">Patients</span>
       </a>
@@ -229,8 +230,14 @@
       </div>
     </div>
 
+    <style>
+      .page-section { display: none; }
+      .page-section.active { display: block; }
+    </style>
+
     <!-- Page Body -->
     <main class="page-body">
+      <div class="page-section active" id="page-dashboard">
       <div class="page-header">
         <div>
           <h1 class="page-title">Front Desk Console</h1>
@@ -436,8 +443,134 @@
         </div>
 
       </div>
-    </main>
-  </div>
+    </div>
+
+    <!-- ===== PATIENTS PAGE ===== -->
+    <div class="page-section" id="page-patients">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Patient Registry</h1>
+          <p class="page-sub">Showing <span id="patientCount">0</span> registered patients</p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <button class="btn-primary" id="addPatientBtn" onclick="openAddPatientModal()">
+            <span class="material-icons-round">person_add</span> Add Patient
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-bar glass-card">
+        <div class="filter-search-row">
+          <span class="material-icons-round" style="font-size:18px;color:var(--outline)">search</span>
+          <input type="text" id="patientSearch" class="filter-search-input" placeholder="Search by name or phone number…" oninput="filterPatients()" />
+        </div>
+        <div class="filter-bar-row">
+          <div class="filter-chips" id="filterChips">
+            <button class="chip active" data-filter="all" onclick="setFilter(this,'all')">All Patients</button>
+            <button class="chip" data-filter="admitted" onclick="setFilter(this,'admitted')">Admitted</button>
+            <button class="chip" data-filter="outpatient" onclick="setFilter(this,'outpatient')">Outpatient</button>
+            <button class="chip" data-filter="discharged" onclick="setFilter(this,'discharged')">Discharged</button>
+          </div>
+          <div class="filter-selects">
+            <select id="deptFilter" onchange="filterPatients()" class="filter-select">
+              <option value="">All Departments</option>
+              <option>Cardiology</option>
+              <option>Pediatrics</option>
+              <option>Orthopedics</option>
+              <option>Oncology</option>
+              <option>Neurology</option>
+              <option>General Surgery</option>
+            </select>
+            <select id="statusFilter" onchange="filterPatients()" class="filter-select">
+              <option value="">All Status</option>
+              <option value="stable">Stable</option>
+              <option value="critical">Critical</option>
+              <option value="recovering">Recovering</option>
+            </select>
+            <button class="btn-secondary adv-search-btn" id="toggleAdvancedSearch" onclick="toggleAdvancedSearchPanel()">
+              <span class="material-icons-round">tune</span> Advanced
+              <span class="adv-active-badge" id="advActiveBadge" style="display:none">0</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="advancedSearchPanel" class="adv-search-panel glass-card" style="display:none;">
+        <div class="adv-search-header">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="material-icons-round" style="font-size:16px;color:var(--primary-light)">manage_search</span>
+            <span style="font-weight:700;font-size:0.85rem;">Advanced Filters</span>
+            <span class="adv-results-count" id="advResultsCount"></span>
+          </div>
+          <button class="adv-clear-btn" id="advClearBtn" onclick="clearAdvancedFilters()" style="display:none">
+            <span class="material-icons-round" style="font-size:14px;">close</span> Clear All
+          </button>
+        </div>
+        <div class="adv-search-grid">
+          <div class="adv-field">
+            <label><span class="material-icons-round">cake</span> Age Range</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="number" id="minAgeFilter" oninput="filterPatients();updateAdvBadge()" class="adv-input" placeholder="Min" min="0" />
+              <span style="color:var(--outline);font-size:0.8rem;">—</span>
+              <input type="number" id="maxAgeFilter" oninput="filterPatients();updateAdvBadge()" class="adv-input" placeholder="Max" min="0" />
+            </div>
+          </div>
+          <div class="adv-field">
+            <label><span class="material-icons-round">location_on</span> Place / Area</label>
+            <input type="text" id="placeFilter" oninput="filterPatients();updateAdvBadge()" class="adv-input" placeholder="E.g., Pulpally, Chepila…" />
+          </div>
+          <div class="adv-field">
+            <label><span class="material-icons-round">stethoscope</span> Assigned Doctor</label>
+            <input type="text" id="doctorFilter" oninput="filterPatients();updateAdvBadge()" class="adv-input" placeholder="E.g., Dr Pillai, Rajesh…" />
+          </div>
+          <div class="adv-field">
+            <label><span class="material-icons-round">tag</span> OP Number</label>
+            <input type="text" id="opFilter" oninput="filterPatients();updateAdvBadge()" class="adv-input" placeholder="E.g., 6052, 13150…" />
+          </div>
+          <div class="adv-field">
+            <label><span class="material-icons-round">event</span> Last Visit From</label>
+            <input type="date" id="visitFromFilter" oninput="filterPatients();updateAdvBadge()" class="adv-input" />
+          </div>
+          <div class="adv-field">
+            <label><span class="material-icons-round">event</span> Last Visit To</label>
+            <input type="date" id="visitToFilter" oninput="filterPatients();updateAdvBadge()" class="adv-input" />
+          </div>
+        </div>
+      </div>
+
+      <div class="widget glass-card table-widget">
+        <div class="table-scroll">
+          <table class="data-table" id="patientTable">
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" /></th>
+                <th class="sortable" onclick="sortTable('id')">Patient ID <span class="material-icons-round">unfold_more</span></th>
+                <th class="sortable" onclick="sortTable('name')">Name <span class="material-icons-round">unfold_more</span></th>
+                <th>Contact</th>
+                <th>Department</th>
+                <th class="sortable" onclick="sortTable('visit')">Last Visit <span class="material-icons-round">unfold_more</span></th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="patientTableBody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span class="pagination-info" id="paginationInfo">Showing 1–10 of 0</span>
+          <div class="pagination-btns">
+            <button class="page-btn" id="prevPage" onclick="changePage(-1)" disabled><span class="material-icons-round">chevron_left</span></button>
+            <div class="page-numbers" id="pageNumbers"></div>
+            <button class="page-btn" id="nextPage" onclick="changePage(1)"><span class="material-icons-round">chevron_right</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+  <div id="toastContainer"></div>
 
   <!-- Check-In Modal -->
   <div class="modal-overlay" id="checkInModal" onclick="closeModal(event, 'checkInModal')">
@@ -499,10 +632,117 @@
     </div>
   </div>
 
+  <!-- Add Patient Modal -->
+  <div class="modal-overlay" id="addPatientModal" onclick="closeModal(event,'addPatientModal')">
+    <div class="modal glass-card">
+      <div class="modal-header">
+        <h2>Add New Patient</h2>
+        <button class="modal-close" onclick="closeModal(null,'addPatientModal')"><span class="material-icons-round">close</span></button>
+      </div>
+      <form id="addPatientForm" class="modal-form" onsubmit="submitAddPatient(event)">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:10px 14px;background:var(--primary-soft);border-radius:var(--radius-md)">
+          <span class="material-icons-round" style="color:var(--primary-light)">confirmation_number</span>
+          <span style="font-size:.82rem;color:var(--on-surface-var)">OP Number:</span>
+          <span id="pOpNo" style="font-weight:800;font-size:1rem;color:var(--primary-light)">—</span>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label>First Name *</label><input type="text" id="pFirstName" required /></div>
+          <div class="form-group"><label>Last Name *</label><input type="text" id="pLastName" required /></div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Date of Birth *</label><input type="date" id="pDob" required /></div>
+          <div class="form-group"><label>Gender *</label>
+            <select id="pGender" required><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select>
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Contact Number *</label><input type="tel" id="pContact" required /></div>
+          <div class="form-group"><label>Email</label><input type="email" id="pEmail" /></div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Department *</label>
+            <select id="pDept" required><option value="">Select</option><option>Cardiology</option><option>Pediatrics</option><option>Orthopedics</option><option>Oncology</option><option>Neurology</option><option>General Surgery</option></select>
+          </div>
+          <div class="form-group"><label>Admission Type *</label>
+            <select id="pType" required><option value="">Select</option><option>Admitted</option><option>Outpatient</option></select>
+          </div>
+        </div>
+        <div class="form-group"><label>Blood Group</label>
+          <select id="pBlood"><option value="">Unknown</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select>
+        </div>
+        <div class="form-group"><label>Notes / Chief Complaint</label><textarea id="pNotes" rows="2"></textarea></div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal(null,'addPatientModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Register Patient</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Patient Modal -->
+  <div class="modal-overlay" id="editPatientModal" onclick="closeModal(event,'editPatientModal')">
+    <div class="modal glass-card">
+      <div class="modal-header">
+        <h2 id="editPatientTitle">Edit Patient</h2>
+        <button class="modal-close" onclick="closeModal(null,'editPatientModal')"><span class="material-icons-round">close</span></button>
+      </div>
+      <form id="editPatientForm" class="modal-form" onsubmit="submitEditPatient(event)">
+        <input type="hidden" id="editPatientId" />
+        <div class="form-row-2">
+          <div class="form-group"><label>First Name *</label><input type="text" id="editFirstName" required /></div>
+          <div class="form-group"><label>Last Name *</label><input type="text" id="editLastName" required /></div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Date of Birth</label><input type="date" id="editDob" /></div>
+          <div class="form-group"><label>Gender</label>
+            <select id="editGender"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select>
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Contact Number *</label><input type="tel" id="editContact" required /></div>
+          <div class="form-group"><label>Email</label><input type="email" id="editEmail" /></div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Department *</label>
+            <select id="editDept" required><option value="">Select</option><option>Cardiology</option><option>Pediatrics</option><option>Orthopedics</option><option>Oncology</option><option>Neurology</option><option>General Surgery</option></select>
+          </div>
+          <div class="form-group"><label>Admission Type *</label>
+            <select id="editType" required><option value="">Select</option><option>Admitted</option><option>Outpatient</option></select>
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Blood Group</label>
+            <select id="editBlood"><option value="">Unknown</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select>
+          </div>
+          <div class="form-group"><label>Status</label>
+            <select id="editStatus"><option value="stable">Stable</option><option value="recovering">Recovering</option><option value="critical">Critical</option></select>
+          </div>
+        </div>
+        <div class="form-group"><label>Notes / Chief Complaint</label><textarea id="editNotes" rows="2"></textarea></div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal(null,'editPatientModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- View Patient Modal -->
+  <div class="modal-overlay" id="viewPatientModal" onclick="closeModal(event,'viewPatientModal')">
+    <div class="modal glass-card wide-modal">
+      <div class="modal-header">
+        <h2 id="viewPatientTitle">Patient Profile</h2>
+        <button class="modal-close" onclick="closeModal(null,'viewPatientModal')"><span class="material-icons-round">close</span></button>
+      </div>
+      <div id="viewPatientBody"></div>
+    </div>
+  </div>
+
   <!-- HMS Sheets API Layer -->
   <script src="js/sheets-api.js"></script>
   <script src="js/app.js"></script>
   <script src="js/reception-dashboard.js"></script>
+  <script src="js/patients.js"></script>
 </body>
 
 </html>

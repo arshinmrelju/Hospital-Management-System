@@ -35,6 +35,7 @@ let currentPage = 1;
 const ROWS_PER_PAGE = 10;
 let activeFilter = 'all';
 let sortCol = null, sortDir = 1;
+var _patientsInitialized = false;
 
 
 function renderTable() {
@@ -527,13 +528,13 @@ async function loadPatients(skipCache) {
     if (cached && cached.length > 0) {
       allPatients = normalizePatients(cached);
       window.allPatients = allPatients;
-      applyFilters();
+      if (_patientsInitialized) applyFilters();
       hasRenderedCache = true;
     }
   }
 
   // If we haven't rendered cached data, show the skeleton loader
-  if (!hasRenderedCache && tbody) {
+  if (!hasRenderedCache && tbody && _patientsInitialized) {
     var skeletonHTML = '';
     for (var i = 0; i < 5; i++) {
       skeletonHTML += '<tr class="skeleton-row">' +
@@ -569,11 +570,11 @@ async function loadPatients(skipCache) {
     allPatients = normalizePatients(result.data || []);
     window.allPatients = allPatients;
     PatientCache.set(allPatients);
-    applyFilters();
+    if (_patientsInitialized) applyFilters();
   } catch (e) {
     console.error('Failed to load patients:', e);
     const errMsg = e && e.message ? e.message : String(e);
-    if (!hasRenderedCache) {
+    if (!hasRenderedCache && _patientsInitialized) {
       if (typeof toast === 'function') toast('Could not load patients: ' + errMsg, 'error');
       if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--error,#ef4444)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px">error_outline</span>Failed to load: ' + errMsg + '<br><button class="btn-secondary" style="margin-top:12px" onclick="loadPatients()">Retry</button></td></tr>';
       allPatients = [];
@@ -582,6 +583,14 @@ async function loadPatients(skipCache) {
   }
 }
 window.loadPatients = loadPatients;
+
+function initPatientsPage() {
+  if (_patientsInitialized) return;
+  _patientsInitialized = true;
+  if (allPatients && allPatients.length > 0) {
+    applyFilters();
+  }
+}
 
 
 function getNextOpNo() {
@@ -635,6 +644,8 @@ async function submitAddPatient(e) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  var isSPA = !!document.getElementById('page-patients');
+  if (!isSPA) _patientsInitialized = true;
   await loadPatients();
   if (typeof window.hideLoader === 'function') window.hideLoader();
 });

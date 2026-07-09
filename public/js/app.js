@@ -432,14 +432,17 @@ function initGlobalSearch() {
       if (toggleBtn) toggleBtn.querySelector('.material-icons-round').textContent = 'search';
     }
 
-    var path = window.location.pathname;
-
-    if (path.includes('patients.html')) {
+    var pageSection = document.querySelector('.page-section.active');
+    if (pageSection && pageSection.id === 'page-patients') {
       var patientSearch = document.getElementById('patientSearch');
       if (patientSearch) { patientSearch.value = q; patientSearch.dispatchEvent(new Event('input')); toast('Filtering patients for "' + q + '"', 'info', 'search'); }
     } else {
       toast('Searching for "' + q + '" in patient registry...', 'info', 'search');
-      setTimeout(function() { window.location.href = 'patients.html?search=' + encodeURIComponent(q); }, 600);
+      switchPage('patients');
+      setTimeout(function() {
+        var patientSearch = document.getElementById('patientSearch');
+        if (patientSearch) { patientSearch.value = q; patientSearch.dispatchEvent(new Event('input')); }
+      }, 100);
     }
   }
 
@@ -449,12 +452,60 @@ function initGlobalSearch() {
 
 document.addEventListener('DOMContentLoaded', initGlobalSearch);
 
+var _tabStates = {};
+
+function _saveTabState(id) {
+  var pane = document.getElementById(id);
+  if (!pane) return;
+  var state = { inputs: {}, scrolls: {} };
+  pane.querySelectorAll('input, select, textarea').forEach(function(el) {
+    if (el.id) state.inputs[el.id] = el.value;
+  });
+  pane.querySelectorAll('[style*="overflow"]').forEach(function(el, i) {
+    state.scrolls[i] = el.scrollTop;
+  });
+  _tabStates[id] = state;
+}
+
+function _restoreTabState(id) {
+  var state = _tabStates[id];
+  if (!state) return;
+  Object.keys(state.inputs).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = state.inputs[id];
+  });
+  var pane = document.getElementById(id);
+  if (pane) {
+    pane.querySelectorAll('[style*="overflow"]').forEach(function(el, i) {
+      if (state.scrolls[i] !== undefined) el.scrollTop = state.scrolls[i];
+    });
+  }
+}
+
 window.switchDashboardTab = function(tabId, event) {
+  var current = document.querySelector('.dashboard-tab-pane.active');
+  if (current) _saveTabState(current.id);
   document.querySelectorAll('.dashboard-tab-pane').forEach(function(pane) { pane.classList.remove('active'); });
   document.querySelectorAll('.dashboard-tab-btn').forEach(function(btn) { btn.classList.remove('active'); });
   var targetPane = document.getElementById(tabId);
-  if (targetPane) targetPane.classList.add('active');
+  if (targetPane) {
+    targetPane.classList.add('active');
+    _restoreTabState(tabId);
+  }
   if (event && event.currentTarget) event.currentTarget.classList.add('active');
+};
+
+/* --- Page Navigation (SPA) --- */
+window.switchPage = function(page) {
+  document.querySelectorAll('.page-section').forEach(function(s) { s.classList.remove('active'); });
+  document.querySelectorAll('.sidebar-nav .nav-item').forEach(function(i) { i.classList.remove('active'); });
+  var section = document.getElementById('page-' + page);
+  if (section) section.classList.add('active');
+  var navItem = document.getElementById('nav-' + page);
+  if (navItem) navItem.classList.add('active');
+  if (page === 'patients' && typeof initPatientsPage === 'function') {
+    initPatientsPage();
+  }
 };
 
 document.addEventListener('DOMContentLoaded', function() {
