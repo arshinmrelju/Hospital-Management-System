@@ -167,12 +167,7 @@
             <span class="material-icons-round">groups</span>
             <span class="nav-label">Patients</span>
           </a>
-          <a href="admin.html" class="nav-item" id="nav-admin">
-            <span class="material-icons-round">admin_panel_settings</span>
-            <span class="nav-label">Admin</span>
-          </a>
-
-        </nav>
+          </nav>
 
     <!-- Techsiah Branding -->
     <a href="https://techsiah.web.app" target="_blank" class="techsiah-badge">
@@ -193,10 +188,10 @@
     </a>
 
     <div class="sidebar-user">
-      <div class="user-avatar" id="userAvatar">PK</div>
+      <div class="user-avatar" id="userAvatar">FD</div>
       <div class="user-info">
         <span class="user-name" id="sidebarUserName">Front Desk</span>
-        <span class="user-role" id="sidebarUserRole">Wellness Medicals</span>
+        <span class="user-role" id="sidebarUserRole">Reception</span>
       </div>
     </div>
     </div>
@@ -222,7 +217,7 @@
           <span class="material-icons-round">notifications</span>
           <span class="badge" id="notifBadge">7</span>
         </button>
-        <div class="topbar-avatar" id="topbarAvatar">PK</div>
+        <div class="topbar-avatar" id="topbarAvatar">FD</div>
       </div>
     </header>
 
@@ -245,7 +240,7 @@
       <div class="page-header">
         <div>
           <h1 class="page-title">Front Desk Console</h1>
-          <p class="page-sub" id="dashboardGreeting">Reception desk active. Good morning, Priya!</p>
+          <p class="page-sub" id="dashboardGreeting">Good morning! Front Desk is ready.</p>
         </div>
         <div class="header-actions">
           <span class="date-badge" id="todayDate"></span>
@@ -731,6 +726,20 @@
         <button class="modal-close" onclick="closeModal(null,'viewPatientModal')"><span class="material-icons-round">close</span></button>
       </div>
       <div id="viewPatientBody"></div>
+    </div>
+  </div>
+
+  <!-- Login Success Overlay -->
+  <div class="modal-overlay" id="loginSuccessOverlay" style="background:linear-gradient(135deg, rgba(0,72,64,0.82) 0%, rgba(13,148,136,0.55) 100%);backdrop-filter:blur(24px);z-index:10000;">
+    <div style="width:100%;max-width:380px;background:rgba(255,255,255,0.97);border-radius:28px;box-shadow:0 32px 80px rgba(0,80,70,0.30);overflow:hidden;animation:modalIn 0.4s cubic-bezier(0.34,1.56,0.64,1);text-align:center;padding:48px 32px 40px;">
+      <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#10B981,#059669);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;box-shadow:0 8px 32px rgba(16,185,129,0.35);">
+        <span class="material-icons-round" style="font-size:38px;color:#fff;">check_circle</span>
+      </div>
+      <h2 style="color:var(--on-surface);font-family:var(--font-head);font-size:1.3rem;font-weight:800;margin:0 0 4px;">Welcome Back!</h2>
+      <p style="color:var(--outline);font-size:0.92rem;margin:0 0 4px;line-height:1.5;">
+        <span class="material-icons-round" style="font-size:16px;vertical-align:-2px;">badge</span>
+        <span class="ls-role" style="font-weight:700;color:var(--primary-light);">Reception</span>
+      </p>
     </div>
   </div>
 

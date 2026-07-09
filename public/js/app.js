@@ -26,7 +26,6 @@ window.HMS = {
     if (code === 'WMP01') {
       localStorage.setItem('hms_auth', JSON.stringify({
         code: 'WMP01',
-        name: 'Priya K',
         role: 'Reception',
         timestamp: Date.now()
       }));
@@ -72,6 +71,8 @@ function initLoginOverlay() {
       document.body.style.overflow = '';
       input.value = '';
       if (error) error.style.display = 'none';
+      var auth = JSON.parse(localStorage.getItem('hms_auth'));
+      showLoginSuccess(auth ? auth.role : '');
     } else {
       if (error) {
         error.textContent = 'Invalid code. Please try again.';
@@ -89,6 +90,15 @@ window.addConsoleLog = function addConsoleLog(type, msg) {
   if (typeof console !== 'undefined') console.log('[' + type + '] ' + msg);
 };
 
+function showLoginSuccess(role) {
+  var el = document.getElementById('loginSuccessOverlay');
+  if (!el) return;
+  el.querySelector('.ls-role').textContent = role || '';
+  el.classList.add('active');
+  setTimeout(function() {
+    el.classList.remove('active');
+  }, 2500);
+}
 
 function toast(message, type = 'info', icon = null) {
   let container = document.getElementById('toastContainer');
@@ -252,7 +262,7 @@ function initUserDisplay() {
   const nameEl = document.getElementById('sidebarUserName');
   const roleEl = document.getElementById('sidebarUserRole');
   if (nameEl) nameEl.textContent = 'Front Desk';
-  if (roleEl) roleEl.textContent = 'Wellness Medicals';
+  if (roleEl) roleEl.textContent = 'Reception';
 
   initPortalTheme();
 }
@@ -270,7 +280,7 @@ function initGreeting() {
   if (!el) return;
   const h = new Date().getHours();
   const g = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
-  el.textContent = `${g}! Welcome to Front Desk.`;
+  el.textContent = g + '! Front Desk is ready.';
 }
 
 function switchTab(btn, tabId) {

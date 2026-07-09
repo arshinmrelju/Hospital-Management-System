@@ -42,7 +42,9 @@
         document.body.style.overflow = '';
         input.value = '';
         if (error) error.style.display = 'none';
-        initAdmin();
+        var auth = JSON.parse(localStorage.getItem('hms_auth'));
+        showLoginSuccess(auth ? auth.role : 'Admin');
+        setTimeout(function() { initAdmin(); }, 2600);
       } else {
         if (error) { error.textContent = 'Invalid code. Please try again.'; error.style.display = 'block'; }
         input.value = '';

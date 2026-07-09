@@ -458,26 +458,18 @@ function updateStats() {
 document.addEventListener('DOMContentLoaded', async () => {
   // Apply dynamic user details and greeting
   var stored = localStorage.getItem('hms_auth');
-  var userName = 'Priya';
-  if (stored) {
-    try {
-      var parsed = JSON.parse(stored);
-      if (parsed.name) userName = parsed.name.split(' ')[0];
-      var initials = parsed.name ? parsed.name.split(' ').map(n => n[0]).join('') : 'PK';
-      var userAvatar = document.getElementById('userAvatar');
-      var topbarAvatar = document.getElementById('topbarAvatar');
-      var sidebarUserName = document.getElementById('sidebarUserName');
-      if (userAvatar) userAvatar.textContent = initials;
-      if (topbarAvatar) topbarAvatar.textContent = initials;
-      if (sidebarUserName) sidebarUserName.textContent = parsed.name || 'Front Desk';
-    } catch (e) { }
-  }
+  var userAvatar = document.getElementById('userAvatar');
+  var topbarAvatar = document.getElementById('topbarAvatar');
+  var sidebarUserName = document.getElementById('sidebarUserName');
+  if (userAvatar) userAvatar.textContent = 'FD';
+  if (topbarAvatar) topbarAvatar.textContent = 'FD';
+  if (sidebarUserName) sidebarUserName.textContent = 'Front Desk';
 
   var greeting = document.getElementById('dashboardGreeting');
   if (greeting) {
     var hr = new Date().getHours();
     var greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
-    greeting.textContent = 'Reception desk active. ' + greet + ', ' + userName + '!';
+    greeting.textContent = greet + '! Front Desk is ready.';
   }
 
   // Update today's date badge
