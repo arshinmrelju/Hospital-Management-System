@@ -31,6 +31,26 @@ function extractOpFromNotes(notes) {
   return m ? m[1] : '';
 }
 
+function generateNextOpNo(sheet, headers) {
+  var idCol = headers.indexOf('ID');
+  var notesCol = headers.indexOf('Notes');
+  var maxOp = 0;
+  var rows = sheet.getDataRange().getValues();
+  for (var i = 1; i < rows.length; i++) {
+    var vals = [];
+    if (idCol >= 0) vals.push(rows[i][idCol]);
+    if (notesCol >= 0) {
+      var op = extractOpFromNotes(String(rows[i][notesCol] || ''));
+      if (op) vals.push(op);
+    }
+    for (var v = 0; v < vals.length; v++) {
+      var num = parseInt(vals[v], 10);
+      if (!isNaN(num) && num > maxOp) maxOp = num;
+    }
+  }
+  return String(maxOp + 1);
+}
+
 function findPatientRow(id, rows, headers) {
   var idCol = headers.indexOf('ID');
   var notesCol = headers.indexOf('Notes');
@@ -134,7 +154,7 @@ function handleCreatePatient(e) {
   var now = new Date();
   var notes = e.parameter.notes || '';
   var existingOp = extractOpFromNotes(notes);
-  var opNo = existingOp || String(now.getTime()).slice(-6);
+  var opNo = existingOp || generateNextOpNo(sheet, headers);
   if (!existingOp) {
     notes = notes ? notes + '\nOP No: ' + opNo : 'OP No: ' + opNo;
   }
