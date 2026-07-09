@@ -10,9 +10,9 @@
 
   /* ─── Auth ─── */
   function adminLogin(code) {
-    if (code === 'WMP01') {
+    if (code === 'WMPAD01') {
       localStorage.setItem('hms_auth', JSON.stringify({
-        code: 'WMP01', name: 'Admin', role: 'Admin', timestamp: Date.now()
+        code: 'WMPAD01', name: 'Admin', role: 'Admin', timestamp: Date.now()
       }));
       return true;
     }

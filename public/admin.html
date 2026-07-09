@@ -16,14 +16,7 @@
   <link rel="stylesheet" href="css/portals.css" />
   <link rel="stylesheet" href="css/patients.css" />
   <style>
-    :root { --admin-accent: #3B82F6; --admin-soft: rgba(59, 130, 246, 0.10); }
-    body.portal-admin .nav-item.active { background: var(--admin-soft) !important; color: var(--admin-accent) !important; }
-    body.portal-admin .nav-item.active::before { background: var(--admin-accent) !important; }
-    body.portal-admin .user-avatar { background: linear-gradient(135deg, var(--admin-accent), #1D4ED8) !important; }
-    body.portal-admin .btn-primary { background: var(--admin-accent); box-shadow: 0 2px 12px rgba(59, 130, 246, 0.30); }
-    body.portal-admin .btn-primary:hover { background: #2563EB; }
-    body.portal-admin .btn-secondary { color: var(--admin-accent); border-color: rgba(59, 130, 246, 0.25); background: var(--admin-soft); }
-    body.portal-admin .sidebar-nav .nav-item:hover:not(.active) { color: var(--admin-accent) !important; }
+    
     .admin-tab-bar { display: flex; gap: 4px; margin-bottom: 24px; background: var(--surface-mid); border-radius: var(--radius-lg); padding: 4px; }
     .admin-tab { flex: 1; padding: 10px 16px; border: none; border-radius: var(--radius-md); font-weight: 600; font-size: 0.85rem; color: var(--on-surface-var); cursor: pointer; background: transparent; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .admin-tab.active { background: #fff; color: var(--admin-accent); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
@@ -40,13 +33,13 @@
     .admin-search:focus-within { border-color: var(--admin-accent); box-shadow: 0 0 0 3px var(--admin-soft); }
     .empty-state { text-align: center; padding: 48px 20px; color: var(--on-surface-var); }
     .empty-state .material-icons-round { font-size: 48px; color: var(--outline-var); margin-bottom: 12px; }
-    .doctor-avatar-sm { width: 36px; height: 36px; border-radius: 50%; background: var(--admin-soft); color: var(--admin-accent); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.82rem; flex-shrink: 0; }
+    .doctor-avatar-sm { width: 36px; height: 36px; border-radius: 50%; background: var(--primary-soft); color: var(--primary-light); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.82rem; flex-shrink: 0; }
     .doctor-cell { display: flex; align-items: center; gap: 10px; }
     .badge-status.inactive, .badge-status.off { background: rgba(107,114,128,0.12); color: #6B7280; }
   </style>
 </head>
 
-<body class="app-body portal-admin">
+<body class="app-body portal-reception">
 
   <div id="pageLoader">
     <div class="loader-glass">
@@ -68,9 +61,9 @@
   </div>
 
   <!-- Login Overlay -->
-  <div class="modal-overlay active" id="loginOverlay" style="background:linear-gradient(135deg, rgba(30,58,138,0.72) 0%, rgba(59,130,246,0.48) 100%);backdrop-filter:blur(18px);">
+  <div class="modal-overlay active" id="loginOverlay" style="background:linear-gradient(135deg, rgba(0,72,64,0.72) 0%, rgba(13,148,136,0.48) 100%);backdrop-filter:blur(18px);">
     <div style="width:100%;max-width:400px;background:rgba(255,255,255,0.97);border-radius:28px;box-shadow:0 32px 80px rgba(30,58,138,0.28),0 0 0 1.5px rgba(59,130,246,0.18);overflow:hidden;animation:modalIn 0.36s cubic-bezier(0.34,1.56,0.64,1);">
-      <div style="background:linear-gradient(135deg,#1E3A8A 0%,#3B82F6 60%,#60A5FA 100%);padding:36px 32px 28px;text-align:center;position:relative;overflow:hidden;">
+      <div style="background:linear-gradient(135deg, #00685f 0%, #0D9488 60%, #14b8a6 100%);padding:36px 32px 28px;text-align:center;position:relative;overflow:hidden;">
         <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.06);pointer-events:none;"></div>
         <div style="position:absolute;bottom:-20px;left:-20px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,0.05);pointer-events:none;"></div>
         <div style="width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,0.15);border:3px solid rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 0 0 6px rgba(255,255,255,0.08);">
@@ -83,22 +76,22 @@
         <p style="text-align:center;font-size:0.82rem;color:var(--on-surface-var);margin:0 0 20px;line-height:1.5;">Enter your admin access code to continue.</p>
         <form id="loginForm">
           <div style="position:relative;margin-bottom:6px;">
-            <span class="material-icons-round" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--admin-accent);pointer-events:none;">lock</span>
+            <span class="material-icons-round" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--primary-light);pointer-events:none;">lock</span>
             <input type="password" id="loginCodeInput" placeholder="● ● ● ● ●" autocomplete="off"
               style="width:100%;background:var(--surface-low);border:2px solid var(--outline-var);border-radius:var(--radius-md);padding:13px 14px 13px 44px;font-size:1.15rem;text-align:left;letter-spacing:5px;font-weight:700;color:var(--on-surface);transition:border-color 0.2s,box-shadow 0.2s;box-sizing:border-box;"
-              onfocus="this.style.borderColor='#3B82F6';this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.15)'"
+              onfocus="this.style.borderColor='#0D9488';this.style.boxShadow='0 0 0 3px rgba(13,148,136,0.15)'"
               onblur="this.style.borderColor='var(--outline-var)';this.style.boxShadow='none'" />
           </div>
           <p id="loginError" style="display:none;color:#ef4444;font-size:0.78rem;font-weight:600;text-align:center;margin:8px 0 0;padding:8px 12px;background:rgba(239,68,68,0.08);border-radius:var(--radius-sm);"></p>
           <button type="submit" id="loginBtn"
-            style="width:100%;margin-top:18px;background:linear-gradient(135deg,#1E3A8A,#3B82F6);color:#fff;border:none;border-radius:var(--radius-md);padding:14px 20px;font-family:var(--font-body);font-size:0.95rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 6px 24px rgba(59,130,246,0.35);transition:all 0.2s;letter-spacing:0.02em;"
-            onmouseover="this.style.background='linear-gradient(135deg,#1E40AF,#2563EB)';this.style.transform='translateY(-1px)';this.style.boxShadow='0 10px 32px rgba(59,130,246,0.45)'"
-            onmouseout="this.style.background='linear-gradient(135deg,#1E3A8A,#3B82F6)';this.style.transform='translateY(0)';this.style.boxShadow='0 6px 24px rgba(59,130,246,0.35)'">
+            style="width:100%;margin-top:18px;background:linear-gradient(135deg,#00685f,#0D9488);color:#fff;border:none;border-radius:var(--radius-md);padding:14px 20px;font-family:var(--font-body);font-size:0.95rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 6px 24px rgba(13,148,136,0.35);transition:all 0.2s;letter-spacing:0.02em;"
+            onmouseover="this.style.background='linear-gradient(135deg,#005a52,#0c8076)';this.style.transform='translateY(-1px)';this.style.boxShadow='0 10px 32px rgba(13,148,136,0.45)'"
+            onmouseout="this.style.background='linear-gradient(135deg,#00685f,#0D9488)';this.style.transform='translateY(0)';this.style.boxShadow='0 6px 24px rgba(13,148,136,0.35)'">
             <span class="material-icons-round" style="font-size:18px;">login</span>
             Access Admin Panel
           </button>
         </form>
-        <p style="text-align:center;margin:18px 0 0;font-size:0.72rem;color:var(--outline);">Wellness Medicals HMS · <span style="color:var(--admin-accent);font-weight:600;">Admin</span></p>
+        <p style="text-align:center;margin:18px 0 0;font-size:0.72rem;color:var(--outline);">Wellness Medicals HMS · <span style="color:var(--primary-light);font-weight:600;">Admin</span></p>
       </div>
     </div>
   </div>
@@ -127,10 +120,7 @@
         <span class="nav-label">Departments</span>
       </a>
       <div class="nav-divider"></div>
-      <a href="index.html" class="nav-item">
-        <span class="material-icons-round">arrow_back</span>
-        <span class="nav-label">Back to Reception</span>
-      </a>
+      
     </nav>
     <div class="sidebar-user">
       <div class="user-avatar" id="userAvatar">AD</div>
