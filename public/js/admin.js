@@ -7,6 +7,8 @@
   var filteredDepts = [];
   var allDoctorsLoaded = false;
   var allDeptsLoaded = false;
+  var deptChartInstance = null;
+  var statusChartInstance = null;
 
   /* ─── Auth ─── */
   function adminLogin(code) {
@@ -189,6 +191,122 @@
     if (statDoctors) statDoctors.textContent = totalDocs;
     if (statAvail) statAvail.textContent = avail;
     if (statDepts) statDepts.textContent = totalDepts;
+    renderOverviewCharts();
+  }
+
+  /* ─── Overview Charts ─── */
+  function renderOverviewCharts() {
+    var deptCanvas = document.getElementById('deptChart');
+    var statusCanvas = document.getElementById('statusChart');
+    if (!deptCanvas || !statusCanvas) return;
+    if (typeof Chart === 'undefined') return;
+
+    // 1. Calculate Doctors per Department
+    var deptCounts = {};
+    departments.forEach(function(d) {
+      deptCounts[d.name] = 0;
+    });
+    doctors.forEach(function(doc) {
+      if (doc.dept) {
+        deptCounts[doc.dept] = (deptCounts[doc.dept] || 0) + 1;
+      }
+    });
+
+    var deptLabels = Object.keys(deptCounts);
+    var deptData = Object.values(deptCounts);
+
+    // 2. Calculate Doctor Status Distribution
+    var statusCounts = { available: 0, busy: 0, off: 0 };
+    doctors.forEach(function(doc) {
+      var s = (doc.status || 'available').toLowerCase();
+      if (s === 'off duty') s = 'off';
+      if (statusCounts[s] !== undefined) {
+        statusCounts[s]++;
+      }
+    });
+
+    // 3. Render Department Chart (Bar Chart)
+    if (deptChartInstance) {
+      deptChartInstance.destroy();
+    }
+    deptChartInstance = new Chart(deptCanvas, {
+      type: 'bar',
+      data: {
+        labels: deptLabels,
+        datasets: [{
+          label: 'Number of Doctors',
+          data: deptData,
+          backgroundColor: 'rgba(13, 148, 136, 0.15)', // Logo Teal soft
+          borderColor: '#0D9488', // Logo Teal
+          borderWidth: 2,
+          borderRadius: 6,
+          barThickness: 24
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1,
+              font: { family: 'Inter', size: 11, weight: '500' }
+            },
+            grid: { color: 'rgba(0, 0, 0, 0.04)' }
+          },
+          x: {
+            ticks: {
+              font: { family: 'Inter', size: 11, weight: '500' }
+            },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+
+    // 4. Render Status Chart (Doughnut Chart)
+    if (statusChartInstance) {
+      statusChartInstance.destroy();
+    }
+    statusChartInstance = new Chart(statusCanvas, {
+      type: 'doughnut',
+      data: {
+        labels: ['Available', 'Busy', 'Off Duty'],
+        datasets: [{
+          data: [statusCounts.available || 0, statusCounts.busy || 0, statusCounts.off || 0],
+          backgroundColor: [
+            'rgba(16, 185, 129, 0.15)', // Green soft
+            'rgba(245, 158, 11, 0.15)', // Amber soft
+            'rgba(107, 114, 128, 0.15)'  // Grey soft
+          ],
+          borderColor: [
+            '#10B981', // Green
+            '#F59E0B', // Amber
+            '#6B7280'  // Grey
+          ],
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              boxWidth: 10,
+              padding: 15,
+              font: { family: 'Inter', size: 11, weight: '600' }
+            }
+          }
+        },
+        cutout: '70%'
+      }
+    });
   }
 
   /* ─── Tab Switching ─── */

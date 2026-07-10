@@ -423,23 +423,23 @@ function updateStats() {
   var todayStr = new Date().toISOString().split('T')[0];
   var todayOPD = OPD_QUEUE.filter(function (p) { return p.timestamp && p.timestamp.slice(0, 10) === todayStr; });
 
-  var opdTotalEl = document.querySelector('.stat-card[style*="--accent:#ea580c"] .stat-value');
+  var opdTotalEl = document.querySelector('.stat-card[style*="--accent:#00685f"] .stat-value');
   if (opdTotalEl) {
     if (window.animateCounter) window.animateCounter(opdTotalEl, todayOPD.length);
     else opdTotalEl.textContent = todayOPD.length;
   }
 
-  var waitingEl = document.querySelector('.stat-card[style*="--accent:#f59e0b"] .stat-value');
+  var waitingEl = document.querySelector('.stat-card[style*="--accent:#0D9488"] .stat-value');
   var waiting = todayOPD.filter(function (p) { return p.status === 'waiting' || p.status === 'urgent'; });
   if (waitingEl) {
     if (window.animateCounter) window.animateCounter(waitingEl, waiting.length);
     else waitingEl.textContent = waiting.length;
   }
 
-  var waitingDelta = document.querySelector('.stat-card[style*="--accent:#f59e0b"] .stat-delta');
+  var waitingDelta = document.querySelector('.stat-card[style*="--accent:#0D9488"] .stat-delta');
   if (waitingDelta) waitingDelta.innerHTML = '<span class="material-icons-round">hourglass_empty</span>' + waiting.length + ' waiting now';
 
-  var todayApptsEl = document.querySelector('.stat-card[style*="--accent:#0284c7"] .stat-value');
+  var todayApptsEl = document.querySelector('.stat-card[style*="--accent:#004d46"] .stat-value');
   if (todayApptsEl) {
     window.API.getAppointments().then(function (resp) {
       if (resp && resp.data) {
@@ -447,7 +447,7 @@ function updateStats() {
         if (window.animateCounter) window.animateCounter(todayApptsEl, todayCount);
         else todayApptsEl.textContent = todayCount;
 
-        var apptDelta = document.querySelector('.stat-card[style*="--accent:#0284c7"] .stat-delta');
+        var apptDelta = document.querySelector('.stat-card[style*="--accent:#004d46"] .stat-delta');
         if (apptDelta) apptDelta.innerHTML = '<span class="material-icons-round">event</span>' + todayCount + ' today';
       }
     }).catch(function () { });

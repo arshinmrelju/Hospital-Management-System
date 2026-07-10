@@ -531,6 +531,12 @@ window.populateAllDropdowns = function() {
 window.populateDoctorDropdowns = function() {
   window.API.getDoctors().then(function(resp) {
     var docs = (resp && resp.data) || [];
+    var doctorOptions = '<option value="">— Select Doctor —</option>' +
+      docs.map(function(d) {
+        return '<option value="' + esc(d.name) + '">' + esc(d.name) + ' (' + esc(d.dept) + ')</option>';
+      }).join('');
+
+    // Appointment doctor (keeps id as value)
     var apptDoc = document.getElementById('apptDoctor');
     if (apptDoc) {
       apptDoc.innerHTML = docs.length
@@ -539,12 +545,30 @@ window.populateDoctorDropdowns = function() {
           }).join('')
         : '<option>No doctors available</option>';
     }
+
+    // Check-in doctor
     var ciDoc = document.getElementById('ciDoctor');
     if (ciDoc) {
       ciDoc.innerHTML = '<option value="" disabled selected>Select Doctor</option>' +
         docs.map(function(d) {
           return '<option value="' + esc(d.id) + '">' + esc(d.name) + ' (' + esc(d.dept) + ')</option>';
         }).join('');
+    }
+
+    // Add Patient modal — Consulting Doctor
+    var pDoc = document.getElementById('pDoctor');
+    if (pDoc) {
+      var curVal = pDoc.value;
+      pDoc.innerHTML = doctorOptions;
+      if (curVal) pDoc.value = curVal;
+    }
+
+    // Edit Patient modal — Consulting Doctor
+    var editDoc = document.getElementById('editDoctor');
+    if (editDoc) {
+      var curEditVal = editDoc.value;
+      editDoc.innerHTML = doctorOptions;
+      if (curEditVal) editDoc.value = curEditVal;
     }
   });
 };

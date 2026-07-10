@@ -44,7 +44,7 @@ function renderTable() {
   const start = (currentPage - 1) * ROWS_PER_PAGE;
   const pageItems = filteredPatients.slice(start, start + ROWS_PER_PAGE);
   if (pageItems.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--on-surface-var)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px;color:var(--outline-var)">search_off</span>No patients found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--on-surface-var)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px;color:var(--outline-var)">search_off</span>No patients found</td></tr>';
     return;
   }
   tbody.innerHTML = pageItems.map(p => `
@@ -56,12 +56,13 @@ function renderTable() {
           <div class="mini-avatar">${esc((p.fname||'U')[0])}${esc((p.lname||'')[0])}</div>
           <div>
             <div style="font-weight:700">${esc(p.fname)} ${esc(p.lname)}</div>
-            <div style="font-size:.72rem;color:var(--on-surface-var)">${esc(p.age)} yrs · ${esc(p.blood_group)}</div>
+            <div style="font-size:.72rem;color:var(--on-surface-var)">${esc(p.age)} yrs · ${esc(p.blood_group)} · ${esc(p.doctor)}</div>
           </div>
         </div>
       </td>
       <td style="font-size:.82rem">${esc(p.contact)}</td>
       <td style="font-size:.82rem">${esc(p.department)}</td>
+      <td style="font-size:.82rem">${p.doctor ? '<span style="display:inline-flex;align-items:center;gap:4px;"><span class=\"material-icons-round\" style=\"font-size:14px;color:var(--primary-light)\">person</span>' + esc(p.doctor) + '</span>' : '<span style="color:var(--outline)">—</span>'}</td>
       <td style="font-size:.82rem">${formatDate(p.last_visit)}</td>
       <td><span class="badge-status ${p.status}">${esc(cap(p.status))}</span></td>
       <td>
@@ -396,6 +397,7 @@ function viewPatient(id) {
         <div class="form-group"><label>Email</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">${esc(p.email)}</div></div>
         <div class="form-group"><label>Type</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">${esc(cap(p.patient_type))}</div></div>
         <div class="form-group"><label>Last Visit</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">${formatDate(p.last_visit)}</div></div>
+        <div class="form-group" style="grid-column:1/-1"><label>Consulting Doctor</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md);display:flex;align-items:center;gap:8px">${p.doctor ? '<span class="material-icons-round" style="font-size:16px;color:var(--primary-light)">person</span><span style="font-weight:600">' + esc(p.doctor) + '</span>' : '<span style="color:var(--outline)">Not assigned</span>'}</div></div>
       </div>
       <div style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end">
         <button class="btn-secondary" onclick="closeModal(null,'viewPatientModal')">Close</button>
@@ -421,6 +423,7 @@ function editPatient(id) {
   document.getElementById('editStatus').value = p.status || 'Active';
   if (document.getElementById('editGender')) document.getElementById('editGender').value = p.gender || '';
   if (document.getElementById('editNotes')) document.getElementById('editNotes').value = p.notes || '';
+  if (document.getElementById('editDoctor')) document.getElementById('editDoctor').value = p.doctor || '';
   openModal('editPatientModal');
 }
 
@@ -439,6 +442,7 @@ async function submitEditPatient(e) {
     gender: document.getElementById('editGender')?.value || '',
     status: document.getElementById('editStatus').value,
     notes: document.getElementById('editNotes')?.value || '',
+    doctor: document.getElementById('editDoctor')?.value || '',
   };
   const errors = validatePatientInput(raw);
   if (errors.length > 0) { toast(errors.join('. '), 'error'); return; }
@@ -552,6 +556,7 @@ async function loadPatients(skipCache) {
         '<td><div class="skeleton-cell" style="width:90px;"></div></td>' +
         '<td><div class="skeleton-cell" style="width:80px;"></div></td>' +
         '<td><div class="skeleton-cell" style="width:100px;"></div></td>' +
+        '<td><div class="skeleton-cell" style="width:100px;"></div></td>' +
         '<td><div class="skeleton-cell" style="width:60px;height:22px;border-radius:12px;"></div></td>' +
         '<td>' +
           '<div style="display:flex;gap:6px;">' +
@@ -620,6 +625,7 @@ async function submitAddPatient(e) {
     blood_group: document.getElementById('pBlood').value || 'Unknown',
     dob: document.getElementById('pDob').value,
     notes: document.getElementById('pNotes').value,
+    doctor: document.getElementById('pDoctor')?.value || '',
   };
   const errors = validatePatientInput(raw);
   if (errors.length > 0) { toast(errors.join('. '), 'error'); return; }

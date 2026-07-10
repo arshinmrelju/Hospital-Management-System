@@ -14,29 +14,10 @@
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/portals.css" />
+  <link rel="stylesheet" href="css/staff-theme.css" />
   <link rel="stylesheet" href="css/patients.css" />
-  <style>
-    
-    .admin-tab-bar { display: flex; gap: 4px; margin-bottom: 24px; background: var(--surface-mid); border-radius: var(--radius-lg); padding: 4px; }
-    .admin-tab { flex: 1; padding: 10px 16px; border: none; border-radius: var(--radius-md); font-weight: 600; font-size: 0.85rem; color: var(--on-surface-var); cursor: pointer; background: transparent; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
-    .admin-tab.active { background: #fff; color: var(--admin-accent); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-    .admin-tab-pane { display: none; }
-    .admin-tab-pane.active { display: block; }
-    .admin-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 20px; }
-    .admin-stat, .admin-stat-card { padding: 16px 20px; background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: var(--glass-border); border-radius: var(--radius-lg); }
-    .admin-stat-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--on-surface-var); }
-    .admin-stat-value { font-size: 1.5rem; font-weight: 800; font-family: var(--font-head); color: var(--on-surface); margin-top: 2px; }
-    .admin-table-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-    .admin-search { display: flex; align-items: center; gap: 8px; background: var(--surface-low); border: 1.5px solid var(--outline-var); border-radius: var(--radius-full); padding: 6px 14px; flex: 1; max-width: 360px; }
-    .admin-search input { border: none; background: transparent; font-size: 0.85rem; flex: 1; color: var(--on-surface); }
-    .admin-search input::placeholder { color: var(--outline); }
-    .admin-search:focus-within { border-color: var(--admin-accent); box-shadow: 0 0 0 3px var(--admin-soft); }
-    .empty-state { text-align: center; padding: 48px 20px; color: var(--on-surface-var); }
-    .empty-state .material-icons-round { font-size: 48px; color: var(--outline-var); margin-bottom: 12px; }
-    .doctor-avatar-sm { width: 36px; height: 36px; border-radius: 50%; background: var(--primary-soft); color: var(--primary-light); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.82rem; flex-shrink: 0; }
-    .doctor-cell { display: flex; align-items: center; gap: 10px; }
-    .badge-status.inactive, .badge-status.off { background: rgba(107,114,128,0.12); color: #6B7280; }
-  </style>
+  <link rel="stylesheet" href="css/administration.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body class="app-body portal-reception">
@@ -111,7 +92,11 @@
       </div>
     </div>
     <nav class="sidebar-nav" id="sidebarNav">
-      <a href="#" class="nav-item active" id="nav-doctors" onclick="switchAdminTab('tab-doctors', this);return false">
+      <a href="#" class="nav-item active" id="nav-overview" onclick="switchAdminTab('tab-overview', this);return false">
+        <span class="material-icons-round">dashboard</span>
+        <span class="nav-label">Overview</span>
+      </a>
+      <a href="#" class="nav-item" id="nav-doctors" onclick="switchAdminTab('tab-doctors', this);return false">
         <span class="material-icons-round">local_hospital</span>
         <span class="nav-label">Doctors</span>
       </a>
@@ -161,25 +146,12 @@
         </div>
       </div>
 
-      <!-- Admin Stats -->
-      <div class="admin-stats" id="adminStats">
-        <div class="admin-stat-card">
-          <div class="admin-stat-label">Total Doctors</div>
-          <div class="admin-stat-value" id="statDoctors">0</div>
-        </div>
-        <div class="admin-stat-card">
-          <div class="admin-stat-label">Available Doctors</div>
-          <div class="admin-stat-value" id="statAvailable">0</div>
-        </div>
-        <div class="admin-stat-card">
-          <div class="admin-stat-label">Departments</div>
-          <div class="admin-stat-value" id="statDepartments">0</div>
-        </div>
-      </div>
-
       <!-- Tab Bar -->
       <div class="admin-tab-bar">
-        <button class="admin-tab active" onclick="switchAdminTab('tab-doctors',this)">
+        <button class="admin-tab active" onclick="switchAdminTab('tab-overview',this)">
+          <span class="material-icons-round">dashboard</span> Overview
+        </button>
+        <button class="admin-tab" onclick="switchAdminTab('tab-doctors',this)">
           <span class="material-icons-round">local_hospital</span> Doctors
         </button>
         <button class="admin-tab" onclick="switchAdminTab('tab-departments',this)">
@@ -187,8 +159,65 @@
         </button>
       </div>
 
+      <!-- Overview Tab -->
+      <div class="admin-tab-pane active" id="tab-overview">
+        <!-- Admin Stats -->
+        <div class="admin-stats" id="adminStats">
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon-wrap bg-teal-soft">
+              <span class="material-icons-round text-teal">local_hospital</span>
+            </div>
+            <div class="admin-stat-info">
+              <div class="admin-stat-label">Total Doctors</div>
+              <div class="admin-stat-value" id="statDoctors">0</div>
+              <div class="admin-stat-desc">Personnel profiles</div>
+            </div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon-wrap bg-green-soft">
+              <span class="material-icons-round text-green">check_circle</span>
+            </div>
+            <div class="admin-stat-info">
+              <div class="admin-stat-label">Available Doctors</div>
+              <div class="admin-stat-value" id="statAvailable">0</div>
+              <div class="admin-stat-desc">Active / on-duty status</div>
+            </div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon-wrap bg-purple-soft">
+              <span class="material-icons-round text-purple">business</span>
+            </div>
+            <div class="admin-stat-info">
+              <div class="admin-stat-label">Departments</div>
+              <div class="admin-stat-value" id="statDepartments">0</div>
+              <div class="admin-stat-desc">Clinical service divisions</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dashboard Charts Grid -->
+        <div class="dashboard-grid">
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>Staffing by Department</h3>
+            </div>
+            <div class="chart-body">
+              <canvas id="deptChart"></canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>Duty Status Distribution</h3>
+            </div>
+            <div class="chart-body">
+              <canvas id="statusChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Doctors Tab -->
-      <div class="admin-tab-pane active" id="tab-doctors">
+      <div class="admin-tab-pane" id="tab-doctors">
         <div class="admin-table-toolbar">
           <div class="admin-search">
             <span class="material-icons-round" style="font-size:18px;color:var(--outline)">search</span>

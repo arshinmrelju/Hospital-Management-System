@@ -1,0 +1,341 @@
+/* =========================================================
+   ADMINISTRATION.CSS – Admin Portal Specific Theme Styles
+   Theme: Matching index.html bright glassmorphism color system
+   ========================================================= */
+
+/* ================== OVERVIEW STATS WIDGETS ================== */
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.admin-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.22s;
+}
+
+.admin-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.admin-stat-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.admin-stat-icon-wrap .material-icons-round {
+  font-size: 26px;
+}
+
+.bg-teal-soft { background: rgba(13, 148, 136, 0.12); }
+.text-teal { color: #0D9488; }
+.bg-green-soft { background: rgba(16, 185, 129, 0.12); }
+.text-green { color: #10B981; }
+.bg-purple-soft { background: rgba(139, 92, 246, 0.12); }
+.text-purple { color: #8B5CF6; }
+
+.admin-stat-info {
+  flex: 1;
+}
+
+.admin-stat-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--on-surface-var);
+}
+
+.admin-stat-value {
+  font-size: 1.85rem;
+  font-weight: 800;
+  font-family: var(--font-head);
+  color: var(--on-surface);
+  margin-top: 2px;
+  line-height: 1.15;
+}
+
+.admin-stat-desc {
+  font-size: 0.72rem;
+  color: var(--outline);
+  margin-top: 4px;
+}
+
+/* ================== DASHBOARD CHARTS GRID ================== */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-card {
+  padding: 24px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.chart-header h3 {
+  font-family: var(--font-head);
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--on-surface);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-header h3::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 16px;
+  background: var(--portal-accent);
+  border-radius: 2px;
+}
+
+.chart-body {
+  position: relative;
+  flex: 1;
+  min-height: 240px;
+  max-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ================== PREMIUM TAB BAR ================== */
+.admin-tab-bar {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  border-bottom: 1.5px solid var(--outline-var);
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.admin-tab {
+  padding: 12px 4px;
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--on-surface-var);
+  cursor: pointer;
+  background: transparent;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-tab:hover {
+  color: var(--portal-accent);
+}
+
+.admin-tab.active {
+  background: transparent;
+  color: var(--portal-accent);
+  border-bottom-color: var(--portal-accent);
+  box-shadow: none;
+}
+
+.admin-tab-pane {
+  display: none;
+}
+
+.admin-tab-pane.active {
+  display: block;
+}
+
+/* ================== DATA TABLE IMPROVEMENTS ================== */
+.portal-reception .data-table tbody tr {
+  transition: all 0.18s ease-in-out;
+}
+
+.portal-reception .data-table tbody tr:hover {
+  background: rgba(13, 148, 136, 0.04) !important;
+  transform: translateY(-0.5px);
+}
+
+/* Status Badges with Pulse Dot */
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+}
+
+.badge-status.available {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.badge-status.available::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #10B981;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.4);
+  animation: badgePulse 2s infinite;
+}
+
+.badge-status.busy {
+  background: rgba(245, 158, 11, 0.12);
+  color: #D97706;
+}
+
+.badge-status.busy::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #F59E0B;
+  border-radius: 50%;
+}
+
+.badge-status.off, .badge-status.inactive {
+  background: rgba(107, 114, 128, 0.12);
+  color: #6B7280;
+}
+
+.badge-status.off::before, .badge-status.inactive::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #6B7280;
+  border-radius: 50%;
+}
+
+@keyframes badgePulse {
+  0% { box-shadow: 0 0 0 0px rgba(16, 185, 129, 0.5); }
+  70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0px rgba(16, 185, 129, 0); }
+}
+
+/* Action Icon Buttons */
+.portal-reception .icon-btn {
+  border-radius: 50%;
+  padding: 8px;
+  border: none;
+  background: rgba(13, 148, 136, 0.08) !important;
+  color: var(--portal-accent) !important;
+  transition: all 0.2s ease;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.portal-reception .icon-btn:hover {
+  background: var(--portal-accent) !important;
+  color: #ffffff !important;
+  transform: scale(1.08) translateY(-0.5px);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+}
+
+.portal-reception .icon-btn.danger {
+  background: rgba(239, 68, 68, 0.08) !important;
+  color: #EF4444 !important;
+}
+
+.portal-reception .icon-btn.danger:hover {
+  background: #EF4444 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+}
+
+/* Toolbars & Search */
+.admin-table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.admin-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-low);
+  border: 1.5px solid var(--outline-var);
+  border-radius: var(--radius-full);
+  padding: 6px 14px;
+  flex: 1;
+  max-width: 360px;
+  box-sizing: border-box;
+}
+
+.admin-search input {
+  border: none;
+  background: transparent;
+  font-size: 0.88rem;
+  flex: 1;
+  color: var(--on-surface);
+}
+
+.admin-search input::placeholder {
+  color: var(--outline);
+}
+
+/* Search Focus Highlight */
+.portal-reception .admin-search:focus-within {
+  border-color: var(--portal-accent);
+  box-shadow: 0 0 0 3px var(--portal-accent-soft);
+}
+
+/* Topbar search & avatar focus */
+.portal-reception .topbar-search:focus-within {
+  border-color: var(--portal-accent) !important;
+  box-shadow: 0 0 0 3px var(--portal-accent-soft) !important;
+}
