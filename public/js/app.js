@@ -50,6 +50,10 @@ window.HMS = {
 };
 const HMS = window.HMS;
 window.HMS_READY = Promise.resolve();
+
+window.handleLogout = function() {
+  if (HMS) HMS.logout();
+};
 /* --- Code-based Login --- */
 function initLoginOverlay() {
   var overlay = document.getElementById('loginOverlay');
