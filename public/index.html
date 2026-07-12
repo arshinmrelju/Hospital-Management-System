@@ -58,6 +58,83 @@
     .appt-form-row .form-group label { font-size: 0.78rem; font-weight: 600; color: var(--on-surface-var); margin-bottom: 5px; display: block; }
     .autocomplete-wrapper { position: relative; }
     #ciPatientInfo { transition: opacity 0.15s; }
+
+    /* --- Mobile Responsive --- */
+    @media (max-width: 600px) {
+      .appt-form-row {
+        grid-template-columns: 1fr;
+      }
+      .dashboard-tabs {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        gap: 4px;
+      }
+      .dashboard-tab-btn {
+        white-space: nowrap;
+        flex-shrink: 0;
+        font-size: 0.82rem;
+        padding: 10px 16px;
+      }
+      .header-actions .btn-primary {
+        width: 100%;
+        justify-content: center;
+      }
+      .page-header .header-actions {
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+      }
+      .page-header .header-actions .btn-primary {
+        width: 100%;
+      }
+      #opdList {
+        max-height: 300px !important;
+      }
+      .opd-card {
+        padding: 10px 12px;
+        gap: 10px;
+      }
+    }
+    @media (max-width: 480px) {
+      .login-card {
+        margin: 0 12px;
+      }
+      #loginCard {
+        margin: 0 12px !important;
+        width: auto !important;
+      }
+      .smart-filter-top {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .sf-chips {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
+      }
+      .sf-chip {
+        flex-shrink: 0;
+      }
+      .sf-result-badge {
+        margin-left: 0;
+        align-self: flex-end;
+      }
+      .smart-filter-custom.expanded {
+        grid-template-columns: 1fr;
+      }
+      .sf-range-arrow {
+        display: none;
+      }
+      .filter-bar .filter-bar-row .filter-selects {
+        flex-direction: column;
+      }
+      .filter-selects .adv-search-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
   </style>
 </head>
 

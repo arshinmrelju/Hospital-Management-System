@@ -132,12 +132,12 @@
       var initials = d.initials || (d.name ? d.name.split(' ').map(function(n){return n[0]}).join('').slice(0,2) : 'DR');
       var statusClass = d.status || 'available';
       return '<tr>' +
-        '<td><div class="doctor-cell"><div class="doctor-avatar-sm">' + esc(initials) + '</div><div><div style="font-weight:700">' + esc(d.name) + '</div><div style="font-size:0.72rem;color:var(--on-surface-var)">' + esc(d.id) + '</div></div></div></td>' +
-        '<td style="font-size:0.82rem">' + esc(d.dept) + '</td>' +
-        '<td style="font-size:0.82rem">' + esc(d.qualification || '—') + '</td>' +
-        '<td style="font-size:0.82rem">' + esc(d.phone || d.email || '—') + '</td>' +
-        '<td><span class="badge-status ' + statusClass + '">' + esc(statusClass) + '</span></td>' +
-        '<td>' +
+        '<td data-label="Doctor"><div class="doctor-cell"><div class="doctor-avatar-sm">' + esc(initials) + '</div><div><div style="font-weight:700">' + esc(d.name) + '</div><div style="font-size:0.72rem;color:var(--on-surface-var)">' + esc(d.id) + '</div></div></div></td>' +
+        '<td data-label="Department" style="font-size:0.82rem">' + esc(d.dept) + '</td>' +
+        '<td data-label="Qualification" style="font-size:0.82rem">' + esc(d.qualification || '—') + '</td>' +
+        '<td data-label="Contact" style="font-size:0.82rem">' + esc(d.phone || d.email || '—') + '</td>' +
+        '<td data-label="Status"><span class="badge-status ' + statusClass + '">' + esc(statusClass) + '</span></td>' +
+        '<td data-label="Actions">' +
         '<button class="icon-btn" onclick="editDoctor(\'' + d.id + '\')" title="Edit"><span class="material-icons-round">edit</span></button> ' +
         '<button class="icon-btn danger" onclick="deleteDoctor(\'' + d.id + '\')" title="Delete"><span class="material-icons-round">delete</span></button>' +
         '</td></tr>';
@@ -156,10 +156,10 @@
     tbody.innerHTML = filteredDepts.map(function(d) {
       var statusClass = (d.status === 'active') ? 'available' : 'inactive';
       return '<tr>' +
-        '<td><div style="font-weight:700">' + esc(d.name) + '</div><div style="font-size:0.72rem;color:var(--on-surface-var)">' + esc(d.id) + '</div></td>' +
-        '<td style="font-size:0.82rem">' + esc(d.description || '—') + '</td>' +
-        '<td><span class="badge-status ' + statusClass + '">' + esc(d.status || 'active') + '</span></td>' +
-        '<td>' +
+        '<td data-label="Department"><div style="font-weight:700">' + esc(d.name) + '</div><div style="font-size:0.72rem;color:var(--on-surface-var)">' + esc(d.id) + '</div></td>' +
+        '<td data-label="Description" style="font-size:0.82rem">' + esc(d.description || '—') + '</td>' +
+        '<td data-label="Status"><span class="badge-status ' + statusClass + '">' + esc(d.status || 'active') + '</span></td>' +
+        '<td data-label="Actions">' +
         '<button class="icon-btn" onclick="editDept(\'' + d.id + '\')" title="Edit"><span class="material-icons-round">edit</span></button> ' +
         '<button class="icon-btn danger" onclick="deleteDepartment(\'' + d.id + '\')" title="Delete"><span class="material-icons-round">delete</span></button>' +
         '</td></tr>';
@@ -583,14 +583,14 @@
         duration = la.getTime() - lt.getTime();
       }
       return '<tr>' +
-        '<td><div style="font-weight:700">' + esc(s.user || '—') + '</div></td>' +
-        '<td><span class="badge-role ' + (s.role === 'Admin' ? 'role-admin' : 'role-reception') + '">' + esc(s.role || '—') + '</span></td>' +
-        '<td style="font-size:0.82rem" title="' + formatTimestamp(s.loginTime) + '">' + formatTimestamp(s.loginTime) + '<br><span style="font-size:0.7rem;color:var(--on-surface-var)">' + getRelativeTime(s.loginTime) + '</span></td>' +
-        '<td style="font-size:0.82rem" title="' + formatTimestamp(s.lastActivity) + '">' + (s.status === 'active' ? formatTimestamp(s.lastActivity) + '<br><span style="font-size:0.7rem;color:var(--on-surface-var)">' + getRelativeTime(s.lastActivity) + '</span>' : '—') + '</td>' +
-        '<td style="font-size:0.82rem">' + formatDuration(duration) + '</td>' +
-        '<td style="font-size:0.78rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + esc(s.deviceInfo || '') + '">' + esc(getDeviceShort(s.deviceInfo)) + '</td>' +
-        '<td><span class="badge-status ' + statusClass + '">' + statusLabel + '</span></td>' +
-        '<td>' +
+        '<td data-label="User"><div style="font-weight:700">' + esc(s.user || '—') + '</div></td>' +
+        '<td data-label="Role"><span class="badge-role ' + (s.role === 'Admin' ? 'role-admin' : 'role-reception') + '">' + esc(s.role || '—') + '</span></td>' +
+        '<td data-label="Login Time" style="font-size:0.82rem" title="' + formatTimestamp(s.loginTime) + '">' + formatTimestamp(s.loginTime) + '<br><span style="font-size:0.7rem;color:var(--on-surface-var)">' + getRelativeTime(s.loginTime) + '</span></td>' +
+        '<td data-label="Last Activity" style="font-size:0.82rem" title="' + formatTimestamp(s.lastActivity) + '">' + (s.status === 'active' ? formatTimestamp(s.lastActivity) + '<br><span style="font-size:0.7rem;color:var(--on-surface-var)">' + getRelativeTime(s.lastActivity) + '</span>' : '—') + '</td>' +
+        '<td data-label="Duration" style="font-size:0.82rem">' + formatDuration(duration) + '</td>' +
+        '<td data-label="Device" style="font-size:0.78rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + esc(s.deviceInfo || '') + '">' + esc(getDeviceShort(s.deviceInfo)) + '</td>' +
+        '<td data-label="Status"><span class="badge-status ' + statusClass + '">' + statusLabel + '</span></td>' +
+        '<td data-label="Actions">' +
         (s.status === 'active' ? '<button class="icon-btn warning" onclick="forceLogoutSession(\'' + s.id + '\')" title="Force Logout"><span class="material-icons-round">logout</span></button>' : '') +
         '</td></tr>';
     }).join('');

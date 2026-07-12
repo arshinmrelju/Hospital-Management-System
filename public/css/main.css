@@ -1571,7 +1571,7 @@ select {
     max-height: 90vh;
   }
   .modal-close {
-    padding: 8px;
+    padding: 10px;
   }
 
   .page-title {

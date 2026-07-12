@@ -430,3 +430,61 @@
   color: #ffffff !important;
   box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
 }
+
+/* ================== RESPONSIVE – ADMIN PORTAL ================== */
+@media (max-width: 768px) {
+  .admin-tab-bar {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    gap: 12px;
+    padding-bottom: 0;
+  }
+  .admin-tab {
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 10px 2px;
+    font-size: 0.82rem;
+  }
+  .admin-table-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .admin-table-toolbar .admin-search {
+    max-width: 100%;
+  }
+  .admin-table-toolbar .filter-select,
+  .admin-table-toolbar .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+  .login-stats {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-stats {
+    grid-template-columns: 1fr;
+  }
+  .login-stats {
+    grid-template-columns: 1fr;
+  }
+  .admin-stat-card {
+    padding: 16px;
+  }
+  .admin-stat-value {
+    font-size: 1.5rem;
+  }
+  .admin-stat-icon-wrap {
+    width: 44px;
+    height: 44px;
+  }
+  .admin-stat-icon-wrap .material-icons-round {
+    font-size: 22px;
+  }
+  #loginOverlay > div {
+    margin: 0 12px !important;
+    width: auto !important;
+  }
+}

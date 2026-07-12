@@ -49,9 +49,9 @@ function renderTable() {
   }
   tbody.innerHTML = pageItems.map(p => `
     <tr>
-      <td><input type="checkbox" /></td>
-      <td><code style="font-size:.78rem;background:var(--surface-mid);padding:2px 6px;border-radius:4px;color:var(--primary-light)">${esc(p.op_no || p.id)}</code></td>
-      <td>
+      <td data-label=""><input type="checkbox" /></td>
+      <td data-label="Patient ID"><code style="font-size:.78rem;background:var(--surface-mid);padding:2px 6px;border-radius:4px;color:var(--primary-light)">${esc(p.op_no || p.id)}</code></td>
+      <td data-label="Name">
         <div class="patient-cell">
           <div class="mini-avatar">${esc((p.fname||'U')[0])}${esc((p.lname||'')[0])}</div>
           <div>
@@ -60,12 +60,12 @@ function renderTable() {
           </div>
         </div>
       </td>
-      <td style="font-size:.82rem">${esc(p.contact)}</td>
-      <td style="font-size:.82rem">${esc(p.department)}</td>
-      <td style="font-size:.82rem">${p.doctor ? '<span style="display:inline-flex;align-items:center;gap:4px;"><span class=\"material-icons-round\" style=\"font-size:14px;color:var(--primary-light)\">person</span>' + esc(p.doctor) + '</span>' : '<span style="color:var(--outline)">—</span>'}</td>
-      <td style="font-size:.82rem">${formatDate(p.last_visit)}</td>
-      <td><span class="badge-status ${p.status}">${esc(cap(p.status))}</span></td>
-      <td>
+      <td data-label="Contact" style="font-size:.82rem">${esc(p.contact)}</td>
+      <td data-label="Department" style="font-size:.82rem">${esc(p.department)}</td>
+      <td data-label="Doctor" style="font-size:.82rem">${p.doctor ? '<span style="display:inline-flex;align-items:center;gap:4px;"><span class=\"material-icons-round\" style=\"font-size:14px;color:var(--primary-light)\">person</span>' + esc(p.doctor) + '</span>' : '<span style="color:var(--outline)">—</span>'}</td>
+      <td data-label="Last Visit" style="font-size:.82rem">${formatDate(p.last_visit)}</td>
+      <td data-label="Status"><span class="badge-status ${p.status}">${esc(cap(p.status))}</span></td>
+      <td data-label="Actions">
         <button class="icon-btn" title="View" onclick="viewPatient(${p.id})"><span class="material-icons-round">visibility</span></button>
         <button class="icon-btn" title="Edit" onclick="editPatient(${p.id})"><span class="material-icons-round">edit</span></button>
         <button class="icon-btn danger" title="Delete" onclick="deletePatient(${p.id})"><span class="material-icons-round">delete</span></button>
@@ -390,7 +390,7 @@ function viewPatient(id) {
           <span class="badge-status ${p.status}" style="margin-top:8px">${esc(cap(p.status))}</span>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="patient-detail-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
         <div class="form-group"><label>Age</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">${esc(p.age)} years</div></div>
         <div class="form-group"><label>Blood Group</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">${esc(p.blood_group)}</div></div>
         <div class="form-group"><label>Contact</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">${esc(p.contact)}</div></div>
