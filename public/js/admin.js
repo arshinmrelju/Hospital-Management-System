@@ -642,12 +642,7 @@
         return;
       }
 
-      var thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
       loginHistoryUnsubscribe = db.collection('login_history')
-        .where('loginTime', '>=', thirtyDaysAgo)
-        .orderBy('loginTime', 'desc')
         .limit(200)
         .onSnapshot(function(snapshot) {
           allLoginSessions = [];
@@ -656,25 +651,26 @@
             data.id = doc.id;
             allLoginSessions.push(data);
           });
+
+          // Sort by loginTime descending (client-side)
+          allLoginSessions.sort(function(a, b) {
+            var aTime = a.loginTime ? (a.loginTime.toDate ? a.loginTime.toDate().getTime() : new Date(a.loginTime).getTime()) : 0;
+            var bTime = b.loginTime ? (b.loginTime.toDate ? b.loginTime.toDate().getTime() : new Date(b.loginTime).getTime()) : 0;
+            return bTime - aTime;
+          });
+
+          // Filter to last 30 days
+          var cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+          allLoginSessions = allLoginSessions.filter(function(s) {
+            var t = s.loginTime ? (s.loginTime.toDate ? s.loginTime.toDate().getTime() : new Date(s.loginTime).getTime()) : 0;
+            return t >= cutoff;
+          });
+
           window.filterLoginHistory();
         }, function(err) {
-          console.warn('[Admin] Login history listener error:', err.message);
-          // Try without the filter (fallback to just orderBy)
-          loginHistoryUnsubscribe = db.collection('login_history')
-            .orderBy('loginTime', 'desc')
-            .limit(200)
-            .onSnapshot(function(snapshot) {
-              allLoginSessions = [];
-              snapshot.forEach(function(doc) {
-                var data = doc.data();
-                data.id = doc.id;
-                allLoginSessions.push(data);
-              });
-              window.filterLoginHistory();
-            }, function(err2) {
-              console.error('[Admin] Login history fallback error:', err2.message);
-              document.getElementById('loginHistoryBody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--accent-red)">Failed to load login history.</td></tr>';
-            });
+          console.error('[Admin] Login history error:', err.message);
+          document.getElementById('loginHistoryBody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--accent-red)">' +
+            'Failed to load login history: ' + esc(err.message) + '</td></tr>';
         });
     });
   }
