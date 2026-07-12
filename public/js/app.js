@@ -29,11 +29,18 @@ window.HMS = {
         role: 'Reception',
         timestamp: Date.now()
       }));
+      if (window.logLoginEvent) {
+        window.logLoginEvent('Front Desk', 'Reception', 'reception');
+      }
       return true;
     }
     return false;
   },
   logout() {
+    var p = Promise.resolve();
+    if (window.updateSessionStatus) {
+      p = window.updateSessionStatus('logged_out');
+    }
     localStorage.removeItem('hms_auth');
     location.reload();
   },

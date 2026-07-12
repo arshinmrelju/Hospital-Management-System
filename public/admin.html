@@ -18,6 +18,9 @@
   <link rel="stylesheet" href="css/patients.css" />
   <link rel="stylesheet" href="css/administration.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 </head>
 
 <body class="app-body portal-reception">
@@ -104,6 +107,10 @@
         <span class="material-icons-round">business</span>
         <span class="nav-label">Departments</span>
       </a>
+      <a href="#" class="nav-item" id="nav-login-history" onclick="switchAdminTab('tab-login-history', this);return false">
+        <span class="material-icons-round">history</span>
+        <span class="nav-label">Login History</span>
+      </a>
       <div class="nav-divider"></div>
       
     </nav>
@@ -156,6 +163,9 @@
         </button>
         <button class="admin-tab" onclick="switchAdminTab('tab-departments',this)">
           <span class="material-icons-round">business</span> Departments
+        </button>
+        <button class="admin-tab" onclick="switchAdminTab('tab-login-history',this)">
+          <span class="material-icons-round">history</span> Login History
         </button>
       </div>
 
@@ -272,6 +282,80 @@
               </thead>
               <tbody id="deptTableBody">
                 <tr><td colspan="4" style="text-align:center;padding:32px;color:var(--on-surface-var)">Loading departments...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Login History Tab -->
+      <div class="admin-tab-pane" id="tab-login-history">
+        <div class="login-stats">
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon-wrap bg-blue-soft">
+              <span class="material-icons-round text-blue">login</span>
+            </div>
+            <div class="admin-stat-info">
+              <div class="admin-stat-label">Total Logins (30d)</div>
+              <div class="admin-stat-value" id="statTotalLogins">0</div>
+            </div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon-wrap bg-green-soft">
+              <span class="material-icons-round text-green">check_circle</span>
+            </div>
+            <div class="admin-stat-info">
+              <div class="admin-stat-label">Active Sessions</div>
+              <div class="admin-stat-value" id="statActiveSessions">0</div>
+              <div class="admin-stat-desc">Currently logged in</div>
+            </div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon-wrap bg-amber-soft">
+              <span class="material-icons-round text-amber">schedule</span>
+            </div>
+            <div class="admin-stat-info">
+              <div class="admin-stat-label">Today's Logins</div>
+              <div class="admin-stat-value" id="statTodayLogins">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-table-toolbar">
+          <div class="admin-search">
+            <span class="material-icons-round" style="font-size:18px;color:var(--outline)">search</span>
+            <input type="text" id="loginSearch" placeholder="Search by user or device..." oninput="filterLoginHistory()" />
+          </div>
+          <select id="loginRoleFilter" onchange="filterLoginHistory()" class="filter-select">
+            <option value="">All Roles</option>
+            <option value="Admin">Admin</option>
+            <option value="Reception">Reception</option>
+          </select>
+          <select id="loginStatusFilter" onchange="filterLoginHistory()" class="filter-select">
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="expired">Expired</option>
+            <option value="logged_out">Logged Out</option>
+          </select>
+        </div>
+
+        <div class="widget glass-card table-widget">
+          <div class="table-scroll">
+            <table class="data-table" id="loginHistoryTable">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Role</th>
+                  <th>Login Time</th>
+                  <th>Last Activity</th>
+                  <th>Duration</th>
+                  <th>Device</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="loginHistoryBody">
+                <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--on-surface-var)">Loading login history...</td></tr>
               </tbody>
             </table>
           </div>
@@ -418,6 +502,7 @@
   </div>
 
   <script src="js/sheets-api.js"></script>
+  <script src="js/firebase-init.js"></script>
   <script src="js/app.js"></script>
   <script src="js/admin.js"></script>
 </body>

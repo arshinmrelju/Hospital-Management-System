@@ -16,6 +16,9 @@
       localStorage.setItem('hms_auth', JSON.stringify({
         code: 'WMPAD01', name: 'Admin', role: 'Admin', timestamp: Date.now()
       }));
+      if (window.logLoginEvent) {
+        window.logLoginEvent('Admin', 'Admin', 'admin');
+      }
       return true;
     }
     return false;
@@ -499,6 +502,183 @@
     if (HMS) HMS.logout();
   };
 
+  /* ─── Login History ─── */
+  var loginHistoryUnsubscribe = null;
+  var allLoginSessions = [];
+
+  function formatTimestamp(ts) {
+    if (!ts) return '—';
+    var d = ts.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' +
+      d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function formatDuration(ms) {
+    if (!ms || ms <= 0) return '—';
+    var seconds = Math.floor(ms / 1000);
+    if (seconds < 60) return seconds + 's';
+    var minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return minutes + 'm ' + (seconds % 60) + 's';
+    var hours = Math.floor(minutes / 60);
+    return hours + 'h ' + (minutes % 60) + 'm';
+  }
+
+  function getRelativeTime(ts) {
+    if (!ts) return '—';
+    var d = ts.toDate ? ts.toDate() : new Date(ts);
+    var diff = Date.now() - d.getTime();
+    var mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return mins + 'm ago';
+    var hours = Math.floor(mins / 60);
+    if (hours < 24) return hours + 'h ago';
+    var days = Math.floor(hours / 24);
+    return days + 'd ago';
+  }
+
+  function getDeviceShort(ua) {
+    if (!ua) return '—';
+    if (ua.indexOf('Windows') !== -1) return 'Windows';
+    if (ua.indexOf('Mac') !== -1) return 'macOS';
+    if (ua.indexOf('Linux') !== -1) return 'Linux';
+    if (ua.indexOf('Android') !== -1) return 'Android';
+    if (ua.indexOf('iPhone') !== -1 || ua.indexOf('iPad') !== -1) return 'iOS';
+    return 'Unknown';
+  }
+
+  function updateLoginStats(sessions) {
+    var total = sessions.length;
+    var active = sessions.filter(function(s) { return s.status === 'active'; }).length;
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var todayCount = sessions.filter(function(s) {
+      var t = s.loginTime;
+      if (!t) return false;
+      var d = t.toDate ? t.toDate() : new Date(t);
+      return d >= today;
+    }).length;
+
+    document.getElementById('statTotalLogins').textContent = total;
+    document.getElementById('statActiveSessions').textContent = active;
+    document.getElementById('statTodayLogins').textContent = todayCount;
+  }
+
+  function renderLoginHistory(sessions) {
+    var tbody = document.getElementById('loginHistoryBody');
+    if (!tbody) return;
+
+    if (sessions.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--on-surface-var)">' +
+        '<span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px;color:var(--outline-var)">history</span>No login history found</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = sessions.map(function(s) {
+      var statusClass = s.status;
+      var statusLabel = s.status === 'logged_out' ? 'Logged Out' : s.status.charAt(0).toUpperCase() + s.status.slice(1);
+      var duration = s.sessionDuration;
+      if (!duration && s.loginTime && s.lastActivity && s.status !== 'active') {
+        var lt = s.loginTime.toDate ? s.loginTime.toDate() : new Date(s.loginTime);
+        var la = s.lastActivity.toDate ? s.lastActivity.toDate() : new Date(s.lastActivity);
+        duration = la.getTime() - lt.getTime();
+      }
+      return '<tr>' +
+        '<td><div style="font-weight:700">' + esc(s.user || '—') + '</div></td>' +
+        '<td><span class="badge-role ' + (s.role === 'Admin' ? 'role-admin' : 'role-reception') + '">' + esc(s.role || '—') + '</span></td>' +
+        '<td style="font-size:0.82rem" title="' + formatTimestamp(s.loginTime) + '">' + formatTimestamp(s.loginTime) + '<br><span style="font-size:0.7rem;color:var(--on-surface-var)">' + getRelativeTime(s.loginTime) + '</span></td>' +
+        '<td style="font-size:0.82rem" title="' + formatTimestamp(s.lastActivity) + '">' + (s.status === 'active' ? formatTimestamp(s.lastActivity) + '<br><span style="font-size:0.7rem;color:var(--on-surface-var)">' + getRelativeTime(s.lastActivity) + '</span>' : '—') + '</td>' +
+        '<td style="font-size:0.82rem">' + formatDuration(duration) + '</td>' +
+        '<td style="font-size:0.78rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + esc(s.deviceInfo || '') + '">' + esc(getDeviceShort(s.deviceInfo)) + '</td>' +
+        '<td><span class="badge-status ' + statusClass + '">' + statusLabel + '</span></td>' +
+        '<td>' +
+        (s.status === 'active' ? '<button class="icon-btn warning" onclick="forceLogoutSession(\'' + s.id + '\')" title="Force Logout"><span class="material-icons-round">logout</span></button>' : '') +
+        '</td></tr>';
+    }).join('');
+  }
+
+  window.filterLoginHistory = function() {
+    var q = (document.getElementById('loginSearch').value || '').toLowerCase();
+    var roleFilter = document.getElementById('loginRoleFilter').value;
+    var statusFilter = document.getElementById('loginStatusFilter').value;
+
+    var filtered = allLoginSessions.filter(function(s) {
+      if (q && (s.user || '').toLowerCase().indexOf(q) === -1 && (s.deviceInfo || '').toLowerCase().indexOf(q) === -1) {
+        return false;
+      }
+      if (roleFilter && s.role !== roleFilter) return false;
+      if (statusFilter && s.status !== statusFilter) return false;
+      return true;
+    });
+
+    renderLoginHistory(filtered);
+    updateLoginStats(filtered);
+  };
+
+  window.forceLogoutSession = function(sessionId) {
+    if (!confirm('Force logout this session?')) return;
+    window.FIREBASE_READY.then(function(db) {
+      if (!db) { toast('Firebase not available', 'error'); return; }
+      return db.collection('login_history').doc(sessionId).update({
+        status: 'logged_out',
+        lastActivity: firebase.firestore.FieldValue.serverTimestamp(),
+        sessionDuration: 0
+      }).then(function() {
+        toast('Session force-logged out', 'warning', 'logout');
+      });
+    }).catch(function(err) {
+      toast('Failed to force logout: ' + err.message, 'error');
+    });
+  };
+
+  function loadLoginHistory() {
+    if (loginHistoryUnsubscribe) {
+      loginHistoryUnsubscribe();
+      loginHistoryUnsubscribe = null;
+    }
+
+    window.FIREBASE_READY.then(function(db) {
+      if (!db) {
+        document.getElementById('loginHistoryBody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--accent-red)">Firebase not available. Login history disabled.</td></tr>';
+        return;
+      }
+
+      var thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      loginHistoryUnsubscribe = db.collection('login_history')
+        .where('loginTime', '>=', thirtyDaysAgo)
+        .orderBy('loginTime', 'desc')
+        .limit(200)
+        .onSnapshot(function(snapshot) {
+          allLoginSessions = [];
+          snapshot.forEach(function(doc) {
+            var data = doc.data();
+            data.id = doc.id;
+            allLoginSessions.push(data);
+          });
+          window.filterLoginHistory();
+        }, function(err) {
+          console.warn('[Admin] Login history listener error:', err.message);
+          // Try without the filter (fallback to just orderBy)
+          loginHistoryUnsubscribe = db.collection('login_history')
+            .orderBy('loginTime', 'desc')
+            .limit(200)
+            .onSnapshot(function(snapshot) {
+              allLoginSessions = [];
+              snapshot.forEach(function(doc) {
+                var data = doc.data();
+                data.id = doc.id;
+                allLoginSessions.push(data);
+              });
+              window.filterLoginHistory();
+            }, function(err2) {
+              console.error('[Admin] Login history fallback error:', err2.message);
+              document.getElementById('loginHistoryBody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--accent-red)">Failed to load login history.</td></tr>';
+            });
+        });
+    });
+  }
+
   /* ─── Init ─── */
   function initAdmin() {
     if (typeof window.hideLoader === 'function') window.hideLoader();
@@ -537,6 +717,9 @@
       if (typeof window.populateAllDropdowns === 'function') window.populateAllDropdowns();
       console.info('[Admin] Data loaded successfully.');
     });
+
+    // Start login history listener
+    loadLoginHistory();
   }
 
   document.addEventListener('DOMContentLoaded', function() {

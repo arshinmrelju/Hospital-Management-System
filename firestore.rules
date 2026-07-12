@@ -1,0 +1,49 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model: login_history
+    // ===============================================================
+    // Collection: login_history
+    // Document ID: auto-generated
+    // Fields:
+    //   - userId:       string  - Firebase anonymous UID
+    //   - user:         string  - Display name ("Admin" / "Front Desk")
+    //   - role:         string  - "Admin" | "Reception"
+    //   - portal:       string  - "admin" | "reception"
+    //   - loginTime:    timestamp - When the session started
+    //   - lastActivity: timestamp - Last user interaction
+    //   - status:       string  - "active" | "expired" | "logged_out"
+    //   - deviceInfo:   string  - navigator.userAgent
+    //   - sessionDuration: number | null - Duration in ms (null while active)
+    // ===============================================================
+
+    match /login_history/{sessionId} {
+
+      // Any authenticated app user can create a login record
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasAll(['userId', 'user', 'role', 'portal', 'loginTime', 'status', 'deviceInfo'])
+        && request.resource.data.status in ['active', 'expired', 'logged_out']
+        && request.resource.data.role in ['Admin', 'Reception']
+        && request.resource.data.portal in ['admin', 'reception'];
+
+      // Any authenticated user can read login history
+      allow read: if request.auth != null;
+
+      // Only allow updating status-related fields (mark expired/logged_out, update activity)
+      allow update: if request.auth != null
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'lastActivity', 'sessionDuration'])
+        && request.resource.data.status in ['active', 'expired', 'logged_out'];
+
+      // No deletes — history is immutable
+      allow delete: if false;
+    }
+
+    // Deny everything else by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

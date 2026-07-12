@@ -339,3 +339,94 @@
   border-color: var(--portal-accent) !important;
   box-shadow: 0 0 0 3px var(--portal-accent-soft) !important;
 }
+
+/* ================== LOGIN HISTORY ================== */
+.login-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.bg-blue-soft { background: rgba(59, 130, 246, 0.12); }
+.text-blue { color: #3B82F6; }
+.bg-amber-soft { background: rgba(245, 158, 11, 0.12); }
+.text-amber { color: #F59E0B; }
+
+.filter-select {
+  padding: 8px 12px;
+  border: 1.5px solid var(--outline-var);
+  border-radius: var(--radius-md);
+  background: var(--surface-low);
+  color: var(--on-surface);
+  font-size: 0.82rem;
+  font-family: var(--font-body);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.filter-select:focus {
+  border-color: var(--portal-accent);
+  box-shadow: 0 0 0 3px var(--portal-accent-soft);
+}
+
+.badge-role {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.role-admin {
+  background: rgba(139, 92, 246, 0.12);
+  color: #7C3AED;
+}
+
+.role-reception {
+  background: rgba(13, 148, 136, 0.12);
+  color: #0D9488;
+}
+
+/* Login history status badges */
+.badge-status.expired {
+  background: rgba(107, 114, 128, 0.12);
+  color: #6B7280;
+}
+
+.badge-status.expired::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #6B7280;
+  border-radius: 50%;
+}
+
+.badge-status.logged_out {
+  background: rgba(245, 158, 11, 0.12);
+  color: #D97706;
+}
+
+.badge-status.logged_out::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #F59E0B;
+  border-radius: 50%;
+}
+
+.icon-btn.warning {
+  background: rgba(245, 158, 11, 0.08) !important;
+  color: #D97706 !important;
+}
+
+.icon-btn.warning:hover {
+  background: #D97706 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+}
