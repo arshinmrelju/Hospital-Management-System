@@ -630,6 +630,34 @@
     });
   };
 
+  window.forceLogoutAllSessions = function() {
+    var active = allLoginSessions.filter(function(s) { return s.status === 'active'; });
+    if (active.length === 0) { toast('No active sessions to logout', 'info'); return; }
+    if (!confirm('Force logout all ' + active.length + ' active session(s)?')) return;
+
+    var btn = document.getElementById('logoutAllBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="material-icons-round">logout</span> Logging out...'; }
+
+    window.FIREBASE_READY.then(function(db) {
+      if (!db) { toast('Firebase not available', 'error'); return; }
+      var batch = db.batch();
+      active.forEach(function(s) {
+        var ref = db.collection('login_history').doc(s.id);
+        batch.update(ref, {
+          status: 'logged_out',
+          lastActivity: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      });
+      return batch.commit().then(function() {
+        toast(active.length + ' session(s) logged out', 'success', 'logout');
+        if (btn) { btn.disabled = false; btn.innerHTML = '<span class="material-icons-round">logout</span> Logout All Active'; }
+      });
+    }).catch(function(err) {
+      toast('Failed to logout all: ' + err.message, 'error');
+      if (btn) { btn.disabled = false; btn.innerHTML = '<span class="material-icons-round">logout</span> Logout All Active'; }
+    });
+  };
+
   function loadLoginHistory() {
     if (loginHistoryUnsubscribe) {
       loginHistoryUnsubscribe();
