@@ -28,17 +28,9 @@
           firebase.initializeApp(FIREBASE_CONFIG);
         }
 
-        var app = firebase.app();
         window.db = firebase.firestore();
-        window.db.settings({ merge: true });
-
-        firebase.auth().signInAnonymously().then(function(result) {
-          console.info('[Firebase] Anonymous auth ready.');
-          resolve(window.db);
-        }).catch(function(err) {
-          console.warn('[Firebase] Anonymous auth failed:', err.message);
-          resolve(window.db);
-        });
+        console.info('[Firebase] Firestore initialized.');
+        resolve(window.db);
       } catch (e) {
         console.warn('[Firebase] Init error:', e.message);
         resolve(null);
@@ -53,9 +45,8 @@
   window.logLoginEvent = function(user, role, portal) {
     return window.FIREBASE_READY.then(function(db) {
       if (!db) return null;
-      var uid = (firebase.auth().currentUser && firebase.auth().currentUser.uid) || 'unknown';
       var doc = {
-        userId: uid,
+        userId: 'app_' + (localStorage.getItem('hms_auth') ? JSON.parse(localStorage.getItem('hms_auth')).code : 'unknown'),
         user: user,
         role: role,
         portal: portal,

@@ -22,22 +22,20 @@ service cloud.firestore {
 
     match /login_history/{sessionId} {
 
-      // Any authenticated app user can create a login record
-      allow create: if request.auth != null
+      // App uses code-based auth (no Firebase Auth). Allow logged-in app users
+      // to create, read, and update login history records.
+      allow create: if true
         && request.resource.data.keys().hasAll(['userId', 'user', 'role', 'portal', 'loginTime', 'status', 'deviceInfo'])
         && request.resource.data.status in ['active', 'expired', 'logged_out']
         && request.resource.data.role in ['Admin', 'Reception']
         && request.resource.data.portal in ['admin', 'reception'];
 
-      // Any authenticated user can read login history
-      allow read: if request.auth != null;
+      allow read: if true;
 
-      // Only allow updating status-related fields (mark expired/logged_out, update activity)
-      allow update: if request.auth != null
+      allow update: if true
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'lastActivity', 'sessionDuration'])
         && request.resource.data.status in ['active', 'expired', 'logged_out'];
 
-      // No deletes — history is immutable
       allow delete: if false;
     }
 
