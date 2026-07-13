@@ -17,6 +17,20 @@
   <link rel="stylesheet" href="css/staff-theme.css" />
   <link rel="stylesheet" href="css/patients.css" />
   <style>
+    /* --- Export Badge on Button --- */
+    .export-badge-onbtn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      border-radius: 11px;
+      background: rgba(255,255,255,0.25);
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 800;
+    }
     /* --- Reception Portal Premium Styles --- */
     .opd-card {
       display: flex;
@@ -243,6 +257,11 @@
 <a href="#" class="nav-item" id="nav-patients" onclick="switchPage('patients');return false">
             <span class="material-icons-round">groups</span>
             <span class="nav-label">Patients</span>
+          </a>
+<a href="#" class="nav-item" id="nav-export" onclick="switchPage('export');return false">
+            <span class="material-icons-round">file_download</span>
+            <span class="nav-label">Export Contacts</span>
+            <span class="nav-export-badge" id="navExportBadge">0</span>
           </a>
           </nav>
 
@@ -636,6 +655,88 @@
             <div class="page-numbers" id="pageNumbers"></div>
             <button class="page-btn" id="nextPage" onclick="changePage(1)"><span class="material-icons-round">chevron_right</span></button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== EXPORT CONTACTS PAGE ===== -->
+    <div class="page-section" id="page-export">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Export Contacts</h1>
+          <p class="page-sub" id="exportPageSub">Track and export patient contact information</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn-secondary" onclick="resetExportTracker()">
+            <span class="material-icons-round">refresh</span> Reset Tracker
+          </button>
+        </div>
+      </div>
+
+      <div class="stats-grid" style="margin-bottom:20px;">
+        <div class="stat-card" style="--accent:#00685f">
+          <div class="stat-icon-wrap"><span class="material-icons-round">groups</span></div>
+          <div class="stat-body">
+            <p class="stat-label">Total Patients</p>
+            <h2 class="stat-value" id="exportTotalStat">0</h2>
+          </div>
+        </div>
+        <div class="stat-card" style="--accent:#0D9488">
+          <div class="stat-icon-wrap"><span class="material-icons-round">pending</span></div>
+          <div class="stat-body">
+            <p class="stat-label">Pending Export</p>
+            <h2 class="stat-value" id="exportPendingStat">0</h2>
+          </div>
+        </div>
+        <div class="stat-card" style="--accent:#004d46">
+          <div class="stat-icon-wrap"><span class="material-icons-round">file_download</span></div>
+          <div class="stat-body">
+            <p class="stat-label">Last Export</p>
+            <p class="stat-value" style="font-size:0.85rem;font-weight:600;" id="exportLastStat">—</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="widget glass-card">
+        <div class="widget-header">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="material-icons-round" style="color:var(--primary-light)">download</span>
+            <h3>Download Contact CSV</h3>
+          </div>
+        </div>
+        <div style="padding:20px 24px 24px;">
+          <p style="font-size:0.85rem;color:var(--on-surface-var);margin:0 0 18px;line-height:1.6;">
+            Download patient contact information as a CSV file. The tracker remembers which patients
+            have already been exported so you can easily export only the new ones.
+          </p>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <button class="btn-primary" id="exportNewBtnPage" onclick="exportPatientsCSV(false)" style="display:flex;align-items:center;gap:8px;padding:12px 24px;">
+              <span class="material-icons-round">download</span>
+              Export New Patients
+              <span class="export-badge-onbtn" id="exportPendingBadgePage">0</span>
+            </button>
+            <button class="btn-secondary" onclick="exportPatientsCSV(true)" style="display:flex;align-items:center;gap:8px;padding:12px 24px;">
+              <span class="material-icons-round">unfold_more</span>
+              Export All Patients
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="widget glass-card">
+        <div class="widget-header">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="material-icons-round" style="color:var(--on-surface-var)">info</span>
+            <h3 style="color:var(--on-surface-var)">About the Tracker</h3>
+          </div>
+        </div>
+        <div style="padding:16px 24px 20px;font-size:0.82rem;color:var(--on-surface-var);line-height:1.7;">
+          <ul style="margin:0;padding-left:20px;">
+            <li><strong>Export New</strong> — downloads only patients not yet exported, then marks them as exported</li>
+            <li><strong>Export All</strong> — downloads all patients without changing the tracker</li>
+            <li><strong>Reset Tracker</strong> — clears the export history, marking all patients as pending</li>
+            <li>The export status is stored locally in your browser and persists across sessions</li>
+          </ul>
         </div>
       </div>
     </div>

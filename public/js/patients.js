@@ -575,6 +575,7 @@ async function loadPatients(skipCache) {
     allPatients = normalizePatients(result.data || []);
     window.allPatients = allPatients;
     PatientCache.set(allPatients);
+    if (typeof updateExportBadge === 'function') updateExportBadge();
     if (_patientsInitialized) applyFilters();
   } catch (e) {
     console.error('Failed to load patients:', e);
@@ -639,6 +640,7 @@ async function submitAddPatient(e) {
     window.allPatients = allPatients;
     PatientCache.clear();
     applyFilters();
+    if (typeof updateExportBadge === 'function') updateExportBadge();
     closeModal(null, 'addPatientModal');
     document.getElementById('addPatientForm').reset();
     toast(`Patient ${raw.fname} ${raw.lname} registered! OP No: ${newP.op_no || newP.id}`, 'success');

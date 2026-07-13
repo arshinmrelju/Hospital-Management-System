@@ -8,6 +8,136 @@
 let OPD_QUEUE = [];
 let filteredOpdQueue = null;
 
+/* --- Export Tracker --- */
+const EXPORTED_IDS_KEY = 'hms_exported_patient_ids';
+
+function getExportedIds() {
+  try {
+    const raw = localStorage.getItem(EXPORTED_IDS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function setExportedIds(ids) {
+  localStorage.setItem(EXPORTED_IDS_KEY, JSON.stringify(ids));
+}
+
+function getUnexportedPatients() {
+  const exportedIds = getExportedIds();
+  const patients = window.allPatients || [];
+  return patients.filter(p => !exportedIds.includes(String(p.id)));
+}
+
+function updateExportBadge() {
+  const allPatients = window.allPatients || [];
+  const pending = getUnexportedPatients();
+  const count = pending.length;
+  const total = allPatients.length;
+
+  /* Sidebar badge */
+  const navBadge = document.getElementById('navExportBadge');
+  if (navBadge) {
+    navBadge.textContent = count;
+    navBadge.style.display = count > 0 ? 'inline-flex' : 'none';
+  }
+
+  /* Export page stats */
+  const totalStat = document.getElementById('exportTotalStat');
+  const pendingStat = document.getElementById('exportPendingStat');
+  const pendingBadge = document.getElementById('exportPendingBadgePage');
+  const exportBtnPage = document.getElementById('exportNewBtnPage');
+
+  if (totalStat) totalStat.textContent = total;
+  if (pendingStat) pendingStat.textContent = count;
+  if (pendingBadge) {
+    pendingBadge.textContent = count;
+    pendingBadge.style.display = count > 0 ? 'inline-flex' : 'none';
+  }
+  if (exportBtnPage) {
+    if (count > 0) {
+      exportBtnPage.style.display = 'inline-flex';
+    } else {
+      exportBtnPage.innerHTML = '<span class="material-icons-round">check_circle</span> All contacts exported';
+    }
+  }
+
+  /* Last export time */
+  const lastExportEl = document.getElementById('exportLastStat');
+  if (lastExportEl) {
+    try {
+      const raw = localStorage.getItem('hms_last_export_time');
+      if (raw) {
+        const d = new Date(raw);
+        lastExportEl.textContent = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      } else {
+        lastExportEl.textContent = 'Never';
+      }
+    } catch (e) {
+      lastExportEl.textContent = '—';
+    }
+  }
+}
+
+function exportPatientsCSV(all) {
+  const patients = all ? (window.allPatients || []) : getUnexportedPatients();
+  if (patients.length === 0) {
+    toast(all ? 'No patients in registry.' : 'No new patients to export.', 'info');
+    return;
+  }
+
+  const headers = ['First Name', 'Last Name', 'Phone', 'Email', 'Age', 'Gender', 'Blood Group', 'Doctor', 'Department', 'OP No', 'Status'];
+  const rows = patients.map(p => [
+    patientName(p),
+    patientLname(p),
+    patientContact(p),
+    String(p.email || p.Email || ''),
+    patientAge(p),
+    patientGender(p),
+    String(p.blood_group || p.blood || p.Blood || p['Blood Group'] || p.BloodGroup || 'Unknown'),
+    String(p.doctor || p.Doctor || p.doctor_name || ''),
+    String(p.department || p.dept || p.Department || ''),
+    String(p.op_no || p['Hosp. OP No'] || p['OP No'] || p['ID. NO'] || p['ID'] || p.op || ''),
+    String(p.status || p.Status || 'stable')
+  ].map(v => `"${v.replace(/"/g, '""')}"`).join(','));
+
+  const csv = '\uFEFF' + headers.join(',') + '\n' + rows.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const now = new Date();
+  const ts = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + '_' + String(now.getHours()).padStart(2, '0') + '-' + String(now.getMinutes()).padStart(2, '0');
+  a.href = url;
+  a.download = 'patient_contacts_' + ts + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  localStorage.setItem('hms_last_export_time', new Date().toISOString());
+
+  if (!all) {
+    const ids = patients.map(p => String(p.id));
+    const exportedIds = getExportedIds();
+    setExportedIds([...new Set([...exportedIds, ...ids])]);
+  }
+
+  updateExportBadge();
+  toast('Exported ' + patients.length + ' contact(s) to CSV.', 'success', 'file_download');
+}
+
+function resetExportTracker() {
+  if (!confirm('Reset export tracker? This will mark all patients as pending export.')) return;
+  localStorage.removeItem(EXPORTED_IDS_KEY);
+  updateExportBadge();
+  toast('Export tracker reset. All patients marked as pending.', 'info', 'refresh');
+}
+
+function initExportTracker() {
+  updateExportBadge();
+}
+
 /* --- Render OPD Queue --- */
 function renderOpdQueue() {
   const list = document.getElementById('opdList');
@@ -481,6 +611,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await ensurePatientsLoaded();
   await loadOpdQueueFromFirestore();
   updateStats();
+  initExportTracker();
 
   // Re-run stats after OPD queue is filtered
   var origRender = renderOpdQueue;
