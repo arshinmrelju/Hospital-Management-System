@@ -38,21 +38,30 @@ function extractOpFromNotes(notes) {
   return m ? m[1] : '';
 }
 
-function generateNextOpNo(sheet, headers) {
+function isValidOpNo(val) {
+  if (!val) return false;
+  var n = Number(val);
+  return Number.isInteger(n) && n > 0 && n < 1000000;
+}
+
+function generateNextOpNo(rows, headers) {
   var idCol = headers.indexOf('ID');
   var notesCol = headers.indexOf('Notes');
   var maxOp = 0;
-  var rows = sheet.getDataRange().getValues();
   for (var i = 1; i < rows.length; i++) {
-    var vals = [];
-    if (idCol >= 0) vals.push(rows[i][idCol]);
+    if (idCol >= 0) {
+      var idVal = rows[i][idCol];
+      if (isValidOpNo(idVal)) {
+        var num = Number(idVal);
+        if (num > maxOp) maxOp = num;
+      }
+    }
     if (notesCol >= 0) {
       var op = extractOpFromNotes(String(rows[i][notesCol] || ''));
-      if (op) vals.push(op);
-    }
-    for (var v = 0; v < vals.length; v++) {
-      var num = parseInt(vals[v], 10);
-      if (!isNaN(num) && num > maxOp) maxOp = num;
+      if (isValidOpNo(op)) {
+        var num = Number(op);
+        if (num > maxOp) maxOp = num;
+      }
     }
   }
   return String(maxOp + 1);
@@ -103,7 +112,9 @@ function handleGetPatients(e) {
     p.uhid = p['UHID'] || '';
     p.notes = p['Notes'] || '';
     var opFromNotes = extractOpFromNotes(p.notes);
-    p.op_no = opFromNotes || p['ID'] || p['UHID'] || '';
+    var rawId = p['ID'] || '';
+    var rawUhid = p['UHID'] || '';
+    p.op_no = opFromNotes || (isValidOpNo(rawId) ? rawId : '') || (isValidOpNo(rawUhid) ? rawUhid : '') || '';
     p.id = p.op_no;
     p.last_visit = p['Last Visit'] || '';
     p.created_on = p['Created On'] || '';
@@ -144,7 +155,9 @@ function handleGetPatient(e) {
     p.uhid = p['UHID'] || '';
     p.notes = p['Notes'] || '';
     var opFromNotes = extractOpFromNotes(p.notes);
-    p.op_no = opFromNotes || p['ID'] || p['UHID'] || '';
+    var rawId = p['ID'] || '';
+    var rawUhid = p['UHID'] || '';
+    p.op_no = opFromNotes || (isValidOpNo(rawId) ? rawId : '') || (isValidOpNo(rawUhid) ? rawUhid : '') || '';
     p.id = p.op_no;
     p.last_visit = p['Last Visit'] || '';
     p.created_on = p['Created On'] || '';
@@ -156,15 +169,24 @@ function handleGetPatient(e) {
 function handleCreatePatient(e) {
   var ss = SpreadsheetApp.openById(SHEET_ID);
   var sheet = ss.getSheetByName('Patients') || ss.getSheets()[0];
-  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  var allData = sheet.getDataRange().getValues();
+  var headers = allData[0];
   var row = [];
   var now = new Date();
   var notes = e.parameter.notes || '';
   var existingOp = extractOpFromNotes(notes);
-  var opNo = existingOp || generateNextOpNo(sheet, headers);
-  if (!existingOp) {
-    notes = notes ? notes + '\nOP No: ' + opNo : 'OP No: ' + opNo;
+  var opNo;
+  if (existingOp) {
+    opNo = existingOp;
+  } else if (e.parameter.op_no && isValidOpNo(e.parameter.op_no)) {
+    opNo = e.parameter.op_no;
+    if (findPatientRow(opNo, allData, headers) >= 0) {
+      opNo = generateNextOpNo(allData, headers);
+    }
+  } else {
+    opNo = generateNextOpNo(allData, headers);
   }
+  notes = notes ? notes + '\nOP No: ' + opNo : 'OP No: ' + opNo;
   for (var j = 0; j < headers.length; j++) {
     var h = headers[j];
     if (h === 'ID') row.push(opNo);
@@ -193,12 +215,13 @@ function handleCreatePatient(e) {
 function handleUpdatePatient(e) {
   var ss = SpreadsheetApp.openById(SHEET_ID);
   var sheet = ss.getSheetByName('Patients') || ss.getSheets()[0];
-  var rows = sheet.getDataRange().getValues();
-  var headers = rows[0];
+  var allData = sheet.getDataRange().getValues();
+  var headers = allData[0];
   var idCol = headers.indexOf('ID');
   if (idCol === -1) return { success: false, error: 'ID column not found' };
-  var i = findPatientRow(e.parameter.id, rows, headers);
+  var i = findPatientRow(e.parameter.id, allData, headers);
   if (i >= 0) {
+    var row = allData[i];
     var map = {
       'fname': 'First Name', 'lname': 'Last Name', 'contact': 'Phone',
       'email': 'Email', 'gender': 'Gender', 'dob': 'DOB', 'address': 'Address',
@@ -209,10 +232,34 @@ function handleUpdatePatient(e) {
     for (var key in map) {
       if (e.parameter[key] !== undefined) {
         var col = headers.indexOf(map[key]);
-        if (col >= 0) sheet.getRange(i + 1, col + 1).setValue(e.parameter[key]);
+        if (col >= 0) row[col] = e.parameter[key];
       }
     }
-    return { success: true };
+    sheet.getRange(i + 1, 1, 1, headers.length).setValues([row]);
+    var p = {};
+    for (var j = 0; j < headers.length; j++) p[headers[j]] = row[j];
+    p.fname = p['First Name'] || '';
+    p.lname = p['Last Name'] || '';
+    p.contact = String(p['Phone'] || '');
+    p.email = p['Email'] || '';
+    p.gender = p['Gender'] || '';
+    p.dob = p['DOB'] || '';
+    p.address = p['Address'] || '';
+    p.blood_group = p['Blood Group'] || 'Unknown';
+    p.department = p['Department'] || 'General';
+    p.patient_type = p['Admission Type'] || 'outpatient';
+    p.status = p['Status'] || 'stable';
+    p.assigned_doctor = p['Assigned Doctor'] || '';
+    p.uhid = p['UHID'] || '';
+    p.notes = p['Notes'] || '';
+    var opFromNotesU = extractOpFromNotes(p.notes);
+    var rawIdU = p['ID'] || '';
+    var rawUhidU = p['UHID'] || '';
+    p.op_no = opFromNotesU || (isValidOpNo(rawIdU) ? rawIdU : '') || (isValidOpNo(rawUhidU) ? rawUhidU : '') || '';
+    p.id = p.op_no;
+    p.last_visit = p['Last Visit'] || '';
+    p.created_on = p['Created On'] || '';
+    return { success: true, data: p };
   }
   return { success: false, error: 'Patient not found' };
 }
@@ -286,18 +333,20 @@ function handleCreateAppointment(e) {
 function handleUpdateAppointment(e) {
   var ss = SpreadsheetApp.openById(SHEET_ID);
   var sheet = getAppointmentsSheet(ss);
-  var rows = sheet.getDataRange().getValues();
-  var headers = rows[0];
+  var allData = sheet.getDataRange().getValues();
+  var headers = allData[0];
   var idCol = headers.indexOf('id');
   if (idCol === -1) return { success: false, error: 'id column not found' };
-  for (var i = 1; i < rows.length; i++) {
-    if (String(rows[i][idCol]) === String(e.parameter.id)) {
+  for (var i = 1; i < allData.length; i++) {
+    if (String(allData[i][idCol]) === String(e.parameter.id)) {
+      var row = allData[i];
       for (var j = 0; j < headers.length; j++) {
         var h = headers[j];
         if (h !== 'id' && e.parameter[h] !== undefined) {
-          sheet.getRange(i + 1, j + 1).setValue(e.parameter[h]);
+          row[j] = e.parameter[h];
         }
       }
+      sheet.getRange(i + 1, 1, 1, headers.length).setValues([row]);
       return { success: true };
     }
   }
@@ -423,10 +472,16 @@ function handleUpdateDoctor(e) {
   if (!id) return { success: false, error: 'Doctor ID required' };
   var ss = SpreadsheetApp.openById(SHEET_ID);
   var sheet = getDoctorsSheet(ss);
-  var rows = sheet.getDataRange().getValues();
-  var headers = rows[0];
-  var idx = findRowIndex(sheet, 'id', id);
+  var allData = sheet.getDataRange().getValues();
+  var headers = allData[0];
+  var idCol = headers.indexOf('id');
+  if (idCol === -1) return { success: false, error: 'id column not found' };
+  var idx = -1;
+  for (var i = 1; i < allData.length; i++) {
+    if (String(allData[i][idCol]) === String(id)) { idx = i; break; }
+  }
   if (idx === -1) return { success: false, error: 'Doctor not found' };
+  var row = allData[idx];
   var map = {
     'name': 'name', 'initials': 'initials', 'dept': 'dept',
     'phone': 'phone', 'email': 'email', 'qualification': 'qualification', 'status': 'status'
@@ -434,9 +489,10 @@ function handleUpdateDoctor(e) {
   for (var key in map) {
     if (e.parameter[key] !== undefined) {
       var col = headers.indexOf(map[key]);
-      if (col >= 0) sheet.getRange(idx + 1, col + 1).setValue(e.parameter[key]);
+      if (col >= 0) row[col] = e.parameter[key];
     }
   }
+  sheet.getRange(idx + 1, 1, 1, headers.length).setValues([row]);
   return { success: true };
 }
 
@@ -507,17 +563,24 @@ function handleUpdateDepartment(e) {
   if (!id) return { success: false, error: 'Department ID required' };
   var ss = SpreadsheetApp.openById(SHEET_ID);
   var sheet = getDepartmentsSheet(ss);
-  var rows = sheet.getDataRange().getValues();
-  var headers = rows[0];
-  var idx = findRowIndex(sheet, 'id', id);
+  var allData = sheet.getDataRange().getValues();
+  var headers = allData[0];
+  var idCol = headers.indexOf('id');
+  if (idCol === -1) return { success: false, error: 'id column not found' };
+  var idx = -1;
+  for (var i = 1; i < allData.length; i++) {
+    if (String(allData[i][idCol]) === String(id)) { idx = i; break; }
+  }
   if (idx === -1) return { success: false, error: 'Department not found' };
+  var row = allData[idx];
   var map = { 'name': 'name', 'description': 'description', 'status': 'status' };
   for (var key in map) {
     if (e.parameter[key] !== undefined) {
       var col = headers.indexOf(map[key]);
-      if (col >= 0) sheet.getRange(idx + 1, col + 1).setValue(e.parameter[key]);
+      if (col >= 0) row[col] = e.parameter[key];
     }
   }
+  sheet.getRange(idx + 1, 1, 1, headers.length).setValues([row]);
   return { success: true };
 }
 

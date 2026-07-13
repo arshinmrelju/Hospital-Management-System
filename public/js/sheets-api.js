@@ -1,6 +1,6 @@
 'use strict';
 
-var SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbwADFT-ngCU-uvcm_xjykk2pjHy5MFjZyoMJ_hpyBTpWCr_fl6BN9JSIgwZo6r0DLMDmA/exec';
+var SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycby5G29sqEKxSDZLEbk1LvDwWhibCW8laYZjLJj5_L_AEWtQuoxz-azQuYYXYsmxGNWjAg/exec';
 
 var _patientsCache = null;
 var _appointmentsCache = null;
@@ -96,14 +96,24 @@ function sheetsFetch(params, callback) {
   document.head.appendChild(script);
 }
 
+function isValidOpNo(val) {
+  if (!val) return false;
+  var n = Number(val);
+  return Number.isInteger(n) && n > 0 && n < 1000000;
+}
+
 function normalizePatient(p) {
   p.notes = p.notes || p['Notes'] || '';
   if (!p.op_no && p.notes) {
     var m = p.notes.match(/OP\s*No\.?\s*:?\s*(\d+)/i);
     if (m) p.op_no = m[1];
   }
-  p.op_no = p.op_no || p['ID'] || p.id || '';
-  p.id = p.op_no || p.id || p.ID || '';
+  if (p.op_no && !isValidOpNo(p.op_no)) p.op_no = '';
+  if (!p.op_no) {
+    var rawId = p['ID'] || p.id || '';
+    if (isValidOpNo(rawId)) p.op_no = rawId;
+  }
+  p.id = p.op_no || '';
   p.fname = p.fname || p['First Name'] || p.FirstName || p.Name || '';
   p.lname = p.lname || p['Last Name'] || p.LastName || '';
   p.contact = String(p.contact || p['Phone'] || p.Phone || p.phone || '');
@@ -161,7 +171,7 @@ window.API = {
 
   createPatient: function(data) {
     var q = { action: 'createPatient' };
-    ['fname','lname','contact','email','gender','dob','address','blood_group','department','patient_type','status','assigned_doctor','notes'].forEach(function(k) {
+    ['op_no','fname','lname','contact','email','gender','dob','address','blood_group','department','patient_type','status','assigned_doctor','notes'].forEach(function(k) {
       if (data[k]) q[k] = data[k];
     });
     return sheetsFetch(q).then(function(resp) {
@@ -170,9 +180,17 @@ window.API = {
       } else {
         var local = getLocalData('patients') || seedLocalPatients();
         var nextOp = 1001;
+        var providedOp = data.op_no ? parseInt(data.op_no, 10) : 0;
+        if (!isNaN(providedOp) && providedOp > 0 && providedOp < 1000000) {
+          var taken = local.some(function(p) {
+            return parseInt(p.op_no || p.id, 10) === providedOp;
+          });
+          if (!taken) nextOp = providedOp;
+        }
         local.forEach(function(p) {
-          var num = parseInt(p.op_no || p.id, 10);
-          if (!isNaN(num) && num >= nextOp) nextOp = num + 1;
+          var val = p.op_no || p.id || '';
+          var num = parseInt(val, 10);
+          if (!isNaN(num) && num > 0 && num < 1000000 && num >= nextOp) nextOp = num + 1;
         });
         var now = new Date();
         var notes = data.notes || '';
@@ -226,7 +244,7 @@ window.API = {
             }
           }
           setLocalData('patients', local);
-          return { success: true, fallback: true };
+          return { success: true, data: local[idx], fallback: true };
         }
         return { success: false, error: 'Patient not found' };
       }

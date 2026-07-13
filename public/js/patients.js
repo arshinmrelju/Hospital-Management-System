@@ -507,8 +507,13 @@ function normalizePatients(rawList) {
         age = Math.floor((Date.now() - dob.getTime()) / (365.25 * 24 * 3600 * 1000));
     }
     const gender = p.gender || p.Gender || p.Sex || p.sex || '';
-    const op_no = p.op_no || p['Hosp. OP No'] || p['OP No'] ||
-                  p['ID. NO'] || p['ID'] || p.op || '';
+    const validOp = function(v) { var n = Number(v); return Number.isInteger(n) && n > 0 && n < 1000000; };
+    const op_no = (validOp(p.op_no) && p.op_no) ||
+                  (validOp(p['Hosp. OP No']) && p['Hosp. OP No']) ||
+                  (validOp(p['OP No']) && p['OP No']) ||
+                  (validOp(p['ID. NO']) && p['ID. NO']) ||
+                  (validOp(p['ID']) && p['ID']) ||
+                  (validOp(p.op) && p.op) || '';
     const doctor = p.doctor || p.Doctor || p.doctor_name || '';
     const email = p.email || p.Email || '';
     return { ...p, fname, lname, contact, department, blood_group, patient_type, status, last_visit, age, gender, op_no, doctor, email };
@@ -602,8 +607,9 @@ function initPatientsPage() {
 function getNextOpNo() {
   var maxOp = 0;
   (window.allPatients || []).forEach(function(p) {
-    var num = parseInt(p.op_no || p.id, 10);
-    if (!isNaN(num) && num > maxOp) maxOp = num;
+    var val = p.op_no || p.id || '';
+    var num = parseInt(val, 10);
+    if (!isNaN(num) && num > 0 && num < 1000000 && num > maxOp) maxOp = num;
   });
   return String(maxOp + 1);
 }
@@ -617,6 +623,7 @@ window.openAddPatientModal = openAddPatientModal;
 async function submitAddPatient(e) {
   e.preventDefault();
   const raw = {
+    op_no: document.getElementById('pOpNo').textContent,
     fname: sanitizeInput(document.getElementById('pFirstName').value),
     lname: sanitizeInput(document.getElementById('pLastName').value),
     contact: sanitizeInput(document.getElementById('pContact').value),
@@ -635,7 +642,24 @@ async function submitAddPatient(e) {
   submitBtn.textContent = 'Registering...';
   try {
     const result = await window.API.createPatient(raw);
-    const newP = result.data;
+    const newP = normalizePatient({
+      id: result.data.id,
+      op_no: result.data.op_no,
+      fname: raw.fname,
+      lname: raw.lname,
+      contact: raw.contact || '',
+      email: raw.email || '',
+      gender: raw.gender || '',
+      dob: raw.dob || '',
+      department: raw.department || 'General',
+      blood_group: raw.blood_group || 'Unknown',
+      patient_type: raw.patient_type || 'outpatient',
+      status: 'stable',
+      assigned_doctor: raw.doctor || '',
+      notes: raw.notes || '',
+      last_visit: new Date().toISOString().slice(0,10),
+      created_on: new Date().toISOString().slice(0,10),
+    });
     allPatients.unshift(newP);
     window.allPatients = allPatients;
     PatientCache.clear();
