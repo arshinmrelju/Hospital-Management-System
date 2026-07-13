@@ -295,7 +295,7 @@
           <div class="form-group"><label>Last Name *</label><input type="text" id="pLastName" required /></div>
         </div>
         <div class="form-row-2">
-          <div class="form-group"><label>Date of Birth *</label><input type="date" id="pDob" required /></div>
+          <div class="form-group"><label>Age *</label><input type="number" id="pAge" min="0" max="150" required /></div>
           <div class="form-group"><label>Gender *</label>
             <select id="pGender" required><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select>
           </div>
@@ -344,7 +344,7 @@
           <div class="form-group"><label>Last Name *</label><input type="text" id="editLastName" required /></div>
         </div>
         <div class="form-row-2">
-          <div class="form-group"><label>Date of Birth</label><input type="date" id="editDob" /></div>
+          <div class="form-group"><label>Age</label><input type="number" id="editAge" min="0" max="150" /></div>
           <div class="form-group"><label>Gender</label>
             <select id="editGender"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select>
           </div>
@@ -409,9 +409,70 @@
     </div>
   </div>
 
+  <!-- OPD Check-In Modal -->
+  <div class="modal-overlay" id="checkInModal" onclick="closeModal(event, 'checkInModal')">
+    <div class="modal-card" style="max-width:520px;">
+      <div class="modal-header">
+        <h3 class="modal-title">OPD Patient Check-In</h3>
+        <button class="modal-close" onclick="closeModal(null, 'checkInModal')">
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Search Patient *</label>
+          <div class="autocomplete-wrapper" id="ciPatientAutocomplete">
+            <input type="text" id="ciPatientSearch" placeholder="Type to search patient name or phone..." autocomplete="off" />
+            <input type="hidden" id="ciPatientId" value="" />
+            <div class="autocomplete-dropdown" id="ciPatientDropdown"></div>
+          </div>
+          <div id="ciPatientInfo" style="display:none;margin-top:8px;padding:10px 12px;background:var(--surface-low);border:1px solid var(--outline-var);border-radius:var(--radius-md);">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="ac-avatar" id="ciPatientAvatar" style="width:36px;height:36px;font-size:0.85rem;"></div>
+              <div>
+                <div style="font-weight:700;font-size:0.88rem;" id="ciPatientNameDisplay"></div>
+                <div style="font-size:0.75rem;color:var(--on-surface-var);" id="ciPatientMetaDisplay"></div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:6px;font-size:0.78rem;">
+            <span id="ciPatientNotFound" style="display:none;">Patient not found? <a href="#" onclick="event.preventDefault();openNewPatient()" style="color:var(--primary-light);font-weight:700;">Register New Patient</a></span>
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Referred Doctor</label>
+            <select id="ciDoctor" class="loading">
+              <option value="" disabled selected>Loading doctors&hellip;</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Priority</label>
+            <select id="ciPriority">
+              <option value="waiting">Normal</option>
+              <option value="urgent">Urgent</option>
+              <option value="checked-in">Pre-Booked</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Chief Complaint</label>
+          <input type="text" id="ciComplaint" placeholder="e.g. Chest pain, Fever, Headache..." />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal(null, 'checkInModal')">Cancel</button>
+        <button class="btn-primary" style="background:var(--primary-light);" onclick="checkInPatient()">
+          <span class="material-icons-round">how_to_reg</span> Check In
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- HMS Sheets API Layer -->
   <script src="js/sheets-api.js"></script>
   <script src="js/app.js"></script>
   <script src="js/patients.js"></script>
+  <script src="js/reception-dashboard.js"></script>
 </body>
 </html>

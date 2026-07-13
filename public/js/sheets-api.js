@@ -1,9 +1,12 @@
 'use strict';
 
-var SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycby5G29sqEKxSDZLEbk1LvDwWhibCW8laYZjLJj5_L_AEWtQuoxz-azQuYYXYsmxGNWjAg/exec';
+var SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbzEbmUnbE4Wut_PG9QeJSpZhzLD9BDyD_HCGsaiqzySjzppN2DcVYHFv26uZLFGIXDLbQ/exec';
 
 var _patientsCache = null;
 var _appointmentsCache = null;
+var _patientsTotal = 0;
+var _batchSize = 5000;
+var _patientsLoading = null;
 
 // One-time purge of stale seed/demo data from localStorage
 (function() {
@@ -119,7 +122,7 @@ function normalizePatient(p) {
   p.contact = String(p.contact || p['Phone'] || p.Phone || p.phone || '');
   p.email = p.email || p['Email'] || p.Email || '';
   p.gender = p.gender || p['Gender'] || p.Gender || '';
-  p.dob = p.dob || p['DOB'] || p.DOB || '';
+  p.age = p.age || p['Age'] || p.Age || '';
   p.address = p.address || p['Address'] || '';
   p.blood_group = p.blood_group || p['Blood Group'] || p.Blood_Group || 'Unknown';
   p.department = p.department || p['Department'] || p.Department || 'General';
@@ -130,29 +133,103 @@ function normalizePatient(p) {
   return p;
 }
 
+function fallbackPatients(params) {
+  console.warn('Using LocalStorage patients fallback.');
+  var local = getLocalData('patients') || seedLocalPatients();
+  if (params && params.search) {
+    var search = params.search.toLowerCase();
+    local = local.filter(function(p) {
+      return (p.fname + ' ' + p.lname + ' ' + p.contact + ' ' + p.op_no).toLowerCase().indexOf(search) !== -1;
+    });
+  }
+  _patientsCache = local;
+  _patientsTotal = local.length;
+  return { success: true, data: local, fallback: true };
+}
+
 window.API = {
   getPatients: function(params) {
     params = params || {};
+
+    // Dedup concurrent calls — return the same promise
+    if (_patientsLoading) return _patientsLoading;
+
     var q = { action: 'getPatients' };
     if (params.search) q.search = params.search;
-    return sheetsFetch(q).then(function(resp) {
-      if (resp.success && resp.data) {
-        _patientsCache = resp.data = resp.data.map(normalizePatient);
-        setLocalData('patients', resp.data); // sync local storage
-        return resp;
-      } else {
-        console.warn('Using LocalStorage patients fallback.');
-        var local = getLocalData('patients') || seedLocalPatients();
-        if (params.search) {
-          var search = params.search.toLowerCase();
-          local = local.filter(function(p) {
-            return (p.fname + ' ' + p.lname + ' ' + p.contact + ' ' + p.op_no).toLowerCase().indexOf(search) !== -1;
+
+    var promise;
+
+    // Searching uses a single request
+    if (params.search) {
+      promise = sheetsFetch(q).then(function(resp) {
+        if (resp.success && resp.data) {
+          resp.data = resp.data.map(normalizePatient);
+          _patientsCache = resp.data;
+          _patientsTotal = resp.total || resp.data.length;
+          return resp;
+        }
+        return fallbackPatients(params);
+      });
+    } else {
+      // Step 1: get paginated count; fall back if old server returns all data without "total"
+      promise = sheetsFetch({ action: 'getPatients', limit: 1, offset: 0 }).then(function(meta) {
+        if (!meta.success) {
+          console.warn('Using LocalStorage patients fallback.');
+          return fallbackPatients(params);
+        }
+
+        // Old server — returns everything in one shot, no total field
+        if (meta.total === undefined) {
+          var all = meta.data || [];
+          _patientsTotal = all.length;
+          _patientsCache = all.map(normalizePatient);
+          setLocalData('patients', _patientsCache);
+          return { success: true, data: _patientsCache };
+        }
+
+        var total = meta.total || 0;
+        if (total === 0) {
+          _patientsTotal = 0;
+          _patientsCache = [];
+          setLocalData('patients', []);
+          return { success: true, data: [] };
+        }
+        _patientsTotal = total;
+
+        // Step 2: fetch all pages sequentially with retry
+        var allData = [];
+        var batchSize = _batchSize;
+        var pages = Math.ceil(total / batchSize);
+
+        function loadPage(idx, retried) {
+          if (idx >= pages) {
+            _patientsCache = allData;
+            setLocalData('patients', allData);
+            return { success: true, data: allData };
+          }
+          var offset = idx * batchSize;
+          var limit = Math.min(batchSize, total - offset);
+          return sheetsFetch({ action: 'getPatients', offset: offset, limit: limit }).then(function(resp) {
+            if (resp.success && resp.data) {
+              allData = allData.concat(resp.data.map(normalizePatient));
+              return loadPage(idx + 1);
+            }
+            // Retry failed batch once
+            if (!retried) {
+              console.warn('Retrying batch ' + idx + ' after failure');
+              return loadPage(idx, true);
+            }
+            console.error('Batch ' + idx + ' failed after retry, skipping');
+            return loadPage(idx + 1);
           });
         }
-        _patientsCache = local;
-        return { success: true, data: local, fallback: true };
-      }
-    });
+        return loadPage(0, false);
+      });
+    }
+
+    // Store promise for dedup and clear when done
+    _patientsLoading = promise.then(function(r) { _patientsLoading = null; return r; }, function(e) { _patientsLoading = null; throw e; });
+    return _patientsLoading;
   },
 
   getPatient: function(id) {
@@ -171,7 +248,7 @@ window.API = {
 
   createPatient: function(data) {
     var q = { action: 'createPatient' };
-    ['op_no','fname','lname','contact','email','gender','dob','address','blood_group','department','patient_type','status','assigned_doctor','notes'].forEach(function(k) {
+    ['op_no','fname','lname','contact','email','gender','age','address','blood_group','department','patient_type','status','assigned_doctor','notes'].forEach(function(k) {
       if (data[k]) q[k] = data[k];
     });
     return sheetsFetch(q).then(function(resp) {
@@ -203,7 +280,7 @@ window.API = {
           contact: data.contact || '',
           email: data.email || '',
           gender: data.gender || '',
-          dob: data.dob || '',
+          age: data.age || '',
           address: data.address || '',
           blood_group: data.blood_group || 'Unknown',
           department: data.department || 'General',

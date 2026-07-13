@@ -86,38 +86,85 @@ function findPatientRow(id, rows, headers) {
 function handleGetPatients(e) {
   var ss = SpreadsheetApp.openById(SHEET_ID);
   var sheet = ss.getSheetByName('Patients') || ss.getSheets()[0];
-  var rows = sheet.getDataRange().getValues();
-  var headers = rows[0];
+
+  // Read headers from row 1 (cheap)
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+  // Pre-compute column indices for speed
+  var idx = {};
+  for (var j = 0; j < headers.length; j++) {
+    idx[headers[j]] = j;
+  }
+  var colFname    = idx['First Name']    !== undefined ? idx['First Name']    : -1;
+  var colLname    = idx['Last Name']     !== undefined ? idx['Last Name']     : -1;
+  var colPhone    = idx['Phone']         !== undefined ? idx['Phone']         : -1;
+  var colEmail    = idx['Email']         !== undefined ? idx['Email']         : -1;
+  var colGender   = idx['Gender']        !== undefined ? idx['Gender']        : -1;
+  var colDob      = idx['Age']           !== undefined ? idx['Age']           : -1;
+  var colAddress  = idx['Address']       !== undefined ? idx['Address']       : -1;
+  var colBlood    = idx['Blood Group']   !== undefined ? idx['Blood Group']   : -1;
+  var colDept     = idx['Department']    !== undefined ? idx['Department']    : -1;
+  var colAdmType  = idx['Admission Type']!== undefined ? idx['Admission Type']: -1;
+  var colStatus   = idx['Status']        !== undefined ? idx['Status']        : -1;
+  var colDoctor   = idx['Assigned Doctor'] !== undefined ? idx['Assigned Doctor'] : -1;
+  var colUhid     = idx['UHID']          !== undefined ? idx['UHID']          : -1;
+  var colNotes    = idx['Notes']         !== undefined ? idx['Notes']         : -1;
+  var colId       = idx['ID']            !== undefined ? idx['ID']            : -1;
+  var colLastVis  = idx['Last Visit']    !== undefined ? idx['Last Visit']    : -1;
+  var colCreated  = idx['Created On']    !== undefined ? idx['Created On']    : -1;
+
+  var totalRows   = sheet.getLastRow() - 1;
+  var search      = (e.parameter.search || '').toLowerCase();
+  var offset      = parseInt(e.parameter.offset, 10);
+  if (isNaN(offset) || offset < 0) offset = 0;
+  var limit       = parseInt(e.parameter.limit, 10);
+  var usePagination = !isNaN(limit) && limit > 0;
+
+  // Read ONLY the rows we need when paginating
+  var rowStart, numRows;
+  if (usePagination) {
+    rowStart = offset + 2;           // +1 for 1-indexed, +1 for header
+    numRows  = Math.min(limit, totalRows - offset);
+  } else {
+    rowStart = 2;
+    numRows  = totalRows;
+  }
+
+  var rawRows = numRows > 0 ? sheet.getRange(rowStart, 1, numRows, headers.length).getValues() : [];
   var result = [];
 
-  var search = (e.parameter.search || '').toLowerCase();
-
-  for (var i = 1; i < rows.length; i++) {
+  for (var i = 0; i < rawRows.length; i++) {
+    var r = rawRows[i];
     var p = {};
+
+    // Preserve all original column values (backward compat with client fallbacks)
     for (var j = 0; j < headers.length; j++) {
-      p[headers[j]] = rows[i][j];
+      p[headers[j]] = r[j];
     }
-    p.fname = p['First Name'] || '';
-    p.lname = p['Last Name'] || '';
-    p.contact = String(p['Phone'] || '');
-    p.email = p['Email'] || '';
-    p.gender = p['Gender'] || '';
-    p.dob = p['DOB'] || '';
-    p.address = p['Address'] || '';
-    p.blood_group = p['Blood Group'] || 'Unknown';
-    p.department = p['Department'] || 'General';
-    p.patient_type = p['Admission Type'] || 'outpatient';
-    p.status = p['Status'] || 'stable';
-    p.assigned_doctor = p['Assigned Doctor'] || '';
-    p.uhid = p['UHID'] || '';
-    p.notes = p['Notes'] || '';
-    var opFromNotes = extractOpFromNotes(p.notes);
-    var rawId = p['ID'] || '';
-    var rawUhid = p['UHID'] || '';
+
+    p.fname           = colFname    >= 0 ? String(r[colFname]    || '') : '';
+    p.lname           = colLname    >= 0 ? String(r[colLname]    || '') : '';
+    p.contact         = colPhone    >= 0 ? String(r[colPhone]    || '') : '';
+    p.email           = colEmail    >= 0 ? String(r[colEmail]    || '') : '';
+    p.gender          = colGender   >= 0 ? String(r[colGender]   || '') : '';
+    p.age             = colDob      >= 0 ? String(r[colDob]      || '') : '';
+    p.address         = colAddress  >= 0 ? String(r[colAddress]  || '') : '';
+    p.blood_group     = colBlood    >= 0 ? String(r[colBlood]    || '') : '';
+    if (!p.blood_group) p.blood_group = 'Unknown';
+    p.department      = colDept     >= 0 ? String(r[colDept]     || '') : 'General';
+    p.patient_type    = colAdmType  >= 0 ? String(r[colAdmType]  || '') : 'outpatient';
+    p.status          = colStatus   >= 0 ? String(r[colStatus]   || '') : 'stable';
+    p.assigned_doctor = colDoctor   >= 0 ? String(r[colDoctor]   || '') : '';
+    p.uhid            = colUhid     >= 0 ? String(r[colUhid]     || '') : '';
+    p.notes           = colNotes    >= 0 ? String(r[colNotes]    || '') : '';
+    var rawNotes      = p.notes;
+    var rawId         = colId       >= 0 ? String(r[colId]       || '') : '';
+    var rawUhid       = p.uhid;
+    var opFromNotes   = extractOpFromNotes(rawNotes);
     p.op_no = opFromNotes || (isValidOpNo(rawId) ? rawId : '') || (isValidOpNo(rawUhid) ? rawUhid : '') || '';
     p.id = p.op_no;
-    p.last_visit = p['Last Visit'] || '';
-    p.created_on = p['Created On'] || '';
+    p.last_visit      = colLastVis  >= 0 ? String(r[colLastVis]  || '') : '';
+    p.created_on      = colCreated  >= 0 ? String(r[colCreated]  || '') : '';
 
     if (search) {
       var haystack = (p.fname + ' ' + p.lname + ' ' + p.contact + ' ' + p.op_no).toLowerCase();
@@ -127,7 +174,7 @@ function handleGetPatients(e) {
     result.push(p);
   }
 
-  return { success: true, data: result };
+  return { success: true, data: result, total: totalRows };
 }
 
 function handleGetPatient(e) {
@@ -145,7 +192,7 @@ function handleGetPatient(e) {
     p.contact = String(p['Phone'] || '');
     p.email = p['Email'] || '';
     p.gender = p['Gender'] || '';
-    p.dob = p['DOB'] || '';
+    p.age = p['Age'] || '';
     p.address = p['Address'] || '';
     p.blood_group = p['Blood Group'] || 'Unknown';
     p.department = p['Department'] || 'General';
@@ -195,7 +242,7 @@ function handleCreatePatient(e) {
     else if (h === 'Phone') row.push(e.parameter.contact || '');
     else if (h === 'Email') row.push(e.parameter.email || '');
     else if (h === 'Gender') row.push(e.parameter.gender || '');
-    else if (h === 'DOB') row.push(e.parameter.dob || '');
+    else if (h === 'Age') row.push(e.parameter.age || '');
     else if (h === 'Address') row.push(e.parameter.address || '');
     else if (h === 'Blood Group') row.push(e.parameter.blood_group || 'Unknown');
     else if (h === 'Department') row.push(e.parameter.department || 'General');
@@ -224,7 +271,7 @@ function handleUpdatePatient(e) {
     var row = allData[i];
     var map = {
       'fname': 'First Name', 'lname': 'Last Name', 'contact': 'Phone',
-      'email': 'Email', 'gender': 'Gender', 'dob': 'DOB', 'address': 'Address',
+      'email': 'Email', 'gender': 'Gender', 'age': 'Age', 'address': 'Address',
       'blood_group': 'Blood Group', 'department': 'Department',
       'patient_type': 'Admission Type', 'status': 'Status',
       'assigned_doctor': 'Assigned Doctor', 'uhid': 'UHID', 'notes': 'Notes'
@@ -243,7 +290,7 @@ function handleUpdatePatient(e) {
     p.contact = String(p['Phone'] || '');
     p.email = p['Email'] || '';
     p.gender = p['Gender'] || '';
-    p.dob = p['DOB'] || '';
+    p.age = p['Age'] || '';
     p.address = p['Address'] || '';
     p.blood_group = p['Blood Group'] || 'Unknown';
     p.department = p['Department'] || 'General';

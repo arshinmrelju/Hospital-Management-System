@@ -396,6 +396,9 @@
                   <h3>OPD Queue Register</h3>
                 </div>
                 <span id="opdQueueCount" style="background:rgba(13,148,136,0.1);color:#0D9488;border-radius:20px;padding:3px 10px;font-size:0.72rem;font-weight:700;"><span class="loading-pulse" style="width:6px;height:6px;margin-right:4px;"></span>Loading<span class="loading-dots loading-dots-sm"></span></span>
+                <button class="btn-primary btn-sm" onclick="openCheckInModal()" style="white-space:nowrap;">
+                  <span class="material-icons-round" style="font-size:16px;">person_add</span> New Check-In
+                </button>
               </div>
               <!-- Smart Filter Bar -->
               <div class="smart-filter" id="opdSmartFilter">
@@ -823,7 +826,7 @@
           <div class="form-group"><label>Last Name *</label><input type="text" id="pLastName" required /></div>
         </div>
         <div class="form-row-2">
-          <div class="form-group"><label>Date of Birth *</label><input type="date" id="pDob" required /></div>
+          <div class="form-group"><label>Age *</label><input type="number" id="pAge" min="0" max="150" required /></div>
           <div class="form-group"><label>Gender *</label>
             <select id="pGender" required><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select>
           </div>
@@ -866,7 +869,7 @@
           <div class="form-group"><label>Last Name *</label><input type="text" id="editLastName" required /></div>
         </div>
         <div class="form-row-2">
-          <div class="form-group"><label>Date of Birth</label><input type="date" id="editDob" /></div>
+          <div class="form-group"><label>Age</label><input type="number" id="editAge" min="0" max="150" /></div>
           <div class="form-group"><label>Gender</label>
             <select id="editGender"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select>
           </div>

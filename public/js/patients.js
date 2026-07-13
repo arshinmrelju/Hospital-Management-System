@@ -68,6 +68,13 @@ function renderTable() {
       <td data-label="Actions">
         <button class="icon-btn" title="View" onclick="viewPatient(${p.id})"><span class="material-icons-round">visibility</span></button>
         <button class="icon-btn" title="Edit" onclick="editPatient(${p.id})"><span class="material-icons-round">edit</span></button>
+        <button class="icon-btn" title="Add to OPD Queue"
+          onclick="queueCheckinPatient(this)"
+          data-id="${p.id}" data-name="${esc(patientFullName(p))}"
+          data-age="${p.age}" data-gender="${p.gender}"
+          data-blood="${p.blood_group}" data-op="${p.op_no}">
+          <span class="material-icons-round">how_to_reg</span>
+        </button>
         <button class="icon-btn danger" title="Delete" onclick="deletePatient(${p.id})"><span class="material-icons-round">delete</span></button>
       </td>
     </tr>
@@ -414,7 +421,7 @@ function editPatient(id) {
   document.getElementById('editPatientTitle').textContent = `Edit ${p.fname} ${p.lname}`;
   document.getElementById('editFirstName').value = p.fname || '';
   document.getElementById('editLastName').value = p.lname || '';
-  document.getElementById('editDob').value = p.dob ? p.dob.slice(0,10) : '';
+  document.getElementById('editAge').value = p.age || '';
   document.getElementById('editContact').value = p.contact || '';
   document.getElementById('editEmail').value = p.email || '';
   document.getElementById('editDept').value = p.department || '';
@@ -438,7 +445,7 @@ async function submitEditPatient(e) {
     department: document.getElementById('editDept').value,
     patient_type: document.getElementById('editType').value.toLowerCase(),
     blood_group: document.getElementById('editBlood').value || 'Unknown',
-    dob: document.getElementById('editDob').value,
+    age: document.getElementById('editAge').value,
     gender: document.getElementById('editGender')?.value || '',
     status: document.getElementById('editStatus').value,
     notes: document.getElementById('editNotes')?.value || '',
@@ -498,12 +505,7 @@ function normalizePatients(rawList) {
     const status = p.status || p.Status || 'stable';
     const last_visit = p.last_visit || p.lastVisit || p['Last Visit'] ||
                        p.LastVisit || p.date || '';
-    let age = p.age || p.Age || '';
-    if (!age && (p.dob || p.DOB)) {
-      const dob = new Date(p.dob || p.DOB);
-      if (!isNaN(dob.getTime()))
-        age = Math.floor((Date.now() - dob.getTime()) / (365.25 * 24 * 3600 * 1000));
-    }
+    const age = p.age || p.Age || '';
     const gender = p.gender || p.Gender || p.Sex || p.sex || '';
     const validOp = function(v) { var n = Number(v); return Number.isInteger(n) && n > 0 && n < 1000000; };
     const op_no = (validOp(p.op_no) && p.op_no) ||
@@ -629,7 +631,7 @@ async function submitAddPatient(e) {
     department: document.getElementById('pDept').value,
     patient_type: document.getElementById('pType').value.toLowerCase(),
     blood_group: document.getElementById('pBlood').value || 'Unknown',
-    dob: document.getElementById('pDob').value,
+    age: document.getElementById('pAge').value,
     notes: document.getElementById('pNotes').value,
     doctor: document.getElementById('pDoctor')?.value || '',
   };
@@ -647,7 +649,7 @@ async function submitAddPatient(e) {
       contact: raw.contact || '',
       email: raw.email || '',
       gender: raw.gender || '',
-      dob: raw.dob || '',
+      age: raw.age || '',
       department: raw.department || 'General',
       blood_group: raw.blood_group || 'Unknown',
       patient_type: raw.patient_type || 'outpatient',

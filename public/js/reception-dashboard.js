@@ -224,17 +224,23 @@ function clearOpdQueueFilter() {
 
 /* --- Check In by Token (quick action from list) --- */
 async function checkInByToken(token) {
-  const patient = OPD_QUEUE.find(p => p.token === token);
-  if (patient) {
-    patient.status = 'checked-in';
-    try {
-      await window.API.updateAppointment(patient.id, { status: 'checked-in' });
-    } catch (e) {
-      addConsoleLog('WARN', 'Could not update check-in status: ' + e.message);
-    }
-    renderOpdQueue();
-    toast(`${patient.name} checked in successfully!`, 'success', 'how_to_reg');
+  const btn = document.querySelector(`#opdCard-${token} button`);
+  if (!btn || btn.disabled) return;
+  const patient = OPD_QUEUE.find(p => String(p.token) === String(token));
+  if (!patient) {
+    btn.disabled = false;
+    return;
   }
+  btn.disabled = true;
+  btn.textContent = '...';
+  patient.status = 'checked-in';
+  try {
+    await window.API.updateAppointment(patient.id, { status: 'checked-in' });
+  } catch (e) {
+    addConsoleLog('WARN', 'Could not update check-in status: ' + e.message);
+  }
+  renderOpdQueue();
+  toast(`${patient.name} checked in successfully!`, 'success', 'how_to_reg');
 }
 
 /* --- Patient Check-In Autocomplete Helpers --- */
@@ -285,7 +291,7 @@ function initCheckinAutocomplete() {
       return;
     }
     document.getElementById('ciPatientNotFound').style.display = 'none';
-    dropdown.innerHTML = filtered.map(function (p) {
+    dropdown.innerHTML = filtered.map(function (p, idx) {
       var f = patientName(p);
       var l = patientLname(p);
       if (!f && !l) {
@@ -302,7 +308,8 @@ function initCheckinAutocomplete() {
       if (gender) meta.push(gender);
       var contact = patientContact(p);
       if (contact) meta.push(contact);
-      return '<div class="autocomplete-item" data-id="' + p.id + '" onclick="selectCheckinPatient(\'' + p.id + '\')">' +
+      var safeId = String(p.id || '');
+      return '<div class="autocomplete-item" data-id="' + safeId + '">' +
         '<div class="ac-avatar">' + esc(initials) + '</div>' +
         '<div class="ac-info">' +
         '<span class="ac-name">' + esc(f) + ' ' + esc(l) + '</span>' +
@@ -310,10 +317,16 @@ function initCheckinAutocomplete() {
         '</div>' +
         '</div>';
     }).join('');
+    // Event delegation on dropdown
+    dropdown.onclick = function(e) {
+      var item = e.target.closest('.autocomplete-item');
+      if (item) selectCheckinPatient(item);
+    };
   }
 
-  input.addEventListener('focus', function () { renderOptions(input.value); dropdown.classList.add('active'); });
+  input.addEventListener('focus', function () { if (ciSelectedPatient) return; renderOptions(input.value); dropdown.classList.add('active'); });
   input.addEventListener('input', function () {
+    if (window._selectingPatient) { window._selectingPatient = false; return; }
     ciSelectedPatient = null;
     document.getElementById('ciPatientId').value = '';
     document.getElementById('ciPatientInfo').style.display = 'none';
@@ -325,7 +338,9 @@ function initCheckinAutocomplete() {
     if (wrapper && !wrapper.contains(e.target)) dropdown.classList.remove('active');
   });
 
-  window.selectCheckinPatient = function (id) {
+  window.selectCheckinPatient = function (el) {
+    var id = typeof el === 'string' ? el : (el && el.getAttribute ? el.getAttribute('data-id') : '');
+    if (!id) return;
     var patients = window.allPatients || [];
     var p = patients.find(function (x) { return String(x.id) === String(id); });
     if (!p) return;
@@ -339,6 +354,7 @@ function initCheckinAutocomplete() {
       l = parts.slice(1).join(' ');
     }
     document.getElementById('ciPatientId').value = p.id;
+    window._selectingPatient = true;
     input.value = (f + ' ' + l).trim();
     dropdown.classList.remove('active');
     var initials = ((f || '')[0] || '') + ((l || '')[0] || '');
@@ -395,18 +411,63 @@ function openCheckInModal() {
   setTimeout(function () { if (input) input.focus(); }, 120);
 }
 
+/* --- Queue Check-In from Patient Registry --- */
+window.queueCheckinPatient = function(btn) {
+  var p = {
+    id: btn.getAttribute('data-id') || '',
+    fname: btn.getAttribute('data-name') || '',
+    lname: '',
+    age: btn.getAttribute('data-age') || '',
+    gender: btn.getAttribute('data-gender') || '',
+    blood_group: btn.getAttribute('data-blood') || 'Unknown',
+    op_no: btn.getAttribute('data-op') || ''
+  };
+  ciSelectedPatient = p;
+  openModal('checkInModal');
+  populateDoctorDropdown();
+  var input = document.getElementById('ciPatientSearch');
+  if (input) {
+    input.value = btn.getAttribute('data-name');
+    window._selectingPatient = true;
+  }
+  document.getElementById('ciPatientId').value = p.id;
+  document.getElementById('ciPatientInfo').style.display = 'block';
+  document.getElementById('ciPatientNotFound').style.display = 'none';
+  document.getElementById('ciComplaint').value = '';
+  var initials = ((patientName(p) || '')[0] || '') + ((patientLname(p) || '')[0] || '');
+  document.getElementById('ciPatientAvatar').textContent = initials;
+  document.getElementById('ciPatientNameDisplay').textContent = btn.getAttribute('data-name');
+  var meta = [];
+  var age = btn.getAttribute('data-age');
+  var gender = btn.getAttribute('data-gender');
+  if (age) meta.push(age + ' yrs');
+  if (gender) meta.push(gender);
+  if (p.blood_group && p.blood_group !== 'Unknown') meta.push(p.blood_group);
+  if (p.op_no) meta.push('OP: ' + p.op_no);
+  document.getElementById('ciPatientMetaDisplay').textContent = meta.join(' · ');
+  setTimeout(function () { if (input) input.focus(); }, 120);
+};
+
 /* --- Patient Check-In (from modal) --- */
 async function checkInPatient() {
+  var submitBtn = document.querySelector('#checkInModal .btn-primary');
+  if (!submitBtn || submitBtn.disabled) return;
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Checking In...';
+
   var p = ciSelectedPatient;
   if (!p) {
     toast('Please search and select a patient from the registry, or register a new one.', 'warning');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Check In';
     return;
   }
   var doctor = document.getElementById('ciDoctor')?.value;
   var priority = document.getElementById('ciPriority')?.value || 'waiting';
   var complaint = document.getElementById('ciComplaint')?.value.trim() || 'Not specified';
 
-  var nextToken = OPD_QUEUE.length + 1;
+  var maxToken = OPD_QUEUE.reduce(function(m, r) { return Math.max(m, Number(r.token) || 0); }, 0);
+  var nextToken = maxToken + 1;
   var now = new Date();
   var record = {
     token: nextToken,
@@ -421,6 +482,7 @@ async function checkInPatient() {
     timestamp: now.toISOString()
   };
   OPD_QUEUE.push(record);
+  if (filteredOpdQueue) filteredOpdQueue.push(record);
 
   try {
     await window.API.createAppointment({
@@ -444,6 +506,9 @@ async function checkInPatient() {
   document.getElementById('ciPatientId').value = '';
   document.getElementById('ciPatientInfo').style.display = 'none';
   document.getElementById('ciComplaint').value = '';
+
+  submitBtn.disabled = false;
+  submitBtn.textContent = 'Check In';
 
   toast('Token #' + nextToken + ' issued to ' + record.name + '!', 'success', 'how_to_reg');
 }
