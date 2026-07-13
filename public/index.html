@@ -343,28 +343,25 @@
         </div>
         <div class="header-actions">
           <span class="date-badge" id="todayDate"></span>
-          <button class="btn-primary btn-sm" onclick="openCheckInModal()">
-            <span class="material-icons-round">person_add</span> Check-In Patient
-          </button>
         </div>
       </div>
 
       <!-- KPI Stat Cards -->
       <div class="stats-grid">
-        <div class="stat-card" style="--accent:#00685f">
-          <div class="stat-icon-wrap"><span class="material-icons-round">groups</span></div>
-          <div class="stat-body">
-            <p class="stat-label">OPD Patients Today</p>
-            <h2 class="stat-value counter" data-target="0">0</h2>
-            <p class="stat-delta positive"><span class="material-icons-round">trending_up</span>+12 vs yesterday</p>
-          </div>
-        </div>
         <div class="stat-card" style="--accent:#0D9488">
           <div class="stat-icon-wrap"><span class="material-icons-round">pending</span></div>
           <div class="stat-body">
             <p class="stat-label">Waiting in Queue</p>
             <h2 class="stat-value counter" data-target="0">0</h2>
             <p class="stat-delta" style="color:var(--primary-light)"><span class="material-icons-round">hourglass_empty</span>Avg. 18 min wait</p>
+          </div>
+        </div>
+        <div class="stat-card" style="--accent:#00685f">
+          <div class="stat-icon-wrap"><span class="material-icons-round">groups</span></div>
+          <div class="stat-body">
+            <p class="stat-label">OPD Patients Today</p>
+            <h2 class="stat-value counter" data-target="0">0</h2>
+            <p class="stat-delta positive"><span class="material-icons-round">trending_up</span>+12 vs yesterday</p>
           </div>
         </div>
         <div class="stat-card" style="--accent:#004d46">
@@ -396,9 +393,6 @@
                   <h3>OPD Queue Register</h3>
                 </div>
                 <span id="opdQueueCount" style="background:rgba(13,148,136,0.1);color:#0D9488;border-radius:20px;padding:3px 10px;font-size:0.72rem;font-weight:700;"><span class="loading-pulse" style="width:6px;height:6px;margin-right:4px;"></span>Loading<span class="loading-dots loading-dots-sm"></span></span>
-                <button class="btn-primary btn-sm" onclick="openCheckInModal()" style="white-space:nowrap;">
-                  <span class="material-icons-round" style="font-size:16px;">person_add</span> New Check-In
-                </button>
               </div>
               <!-- Smart Filter Bar -->
               <div class="smart-filter" id="opdSmartFilter">
