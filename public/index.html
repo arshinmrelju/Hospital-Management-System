@@ -395,7 +395,7 @@
                   <span class="material-icons-round" style="color:var(--primary-light)">how_to_reg</span>
                   <h3>OPD Queue Register</h3>
                 </div>
-                <span id="opdQueueCount" style="background:rgba(13,148,136,0.1);color:#0D9488;border-radius:20px;padding:3px 10px;font-size:0.72rem;font-weight:700;">Loading Waiting...</span>
+                <span id="opdQueueCount" style="background:rgba(13,148,136,0.1);color:#0D9488;border-radius:20px;padding:3px 10px;font-size:0.72rem;font-weight:700;"><span class="loading-pulse" style="width:6px;height:6px;margin-right:4px;"></span>Loading<span class="loading-dots loading-dots-sm"></span></span>
               </div>
               <!-- Smart Filter Bar -->
               <div class="smart-filter" id="opdSmartFilter">
@@ -638,6 +638,7 @@
                 <th class="sortable" onclick="sortTable('name')">Name <span class="material-icons-round">unfold_more</span></th>
                 <th>Contact</th>
                 <th>Department</th>
+                <th>Doctor</th>
                 <th class="sortable" onclick="sortTable('visit')">Last Visit <span class="material-icons-round">unfold_more</span></th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -777,7 +778,7 @@
         <div class="form-row-2">
           <div class="form-group">
             <label>Referred Doctor</label>
-            <select id="ciDoctor">
+            <select id="ciDoctor" class="loading">
               <option value="" disabled selected>Loading doctors…</option>
             </select>
           </div>

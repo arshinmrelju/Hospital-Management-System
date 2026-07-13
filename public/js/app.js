@@ -560,6 +560,7 @@ window.populateDoctorDropdowns = function() {
     // Check-in doctor
     var ciDoc = document.getElementById('ciDoctor');
     if (ciDoc) {
+      ciDoc.classList.remove('loading');
       ciDoc.innerHTML = '<option value="" disabled selected>Select Doctor</option>' +
         docs.map(function(d) {
           return '<option value="' + esc(d.id) + '">' + esc(d.name) + ' (' + esc(d.dept) + ')</option>';
@@ -697,4 +698,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 3000);
   }
 })();
+
+// --- Button Loading State Utilities ---
+window.setButtonLoading = function(btn, label) {
+  if (!btn) return;
+  var orig = btn.innerHTML;
+  btn.setAttribute('data-original-html', orig);
+  btn.disabled = true;
+  btn.classList.add('btn-loading');
+  btn.innerHTML = '<span class="spinner-sm"></span> ' + (label || 'Loading...');
+};
+
+window.setButtonIdle = function(btn) {
+  if (!btn) return;
+  btn.disabled = false;
+  btn.classList.remove('btn-loading');
+  btn.innerHTML = btn.getAttribute('data-original-html') || 'Submit';
+};
 

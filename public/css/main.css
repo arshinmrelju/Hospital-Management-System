@@ -328,6 +328,90 @@ select {
   background-size: 200% 100%;
   animation: glassShimmer 1.8s ease-in-out infinite;
 }
+
+/* --- Reusable Spinner (Rotating Ring) --- */
+.spinner {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid rgba(13,148,136,0.15);
+  border-top-color: var(--primary-light);
+  animation: spin 0.7s linear infinite;
+}
+.spinner-sm {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+.spinner-dark {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(13,148,136,0.15);
+  border-top-color: var(--primary-light);
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* --- Button Loading State --- */
+.btn-loading {
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+/* --- Animated Loading Dots (inline text) --- */
+.loading-dots::after {
+  content: '...';
+  animation: loadDotsPulse 1.4s ease-in-out infinite;
+}
+.loading-dots.loading-dots-sm::after {
+  font-size: 0.75rem;
+}
+@keyframes loadDotsPulse {
+  0%, 20% { opacity: 0.3; }
+  40% { opacity: 1; }
+  60% { opacity: 0.3; }
+  80% { opacity: 0.6; }
+  100% { opacity: 0.3; }
+}
+
+/* --- Inline Loading Placeholder Pulse --- */
+.loading-pulse {
+  display: inline-block;
+  vertical-align: middle;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  animation: pulse 1.2s ease-in-out infinite;
+  margin-right: 4px;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+/* --- Loading Select Animation --- */
+select.loading {
+  background-image: linear-gradient(135deg, rgba(13,148,136,0.04) 0%, rgba(13,148,136,0.1) 50%, rgba(13,148,136,0.04) 100%);
+  background-size: 200% 100%;
+  animation: glassShimmer 1.8s ease-in-out infinite;
+  color: var(--on-surface-var);
+}
+select.loading option {
+  background: #fff;
+  color: var(--text-primary);
+}
+
 /* --- Buttons --- */
 .btn-primary {
   display: inline-flex;

@@ -342,7 +342,7 @@
     };
     if (!data.name || !data.dept) { toast('Name and Department are required', 'warning'); return; }
     var btn = e.target.querySelector('button[type="submit"]');
-    btn.disabled = true; btn.textContent = 'Adding...';
+    setButtonLoading(btn, 'Adding...');
     window.API.createDoctor(data).then(function(resp) {
       if (resp && resp.success) {
         toast('Doctor added successfully', 'success');
@@ -354,7 +354,7 @@
     }).catch(function(err) {
       toast(err.message || 'Failed to add doctor', 'error');
     }).finally(function() {
-      btn.disabled = false; btn.textContent = 'Add Doctor';
+      setButtonIdle(btn);
     });
   };
 
@@ -392,7 +392,7 @@
       status: document.getElementById('editDocStatus').value
     };
     var btn = e.target.querySelector('button[type="submit"]');
-    btn.disabled = true; btn.textContent = 'Saving...';
+    setButtonLoading(btn, 'Saving...');
     window.API.updateDoctor(id, data).then(function(resp) {
       if (resp && resp.success) {
         toast('Doctor updated successfully', 'success');
@@ -403,7 +403,7 @@
     }).catch(function(err) {
       toast(err.message || 'Failed to update doctor', 'error');
     }).finally(function() {
-      btn.disabled = false; btn.textContent = 'Save Changes';
+      setButtonIdle(btn);
     });
   };
 
@@ -434,7 +434,7 @@
     };
     if (!data.name) { toast('Department name is required', 'warning'); return; }
     var btn = e.target.querySelector('button[type="submit"]');
-    btn.disabled = true; btn.textContent = 'Adding...';
+    setButtonLoading(btn, 'Adding...');
     window.API.createDepartment(data).then(function(resp) {
       if (resp && resp.success) {
         toast('Department added successfully', 'success');
@@ -446,7 +446,7 @@
     }).catch(function(err) {
       toast(err.message || 'Failed to add department', 'error');
     }).finally(function() {
-      btn.disabled = false; btn.textContent = 'Add Department';
+      setButtonIdle(btn);
     });
   };
 
@@ -470,7 +470,7 @@
       status: document.getElementById('editDeptStatus').value
     };
     var btn = e.target.querySelector('button[type="submit"]');
-    btn.disabled = true; btn.textContent = 'Saving...';
+    setButtonLoading(btn, 'Saving...');
     window.API.updateDepartment(id, data).then(function(resp) {
       if (resp && resp.success) {
         toast('Department updated successfully', 'success');
@@ -481,7 +481,7 @@
     }).catch(function(err) {
       toast(err.message || 'Failed to update department', 'error');
     }).finally(function() {
-      btn.disabled = false; btn.textContent = 'Save Changes';
+      setButtonIdle(btn);
     });
   };
 
@@ -636,7 +636,7 @@
     if (!confirm('Force logout all ' + active.length + ' active session(s)?')) return;
 
     var btn = document.getElementById('logoutAllBtn');
-    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="material-icons-round">logout</span> Logging out...'; }
+    if (btn) { setButtonLoading(btn, 'Logging out...'); }
 
     window.FIREBASE_READY.then(function(db) {
       if (!db) { toast('Firebase not available', 'error'); return; }
@@ -650,11 +650,11 @@
       });
       return batch.commit().then(function() {
         toast(active.length + ' session(s) logged out', 'success', 'logout');
-        if (btn) { btn.disabled = false; btn.innerHTML = '<span class="material-icons-round">logout</span> Logout All Active'; }
+        if (btn) { setButtonIdle(btn); }
       });
     }).catch(function(err) {
       toast('Failed to logout all: ' + err.message, 'error');
-      if (btn) { btn.disabled = false; btn.innerHTML = '<span class="material-icons-round">logout</span> Logout All Active'; }
+      if (btn) { setButtonIdle(btn); }
     });
   };
 

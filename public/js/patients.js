@@ -447,8 +447,7 @@ async function submitEditPatient(e) {
   const errors = validatePatientInput(raw);
   if (errors.length > 0) { toast(errors.join('. '), 'error'); return; }
   const submitBtn = e.target.querySelector('button[type="submit"]');
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Saving...';
+  setButtonLoading(submitBtn, 'Saving...');
   try {
     const result = await window.API.updatePatient(id, raw);
     const idx = allPatients.findIndex(p => p.id == id);
@@ -463,8 +462,7 @@ async function submitEditPatient(e) {
   } catch (err) {
     toast('Failed to update: ' + err.message, 'error');
   }
-  submitBtn.disabled = false;
-  submitBtn.textContent = 'Save Changes';
+  setButtonIdle(submitBtn);
 }
 
 async function deletePatient(id) {
@@ -638,8 +636,7 @@ async function submitAddPatient(e) {
   const errors = validatePatientInput(raw);
   if (errors.length > 0) { toast(errors.join('. '), 'error'); return; }
   const submitBtn = e.target.querySelector('button[type="submit"]');
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Registering...';
+  setButtonLoading(submitBtn, 'Registering...');
   try {
     const result = await window.API.createPatient(raw);
     const newP = normalizePatient({
@@ -671,8 +668,7 @@ async function submitAddPatient(e) {
   } catch (err) {
     toast('Failed to register patient: ' + err.message, 'error');
   }
-  submitBtn.disabled = false;
-  submitBtn.textContent = 'Register Patient';
+  setButtonIdle(submitBtn);
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
