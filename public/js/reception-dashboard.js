@@ -178,18 +178,30 @@ function renderOpdRecords() {
     return;
   }
 
-  list.innerHTML = data.map((p, i) => `
-    <div class="opd-row" id="opdRow-${p.id || i}">
-      <div class="opd-row-main">
-        <span class="opd-row-name">${p.name} <span class="opd-row-age">· ${p.age}</span></span>
-        <span class="opd-row-doctor"><span class="material-icons-round">person</span> ${p.doctor}</span>
-      </div>
-      <div class="opd-row-meta">
-        <span class="opd-row-complaint">${p.complaint}</span>
-        <span class="opd-row-time"><span class="material-icons-round">schedule</span> ${p.time}</span>
-      </div>
-    </div>
-  `).join('');
+  list.innerHTML = `<table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Patient</th>
+        <th>Age</th>
+        <th>Doctor</th>
+        <th>Complaint</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${data.map((p, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td><strong>${p.name}</strong></td>
+          <td>${p.age}</td>
+          <td>${p.doctor}</td>
+          <td>${p.complaint}</td>
+          <td>${p.time}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>`;
 }
 
 /* --- Filter OPD Records --- */

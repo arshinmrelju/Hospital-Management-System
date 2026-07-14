@@ -32,27 +32,8 @@
       font-weight: 800;
     }
     /* --- Reception Portal Premium Styles --- */
-    .opd-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 16px;
-      background: var(--surface-low);
-      border: 1px solid var(--outline-var);
-      border-radius: var(--radius-md);
-      margin-bottom: 6px;
-      transition: all 0.2s;
-    }
-    .opd-row:hover { background: var(--surface-mid); border-color: var(--primary-light); }
-    .opd-row-main { display: flex; flex-direction: column; gap: 2px; }
-    .opd-row-name { font-weight: 700; font-size: 0.88rem; }
-    .opd-row-age { font-weight: 400; color: var(--on-surface-var); font-size: 0.78rem; }
-    .opd-row-doctor { font-size: 0.77rem; color: var(--on-surface-var); display: flex; align-items: center; gap: 3px; }
-    .opd-row-doctor .material-icons-round { font-size: 13px; }
-    .opd-row-meta { text-align: right; display: flex; flex-direction: column; gap: 2px; align-items: flex-end; }
-    .opd-row-complaint { font-size: 0.77rem; color: var(--on-surface-var); }
-    .opd-row-time { font-size: 0.72rem; color: var(--outline); display: flex; align-items: center; gap: 3px; }
-    .opd-row-time .material-icons-round { font-size: 12px; }
+    #opdList table { width: 100%; font-size: 0.85rem; }
+    #opdList table th { font-size: 0.72rem; }
 
     /* Appointment Form */
     .appt-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
@@ -101,9 +82,7 @@
       #opdList {
         max-height: 300px !important;
       }
-      .opd-row {
-        padding: 10px 12px;
-      }
+      #opdList table { font-size: 0.78rem; }
     }
     @media (max-width: 480px) {
       .login-card {
@@ -429,8 +408,10 @@
               </div>
             </div>
 
-            <div id="opdList" style="margin-top:4px;max-height:420px;overflow-y:auto;padding-right:4px;">
-              <p style="text-align:center;padding:20px;color:var(--outline);font-size:0.85rem">Loading OPD records...</p>
+            <div class="table-scroll" style="margin-top:12px;">
+              <div id="opdList">
+                <p style="text-align:center;padding:20px;color:var(--outline);font-size:0.85rem">Loading OPD records...</p>
+              </div>
             </div>
           </div>
         </div>
