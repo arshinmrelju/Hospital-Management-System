@@ -325,7 +325,10 @@ function submitOpdAssign() {
 
   window.API.createAppointment({
     patient_id: patient.id,
+    patient_name: patient.name,
+    name: patient.name,
     doctor_id: doctor,
+    doctor_name: doctor,
     appointment_date: now.toISOString().split('T')[0],
     appointment_time: timeStr,
     type: 'OPD',
