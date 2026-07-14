@@ -1,7 +1,7 @@
 'use strict';
 
 var CACHE_TTL = 5 * 60 * 1000;
-var CACHE_KEY = 'hms_patients_cache';
+var CACHE_KEY = 'hms_patients_cache_v2';
 
 window.PatientCache = {
   get: function() {
@@ -402,6 +402,7 @@ function viewPatient(id) {
         <div class="form-group"><label>Contact</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">${esc(p.contact)}</div></div>
         <div class="form-group"><label>Type</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">${esc(cap(p.patient_type))}</div></div>
         <div class="form-group"><label>Last Visit</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">${formatDate(p.last_visit)}</div></div>
+        <div class="form-group" style="grid-column:1/-1"><label>Place</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">${p.address ? esc(p.address) : '<span style="color:var(--outline)">Not specified</span>'}</div></div>
         <div class="form-group" style="grid-column:1/-1"><label>Consulting Doctor</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md);display:flex;align-items:center;gap:8px">${p.doctor ? '<span class="material-icons-round" style="font-size:16px;color:var(--primary-light)">person</span><span style="font-weight:600">' + esc(p.doctor) + '</span>' : '<span style="color:var(--outline)">Not assigned</span>'}</div></div>
       </div>
       <div style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end">
@@ -512,8 +513,8 @@ function normalizePatients(rawList) {
                   (validOp(p['ID. NO']) && p['ID. NO']) ||
                   (validOp(p['ID']) && p['ID']) ||
                   (validOp(p.op) && p.op) || '';
-    const doctor = p.doctor || p.Doctor || p.doctor_name || '';
-    const address = p.address || p.Address || p.place || p.Place || '';
+    const doctor = p.doctor || p.Doctor || p.doctor_name || p.assigned_doctor || p['Assigned Doctor'] || '';
+    const address = p.address || p.Address || p.place || p.Place || p['Address'] || '';
     return { ...p, fname, lname, contact, department, blood_group, patient_type, status, last_visit, age, gender, op_no, doctor, address };
   });
 }
