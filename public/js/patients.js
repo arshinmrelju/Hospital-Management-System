@@ -431,6 +431,7 @@ function editPatient(id) {
   if (document.getElementById('editGender')) document.getElementById('editGender').value = p.gender || '';
   if (document.getElementById('editNotes')) document.getElementById('editNotes').value = p.notes || '';
   if (document.getElementById('editDoctor')) document.getElementById('editDoctor').value = p.doctor || '';
+  if (document.getElementById('editAddress')) document.getElementById('editAddress').value = p.address || '';
   openModal('editPatientModal');
 }
 
@@ -450,6 +451,7 @@ async function submitEditPatient(e) {
     status: document.getElementById('editStatus').value,
     notes: document.getElementById('editNotes')?.value || '',
     doctor: document.getElementById('editDoctor')?.value || '',
+    address: document.getElementById('editAddress')?.value || '',
   };
   const errors = validatePatientInput(raw);
   if (errors.length > 0) { toast(errors.join('. '), 'error'); return; }
@@ -516,7 +518,8 @@ function normalizePatients(rawList) {
                   (validOp(p.op) && p.op) || '';
     const doctor = p.doctor || p.Doctor || p.doctor_name || '';
     const email = p.email || p.Email || '';
-    return { ...p, fname, lname, contact, department, blood_group, patient_type, status, last_visit, age, gender, op_no, doctor, email };
+    const address = p.address || p.Address || p.place || p.Place || '';
+    return { ...p, fname, lname, contact, department, blood_group, patient_type, status, last_visit, age, gender, op_no, doctor, email, address };
   });
 }
 
@@ -634,6 +637,7 @@ async function submitAddPatient(e) {
     age: document.getElementById('pAge').value,
     notes: document.getElementById('pNotes').value,
     doctor: document.getElementById('pDoctor')?.value || '',
+    address: document.getElementById('pAddress')?.value || '',
   };
   const errors = validatePatientInput(raw);
   if (errors.length > 0) { toast(errors.join('. '), 'error'); return; }
@@ -656,6 +660,7 @@ async function submitAddPatient(e) {
       status: 'stable',
       assigned_doctor: raw.doctor || '',
       notes: raw.notes || '',
+      address: raw.address || '',
       last_visit: new Date().toISOString().slice(0,10),
       created_on: new Date().toISOString().slice(0,10),
     });
