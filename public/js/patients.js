@@ -72,7 +72,8 @@ function renderTable() {
           onclick="addToOpdRegister(this)"
           data-id="${p.id}" data-name="${esc(patientFullName(p))}"
           data-age="${p.age}" data-gender="${p.gender}"
-          data-blood="${p.blood_group}" data-op="${p.op_no}">
+          data-blood="${p.blood_group}" data-op="${p.op_no}"
+          data-contact="${esc(patientContact(p))}">
           <span class="material-icons-round">how_to_reg</span>
         </button>
         <button class="icon-btn danger" title="Delete" onclick="deletePatient('${p.id}')"><span class="material-icons-round">delete</span></button>

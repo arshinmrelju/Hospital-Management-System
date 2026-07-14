@@ -181,23 +181,23 @@ function renderOpdRecords() {
   list.innerHTML = `<table class="data-table">
     <thead>
       <tr>
-        <th>#</th>
-        <th>Patient</th>
+        <th>SI No</th>
+        <th>OP Number</th>
+        <th>Name</th>
         <th>Age</th>
-        <th>Doctor</th>
-        <th>Complaint</th>
-        <th>Time</th>
+        <th>Sex</th>
+        <th>Phone Number</th>
       </tr>
     </thead>
     <tbody>
       ${data.map((p, i) => `
         <tr>
           <td>${i + 1}</td>
+          <td>${p.op_no || '—'}</td>
           <td><strong>${p.name}</strong></td>
           <td>${p.age}</td>
-          <td>${p.doctor}</td>
-          <td>${p.complaint}</td>
-          <td>${p.time}</td>
+          <td>${p.gender || '—'}</td>
+          <td>${p.contact || '—'}</td>
         </tr>
       `).join('')}
     </tbody>
@@ -262,7 +262,8 @@ window.addToOpdRegister = function(btn) {
     age: btn.getAttribute('data-age') || '',
     gender: btn.getAttribute('data-gender') || '',
     blood: btn.getAttribute('data-blood') || 'Unknown',
-    op: btn.getAttribute('data-op') || ''
+    op: btn.getAttribute('data-op') || '',
+    contact: btn.getAttribute('data-contact') || ''
   };
 
   var nameEl = document.getElementById('opdAssignName');
@@ -314,6 +315,9 @@ function submitOpdAssign() {
     id: 'OPD-' + Date.now(),
     name: patient.name || '',
     age: patient.age || 'N/A',
+    gender: patient.gender || '',
+    contact: patient.contact || '',
+    op_no: patient.op || '',
     doctor: doctor,
     complaint: '—',
     time: timeStr,
@@ -412,10 +416,14 @@ async function loadOpdRecords() {
         if (!name) name = 'Unknown Patient';
         if (!age) age = 'N/A';
         if (!doctor) doctor = 'Unassigned';
+        var match2 = patientLookup.find(function (p) { return patientFullName(p) === name || p.id === a.patient_id || (p.contact || '') === a.patient_id; });
         return {
           id: a.id || 'OPD-' + i,
           name: name,
           age: age,
+          gender: (match2 ? patientGender(match2) : a.gender || a.sex || ''),
+          contact: (match2 ? patientContact(match2) : a.phone || a.contact || ''),
+          op_no: (match2 ? (match2.op_no || match2['Hosp. OP No'] || match2['OP No'] || '') : ''),
           doctor: doctor,
           complaint: a.reason || a.complaint || '—',
           time: a.appointment_time || a.time || '—',
