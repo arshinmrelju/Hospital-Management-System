@@ -182,7 +182,7 @@ function renderOpdRecords() {
     <thead>
       <tr>
         <th>SI No</th>
-        <th>OP Number</th>
+        <th>Patient Id</th>
         <th>Name</th>
         <th>Age</th>
         <th>Sex</th>
@@ -193,7 +193,7 @@ function renderOpdRecords() {
       ${data.map((p, i) => `
         <tr>
           <td>${i + 1}</td>
-          <td>${p.op_no || '—'}</td>
+          <td>${p.patient_id || p.id || p.op_no || '—'}</td>
           <td><strong>${p.name}</strong></td>
           <td>${p.age}</td>
           <td>${p.gender || '—'}</td>
@@ -313,6 +313,7 @@ function submitOpdAssign() {
   var timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
   var record = {
     id: 'OPD-' + Date.now(),
+    patient_id: patient.id || patient.op || '',
     name: patient.name || '',
     age: patient.age || 'N/A',
     gender: patient.gender || '',
@@ -419,6 +420,7 @@ async function loadOpdRecords() {
         var match2 = patientLookup.find(function (p) { return patientFullName(p) === name || p.id === a.patient_id || (p.contact || '') === a.patient_id; });
         return {
           id: a.id || 'OPD-' + i,
+          patient_id: a.patient_id || (match2 ? (match2.id || match2.op_no || match2['Hosp. OP No'] || match2['OP No'] || '') : ''),
           name: name,
           age: age,
           gender: (match2 ? patientGender(match2) : a.gender || a.sex || ''),
