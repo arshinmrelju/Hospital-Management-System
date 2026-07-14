@@ -455,6 +455,14 @@ function getYesterdayStr() {
   d.setDate(d.getDate() - 1);
   return d.toISOString().split('T')[0];
 }
+function getRegDailyCounts() {
+  try {
+    return JSON.parse(localStorage.getItem('hms_reg_daily_counts') || '{}');
+  } catch (e) { return {}; }
+}
+function setRegDailyCounts(counts) {
+  localStorage.setItem('hms_reg_daily_counts', JSON.stringify(counts));
+}
 
 /* --- Update KPI Stat Cards --- */
 function updateStats() {
@@ -485,6 +493,32 @@ function updateStats() {
     } else {
       opdDelta.className = 'stat-delta';
       opdDelta.innerHTML = '<span class="material-icons-round">show_chart</span>No prior data';
+    }
+  }
+
+  /* --- New Registrations Today --- */
+  var todayRegs = (window.allPatients || []).filter(function (p) { return p.created_on && String(p.created_on).slice(0, 10) === todayStr; }).length;
+  var regEl = document.querySelector('.stat-card[style*="--accent:#0D9488"] .stat-value');
+  if (regEl) {
+    if (window.animateCounter) window.animateCounter(regEl, todayRegs);
+    else regEl.textContent = todayRegs;
+  }
+  var regCounts = getRegDailyCounts();
+  regCounts[todayStr] = todayRegs;
+  setRegDailyCounts(regCounts);
+  var regYesterday = regCounts[getYesterdayStr()];
+  var regDelta = document.querySelector('.stat-card[style*="--accent:#0D9488"] .stat-delta');
+  if (regDelta) {
+    if (regYesterday !== undefined && regYesterday !== null) {
+      var regDiff = todayRegs - regYesterday;
+      var regIcon = regDiff >= 0 ? 'trending_up' : 'trending_down';
+      var regCls = regDiff >= 0 ? 'positive' : 'negative';
+      var regSign = regDiff >= 0 ? '+' : '';
+      regDelta.className = 'stat-delta ' + regCls;
+      regDelta.innerHTML = '<span class="material-icons-round">' + regIcon + '</span>' + regSign + regDiff + ' vs yesterday';
+    } else {
+      regDelta.className = 'stat-delta';
+      regDelta.innerHTML = '<span class="material-icons-round">show_chart</span>No prior data';
     }
   }
 
