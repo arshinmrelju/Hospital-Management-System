@@ -240,45 +240,43 @@ function clearOpdQueueFilter() {
   toast('Filter cleared', 'info');
 }
 
-/* --- Inline OPD Entry Form --- */
-let _opdEntryPatient = null;
+/* --- OPD Assign Doctor Modal --- */
+let _opdAssignPatient = null;
 
-function showOpdEntryForm(patient) {
-  _opdEntryPatient = patient;
-  var form = document.getElementById('opdEntryForm');
-  var patientInfo = document.getElementById('opdEntryPatientInfo');
-  if (!form) return;
+window.addToOpdRegister = function(btn) {
+  _opdAssignPatient = {
+    id: btn.getAttribute('data-id') || '',
+    name: btn.getAttribute('data-name') || '',
+    age: btn.getAttribute('data-age') || '',
+    gender: btn.getAttribute('data-gender') || '',
+    blood: btn.getAttribute('data-blood') || 'Unknown',
+    op: btn.getAttribute('data-op') || ''
+  };
 
-  form.style.display = 'block';
-
-  /* Pre-fill patient info */
-  if (patientInfo) {
-    var name = patient.name || '';
-    var age = patient.age || '';
+  var nameEl = document.getElementById('opdAssignName');
+  var metaEl = document.getElementById('opdAssignMeta');
+  var avatarEl = document.getElementById('opdAssignAvatar');
+  if (nameEl) nameEl.textContent = _opdAssignPatient.name;
+  if (avatarEl) {
+    var parts = (_opdAssignPatient.name || '').trim().split(/\s+/);
+    avatarEl.textContent = ((parts[0] || '')[0] || '') + ((parts[1] || '')[0] || '');
+  }
+  if (metaEl) {
     var meta = [];
-    if (age) meta.push(age + ' yrs');
-    if (patient.gender) meta.push(patient.gender);
-    if (patient.op) meta.push('OP: ' + patient.op);
-    patientInfo.innerHTML = '<div style="display:flex;align-items:center;gap:10px;">' +
-      '<div class="mini-avatar" style="width:36px;height:36px;font-size:0.85rem;">' + ((name[0] || '') + ((patient.lname || '')[0] || '')) + '</div>' +
-      '<div><div style="font-weight:700;font-size:0.88rem;">' + name + '</div>' +
-      '<div style="font-size:0.75rem;color:var(--on-surface-var);">' + meta.join(' · ') + '</div></div></div>';
+    if (_opdAssignPatient.age) meta.push(_opdAssignPatient.age + ' yrs');
+    if (_opdAssignPatient.gender) meta.push(_opdAssignPatient.gender);
+    if (_opdAssignPatient.op) meta.push('OP: ' + _opdAssignPatient.op);
+    metaEl.textContent = meta.join(' · ');
   }
 
-  /* Populate doctor dropdown */
-  populateOpdDoctorDropdown();
+  populateAssignDoctor();
+  openModal('opdAssignModal');
+};
 
-  /* Focus complaint */
-  var complaintEl = document.getElementById('opdEntryComplaint');
-  if (complaintEl) setTimeout(function () { complaintEl.focus(); }, 120);
-
-  /* Scroll to form */
-  form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-function populateOpdDoctorDropdown() {
-  var sel = document.getElementById('opdEntryDoctor');
+function populateAssignDoctor() {
+  var sel = document.getElementById('opdAssignDoctor');
   if (!sel) return;
+  sel.innerHTML = '<option value="">Loading doctors...</option>';
   window.API.getDoctors().then(function(resp) {
     var docs = (resp && resp.data) || [];
     sel.innerHTML = '<option value="">Select Doctor</option>' +
@@ -288,26 +286,15 @@ function populateOpdDoctorDropdown() {
   });
 }
 
-function submitOpdEntry() {
-  var submitBtn = document.getElementById('opdEntrySubmit');
-  if (!submitBtn || submitBtn.disabled) return;
+function submitOpdAssign() {
+  var patient = _opdAssignPatient;
+  if (!patient) { toast('No patient selected.', 'warning'); return; }
 
-  var patient = _opdEntryPatient;
-  if (!patient) {
-    toast('No patient selected.', 'warning');
-    return;
-  }
+  var doctor = document.getElementById('opdAssignDoctor')?.value;
+  if (!doctor) { toast('Please select a doctor.', 'warning'); return; }
 
-  var doctor = document.getElementById('opdEntryDoctor')?.value;
-  var complaint = document.getElementById('opdEntryComplaint')?.value.trim() || 'Not specified';
-
-  if (!doctor) {
-    toast('Please select a doctor.', 'warning');
-    return;
-  }
-
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Adding...';
+  var btn = document.getElementById('opdAssignSubmit');
+  if (btn) { btn.disabled = true; btn.textContent = 'Adding...'; }
 
   var now = new Date();
   var timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
@@ -316,7 +303,7 @@ function submitOpdEntry() {
     name: patient.name || '',
     age: patient.age || 'N/A',
     doctor: doctor,
-    complaint: complaint,
+    complaint: '—',
     time: timeStr,
     timestamp: now.toISOString()
   };
@@ -331,70 +318,19 @@ function submitOpdEntry() {
     appointment_time: timeStr,
     type: 'OPD',
     status: 'waiting',
-    reason: complaint
+    reason: ''
   }).catch(function (e) {
     addConsoleLog('WARN', 'Could not save OPD record: ' + e.message);
   });
 
-  cancelOpdEntry();
+  _opdAssignPatient = null;
+  closeModal(null, 'opdAssignModal');
   renderOpdRecords();
   updateStats();
 
-  toast('Added to OPD: ' + record.name, 'success', 'how_to_reg');
-}
+  if (btn) { btn.disabled = false; btn.innerHTML = '<span class="material-icons-round" style="font-size:14px;">how_to_reg</span> Add to OPD'; }
 
-function cancelOpdEntry() {
-  _opdEntryPatient = null;
-  var form = document.getElementById('opdEntryForm');
-  if (form) {
-    form.style.display = 'none';
-    var complaint = document.getElementById('opdEntryComplaint');
-    if (complaint) complaint.value = '';
-  }
-}
-
-/* --- Add to OPD from Patient Registry (standalone) --- */
-window.addToOpdRegister = function(btn) {
-  var patient = {
-    id: btn.getAttribute('data-id') || '',
-    name: btn.getAttribute('data-name') || '',
-    lname: '',
-    age: btn.getAttribute('data-age') || '',
-    gender: btn.getAttribute('data-gender') || '',
-    blood: btn.getAttribute('data-blood') || 'Unknown',
-    op: btn.getAttribute('data-op') || ''
-  };
-
-  var isSPA = typeof switchPage === 'function' && document.getElementById('page-patients');
-  if (isSPA) {
-    var dashboardTab = document.querySelector('.dashboard-tab-btn.active');
-    if (dashboardTab && dashboardTab.textContent.trim() !== 'OPD Register') {
-      switchDashboardTab('tab-opd');
-    }
-    showOpdEntryForm(patient);
-  } else {
-    addToOpdDirect(patient);
-  }
-};
-
-function addToOpdDirect(patient) {
-  var now = new Date();
-  var timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-
-  window.API.createAppointment({
-    patient_id: patient.id,
-    doctor_id: '',
-    appointment_date: now.toISOString().split('T')[0],
-    appointment_time: timeStr,
-    type: 'OPD',
-    status: 'waiting',
-    reason: ''
-  }).then(function () {
-    toast('Added to OPD: ' + patient.name, 'success', 'how_to_reg');
-  }).catch(function (e) {
-    addConsoleLog('WARN', 'Could not save OPD record: ' + e.message);
-    toast('Added to OPD: ' + patient.name, 'success', 'how_to_reg');
-  });
+  toast('Added to OPD: ' + record.name + ' → ' + doctor, 'success', 'how_to_reg');
 }
 
 /* --- Book Appointment --- */

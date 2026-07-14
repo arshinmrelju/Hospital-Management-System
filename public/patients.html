@@ -413,7 +413,38 @@
     </div>
   </div>
 
-
+  <!-- OPD Assign Doctor Modal -->
+  <div class="modal-overlay" id="opdAssignModal" onclick="closeModal(event, 'opdAssignModal')">
+    <div class="modal-card" style="max-width:420px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Assign Doctor</h3>
+        <button class="modal-close" onclick="closeModal(null, 'opdAssignModal')">
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 12px;background:var(--surface-low);border:1px solid var(--outline-var);border-radius:var(--radius-md);">
+          <div class="mini-avatar" id="opdAssignAvatar" style="width:36px;height:36px;font-size:0.85rem;"></div>
+          <div>
+            <div style="font-weight:700;font-size:0.88rem;" id="opdAssignName"></div>
+            <div style="font-size:0.75rem;color:var(--on-surface-var);" id="opdAssignMeta"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Select Doctor</label>
+          <select id="opdAssignDoctor">
+            <option value="">Loading doctors...</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal(null, 'opdAssignModal')">Cancel</button>
+        <button class="btn-primary" id="opdAssignSubmit" onclick="submitOpdAssign()" style="background:var(--primary-light);">
+          <span class="material-icons-round" style="font-size:16px;">how_to_reg</span> Add to OPD
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- HMS Sheets API Layer -->
   <script src="js/sheets-api.js?v=3"></script>
