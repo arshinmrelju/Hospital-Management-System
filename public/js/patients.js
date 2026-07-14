@@ -66,8 +66,8 @@ function renderTable() {
       <td data-label="Last Visit" style="font-size:.82rem">${formatDate(p.last_visit)}</td>
       <td data-label="Status"><span class="badge-status ${p.status}">${esc(cap(p.status))}</span></td>
       <td data-label="Actions">
-        <button class="icon-btn" title="View" onclick="viewPatient(${p.id})"><span class="material-icons-round">visibility</span></button>
-        <button class="icon-btn" title="Edit" onclick="editPatient(${p.id})"><span class="material-icons-round">edit</span></button>
+        <button class="icon-btn" title="View" onclick="viewPatient('${p.id}')"><span class="material-icons-round">visibility</span></button>
+        <button class="icon-btn" title="Edit" onclick="editPatient('${p.id}')"><span class="material-icons-round">edit</span></button>
         <button class="icon-btn" title="Add to OPD Queue"
           onclick="queueCheckinPatient(this)"
           data-id="${p.id}" data-name="${esc(patientFullName(p))}"
@@ -75,7 +75,7 @@ function renderTable() {
           data-blood="${p.blood_group}" data-op="${p.op_no}">
           <span class="material-icons-round">how_to_reg</span>
         </button>
-        <button class="icon-btn danger" title="Delete" onclick="deletePatient(${p.id})"><span class="material-icons-round">delete</span></button>
+        <button class="icon-btn danger" title="Delete" onclick="deletePatient('${p.id}')"><span class="material-icons-round">delete</span></button>
       </td>
     </tr>
   `).join('');
