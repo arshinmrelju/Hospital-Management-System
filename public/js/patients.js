@@ -87,7 +87,6 @@ function validatePatientInput(data) {
   if (!data.fname || data.fname.trim().length < 1) errors.push('First name is required');
 
   if (data.contact && data.contact.length > 50) errors.push('Contact too long');
-  if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) errors.push('Invalid email format');
   if (data.age && (isNaN(data.age) || data.age < 0 || data.age > 150)) errors.push('Invalid age');
   return errors;
 }
@@ -401,7 +400,6 @@ function viewPatient(id) {
         <div class="form-group"><label>Age</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">${esc(p.age)} years</div></div>
         <div class="form-group"><label>Blood Group</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">${esc(p.blood_group)}</div></div>
         <div class="form-group"><label>Contact</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">${esc(p.contact)}</div></div>
-        <div class="form-group"><label>Email</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">${esc(p.email)}</div></div>
         <div class="form-group"><label>Type</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">${esc(cap(p.patient_type))}</div></div>
         <div class="form-group"><label>Last Visit</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">${formatDate(p.last_visit)}</div></div>
         <div class="form-group" style="grid-column:1/-1"><label>Consulting Doctor</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md);display:flex;align-items:center;gap:8px">${p.doctor ? '<span class="material-icons-round" style="font-size:16px;color:var(--primary-light)">person</span><span style="font-weight:600">' + esc(p.doctor) + '</span>' : '<span style="color:var(--outline)">Not assigned</span>'}</div></div>
@@ -423,7 +421,6 @@ function editPatient(id) {
   document.getElementById('editLastName').value = p.lname || '';
   document.getElementById('editAge').value = p.age || '';
   document.getElementById('editContact').value = p.contact || '';
-  document.getElementById('editEmail').value = p.email || '';
   document.getElementById('editDept').value = p.department || '';
   document.getElementById('editType').value = p.patient_type ? cap(p.patient_type) : '';
   document.getElementById('editBlood').value = p.blood_group || '';
@@ -442,7 +439,6 @@ async function submitEditPatient(e) {
     fname: sanitizeInput(document.getElementById('editFirstName').value),
     lname: sanitizeInput(document.getElementById('editLastName').value),
     contact: sanitizeInput(document.getElementById('editContact').value),
-    email: sanitizeInput(document.getElementById('editEmail').value.trim()),
     department: document.getElementById('editDept').value,
     patient_type: document.getElementById('editType').value.toLowerCase(),
     blood_group: document.getElementById('editBlood').value || 'Unknown',
@@ -517,9 +513,8 @@ function normalizePatients(rawList) {
                   (validOp(p['ID']) && p['ID']) ||
                   (validOp(p.op) && p.op) || '';
     const doctor = p.doctor || p.Doctor || p.doctor_name || '';
-    const email = p.email || p.Email || '';
     const address = p.address || p.Address || p.place || p.Place || '';
-    return { ...p, fname, lname, contact, department, blood_group, patient_type, status, last_visit, age, gender, op_no, doctor, email, address };
+    return { ...p, fname, lname, contact, department, blood_group, patient_type, status, last_visit, age, gender, op_no, doctor, address };
   });
 }
 
@@ -630,7 +625,6 @@ async function submitAddPatient(e) {
     fname: sanitizeInput(document.getElementById('pFirstName').value),
     lname: sanitizeInput(document.getElementById('pLastName').value),
     contact: sanitizeInput(document.getElementById('pContact').value),
-    email: sanitizeInput(document.getElementById('pEmail').value.trim()),
     department: document.getElementById('pDept').value,
     patient_type: document.getElementById('pType').value.toLowerCase(),
     blood_group: document.getElementById('pBlood').value || 'Unknown',
@@ -651,7 +645,6 @@ async function submitAddPatient(e) {
       fname: raw.fname,
       lname: raw.lname,
       contact: raw.contact || '',
-      email: raw.email || '',
       gender: raw.gender || '',
       age: raw.age || '',
       department: raw.department || 'General',

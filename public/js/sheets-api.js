@@ -120,7 +120,6 @@ function normalizePatient(p) {
   p.fname = p.fname || p['First Name'] || p.FirstName || p.Name || '';
   p.lname = p.lname || p['Last Name'] || p.LastName || '';
   p.contact = String(p.contact || p['Phone'] || p.Phone || p.phone || '');
-  p.email = p.email || p['Email'] || p.Email || '';
   p.gender = p.gender || p['Gender'] || p.Gender || '';
   p.age = p.age || p['Age'] || p.Age || '';
   p.address = p.address || p['Address'] || '';
@@ -248,7 +247,7 @@ window.API = {
 
   createPatient: function(data) {
     var q = { action: 'createPatient' };
-    ['op_no','fname','lname','contact','email','gender','age','address','blood_group','department','patient_type','status','assigned_doctor','notes'].forEach(function(k) {
+    ['op_no','fname','lname','contact','gender','age','address','blood_group','department','patient_type','status','assigned_doctor','notes'].forEach(function(k) {
       if (data[k]) q[k] = data[k];
     });
     return sheetsFetch(q).then(function(resp) {
@@ -278,7 +277,6 @@ window.API = {
           fname: data.fname || '',
           lname: data.lname || '',
           contact: data.contact || '',
-          email: data.email || '',
           gender: data.gender || '',
           age: data.age || '',
           address: data.address || '',
