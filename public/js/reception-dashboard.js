@@ -497,7 +497,15 @@ function updateStats() {
   }
 
   /* --- New Registrations Today --- */
-  var todayRegs = (window.allPatients || []).filter(function (p) { return p.created_on && String(p.created_on).slice(0, 10) === todayStr; }).length;
+  var todayRegs = (window.allPatients || []).filter(function (p) {
+    var d = p.created_on || p['Created On'] || '';
+    if (!d) return false;
+    d = String(d).trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.slice(0, 10) === todayStr;
+    var dt = new Date(d);
+    if (!isNaN(dt.getTime())) return dt.toISOString().slice(0, 10) === todayStr;
+    return false;
+  }).length;
   var regEl = document.querySelector('.stat-card[style*="--accent:#0D9488"] .stat-value');
   if (regEl) {
     if (window.animateCounter) window.animateCounter(regEl, todayRegs);
