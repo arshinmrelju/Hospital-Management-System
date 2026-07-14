@@ -32,30 +32,27 @@
       font-weight: 800;
     }
     /* --- Reception Portal Premium Styles --- */
-    .opd-card {
+    .opd-row {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 14px;
-      padding: 13px 16px;
+      padding: 12px 16px;
       background: var(--surface-low);
       border: 1px solid var(--outline-var);
       border-radius: var(--radius-md);
-      margin-bottom: 8px;
-      cursor: pointer;
-      transition: all 0.22s;
-      position: relative;
+      margin-bottom: 6px;
+      transition: all 0.2s;
     }
-    .opd-card:hover { background: var(--surface-mid); border-color: var(--primary-light); transform: translateX(3px); }
-    .opd-card.checked-in { border-left: 3px solid #10b981; }
-    .opd-card.waiting { border-left: 3px solid #f59e0b; }
-    .opd-card.urgent { border-left: 3px solid #ef4444; }
-    .queue-num { width: 36px; height: 36px; background: var(--primary-soft); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.95rem; color: var(--primary-light); flex-shrink: 0; }
-    .opd-name { font-weight: 700; font-size: 0.88rem; }
-    .opd-detail { font-size: 0.77rem; color: var(--on-surface-var); margin-top: 2px; }
-    .opd-status { font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
-    .opd-status.checked-in { background: rgba(16,185,129,0.1); color: #059669; }
-    .opd-status.waiting { background: rgba(245,158,11,0.1); color: #d97706; }
-    .opd-status.urgent { background: rgba(239,68,68,0.1); color: #ef4444; }
+    .opd-row:hover { background: var(--surface-mid); border-color: var(--primary-light); }
+    .opd-row-main { display: flex; flex-direction: column; gap: 2px; }
+    .opd-row-name { font-weight: 700; font-size: 0.88rem; }
+    .opd-row-age { font-weight: 400; color: var(--on-surface-var); font-size: 0.78rem; }
+    .opd-row-doctor { font-size: 0.77rem; color: var(--on-surface-var); display: flex; align-items: center; gap: 3px; }
+    .opd-row-doctor .material-icons-round { font-size: 13px; }
+    .opd-row-meta { text-align: right; display: flex; flex-direction: column; gap: 2px; align-items: flex-end; }
+    .opd-row-complaint { font-size: 0.77rem; color: var(--on-surface-var); }
+    .opd-row-time { font-size: 0.72rem; color: var(--outline); display: flex; align-items: center; gap: 3px; }
+    .opd-row-time .material-icons-round { font-size: 12px; }
 
     /* Appointment Form */
     .appt-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
@@ -70,8 +67,7 @@
       color: var(--on-surface);
     }
     .appt-form-row .form-group label { font-size: 0.78rem; font-weight: 600; color: var(--on-surface-var); margin-bottom: 5px; display: block; }
-    .autocomplete-wrapper { position: relative; }
-    #ciPatientInfo { transition: opacity 0.15s; }
+
 
     /* --- Mobile Responsive --- */
     @media (max-width: 600px) {
@@ -105,9 +101,8 @@
       #opdList {
         max-height: 300px !important;
       }
-      .opd-card {
+      .opd-row {
         padding: 10px 12px;
-        gap: 10px;
       }
     }
     @media (max-width: 480px) {
@@ -348,14 +343,6 @@
 
       <!-- KPI Stat Cards -->
       <div class="stats-grid">
-        <div class="stat-card" style="--accent:#0D9488">
-          <div class="stat-icon-wrap"><span class="material-icons-round">pending</span></div>
-          <div class="stat-body">
-            <p class="stat-label">Waiting in Queue</p>
-            <h2 class="stat-value counter" data-target="0">0</h2>
-            <p class="stat-delta" style="color:var(--primary-light)"><span class="material-icons-round">hourglass_empty</span>Avg. 18 min wait</p>
-          </div>
-        </div>
         <div class="stat-card" style="--accent:#00685f">
           <div class="stat-icon-wrap"><span class="material-icons-round">groups</span></div>
           <div class="stat-body">
@@ -376,30 +363,29 @@
 
       <!-- Dashboard Tabs -->
       <div class="dashboard-tabs">
-        <button class="dashboard-tab-btn active" onclick="switchDashboardTab('tab-opd', event)">OPD Queue</button>
+        <button class="dashboard-tab-btn active" onclick="switchDashboardTab('tab-opd', event)">OPD Register</button>
         <button class="dashboard-tab-btn" onclick="switchDashboardTab('tab-book', event)">Book Appointment</button>
 
       </div>
 
       <!-- Tab Content Area -->
       <div class="dashboard-tab-content">
-        <!-- TAB 1: OPD Queue -->
+        <!-- TAB 1: OPD Register -->
         <div class="dashboard-tab-pane active" id="tab-opd">
           <div class="widget glass-card" id="opd-checkin">
             <div class="widget-header" style="flex-direction:column; align-items:stretch; gap:10px;">
               <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div style="display:flex;align-items:center;gap:8px;">
                   <span class="material-icons-round" style="color:var(--primary-light)">how_to_reg</span>
-                  <h3>OPD Queue Register</h3>
+                  <h3>OPD Register</h3>
                 </div>
-                <span id="opdQueueCount" style="background:rgba(13,148,136,0.1);color:#0D9488;border-radius:20px;padding:3px 10px;font-size:0.72rem;font-weight:700;"><span class="loading-pulse" style="width:6px;height:6px;margin-right:4px;"></span>Loading<span class="loading-dots loading-dots-sm"></span></span>
               </div>
               <!-- Smart Filter Bar -->
               <div class="smart-filter" id="opdSmartFilter">
                 <div class="smart-filter-top">
                   <div class="sf-label">
                     <span class="material-icons-round">tune</span>
-                    Filter Queue
+                    Filter Records
                   </div>
                   <div class="sf-chips">
                     <button class="sf-chip active" onclick="sfChipSelect(this,'opd','today')">Today</button>
@@ -442,35 +428,34 @@
                 </div>
               </div>
             </div>
-            <div id="opdList" style="margin-top:12px;max-height:420px;overflow-y:auto;padding-right:4px;">
-              <!-- OPD Skeleton Cards -->
-              <div class="opd-skeleton">
-                <div class="opd-skeleton-num"></div>
-                <div class="opd-skeleton-body">
-                  <div class="opd-skeleton-line short"></div>
-                  <div class="opd-skeleton-line"></div>
-                  <div class="opd-skeleton-line xshort"></div>
-                </div>
-                <div class="opd-skeleton-badge"></div>
+            <!-- Inline OPD Entry Form -->
+            <div id="opdEntryForm" style="display:none;margin-bottom:12px;padding:14px;background:var(--primary-soft);border:1.5px solid rgba(13,148,136,0.25);border-radius:var(--radius-md);">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <span class="material-icons-round" style="font-size:18px;color:var(--primary-light);">person_add</span>
+                <span style="font-weight:700;font-size:0.88rem;color:var(--primary-light);">New OPD Entry</span>
               </div>
-              <div class="opd-skeleton">
-                <div class="opd-skeleton-num"></div>
-                <div class="opd-skeleton-body">
-                  <div class="opd-skeleton-line short" style="animation-delay:0.1s"></div>
-                  <div class="opd-skeleton-line" style="animation-delay:0.1s"></div>
-                  <div class="opd-skeleton-line xshort" style="animation-delay:0.4s"></div>
+              <div id="opdEntryPatientInfo" style="margin-bottom:10px;"></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+                <div class="form-group">
+                  <label style="font-size:0.78rem;font-weight:600;color:var(--on-surface-var);display:block;margin-bottom:4px;">Doctor</label>
+                  <select id="opdEntryDoctor" style="width:100%;background:var(--surface);border:1.5px solid var(--outline-var);border-radius:var(--radius-sm);padding:9px 12px;font-size:0.85rem;color:var(--on-surface);">
+                    <option value="">Loading doctors...</option>
+                  </select>
                 </div>
-                <div class="opd-skeleton-badge" style="animation-delay:0.2s"></div>
-              </div>
-              <div class="opd-skeleton">
-                <div class="opd-skeleton-num"></div>
-                <div class="opd-skeleton-body">
-                  <div class="opd-skeleton-line short" style="animation-delay:0.2s"></div>
-                  <div class="opd-skeleton-line" style="animation-delay:0.2s"></div>
-                  <div class="opd-skeleton-line xshort" style="animation-delay:0.5s"></div>
+                <div class="form-group">
+                  <label style="font-size:0.78rem;font-weight:600;color:var(--on-surface-var);display:block;margin-bottom:4px;">Complaint</label>
+                  <input type="text" id="opdEntryComplaint" placeholder="e.g. Fever, Cough..." style="width:100%;background:var(--surface);border:1.5px solid var(--outline-var);border-radius:var(--radius-sm);padding:9px 12px;font-size:0.85rem;color:var(--on-surface);" />
                 </div>
-                <div class="opd-skeleton-badge" style="animation-delay:0.25s"></div>
               </div>
+              <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button class="btn-sm btn-secondary" onclick="cancelOpdEntry()" style="padding:6px 14px;font-size:0.78rem;">Cancel</button>
+                <button class="btn-sm btn-primary" id="opdEntrySubmit" onclick="submitOpdEntry()" style="padding:6px 14px;font-size:0.78rem;background:var(--primary-light);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;">
+                  <span class="material-icons-round" style="font-size:14px;">how_to_reg</span> Add to OPD
+                </button>
+              </div>
+            </div>
+            <div id="opdList" style="margin-top:4px;max-height:420px;overflow-y:auto;padding-right:4px;">
+              <p style="text-align:center;padding:20px;color:var(--outline);font-size:0.85rem">Loading OPD records...</p>
             </div>
           </div>
         </div>
@@ -742,65 +727,7 @@
   </main>
   <div id="toastContainer"></div>
 
-  <!-- Check-In Modal -->
-  <div class="modal-overlay" id="checkInModal" onclick="closeModal(event, 'checkInModal')">
-    <div class="modal-card" style="max-width:520px;">
-      <div class="modal-header">
-        <h3 class="modal-title">OPD Patient Check-In</h3>
-        <button class="modal-close" onclick="closeModal(null, 'checkInModal')">
-          <span class="material-icons-round">close</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>Search Patient *</label>
-          <div class="autocomplete-wrapper" id="ciPatientAutocomplete">
-            <input type="text" id="ciPatientSearch" placeholder="Type to search patient name or phone..." autocomplete="off" />
-            <input type="hidden" id="ciPatientId" value="" />
-            <div class="autocomplete-dropdown" id="ciPatientDropdown"></div>
-          </div>
-          <div id="ciPatientInfo" style="display:none;margin-top:8px;padding:10px 12px;background:var(--surface-low);border:1px solid var(--outline-var);border-radius:var(--radius-md);">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <div class="ac-avatar" id="ciPatientAvatar" style="width:36px;height:36px;font-size:0.85rem;"></div>
-              <div>
-                <div style="font-weight:700;font-size:0.88rem;" id="ciPatientNameDisplay"></div>
-                <div style="font-size:0.75rem;color:var(--on-surface-var);" id="ciPatientMetaDisplay"></div>
-              </div>
-            </div>
-          </div>
-          <div style="margin-top:6px;font-size:0.78rem;">
-            <span id="ciPatientNotFound" style="display:none;">Patient not found? <a href="#" onclick="event.preventDefault();openNewPatient()" style="color:var(--primary-light);font-weight:700;">Register New Patient</a></span>
-          </div>
-        </div>
-        <div class="form-row-2">
-          <div class="form-group">
-            <label>Referred Doctor</label>
-            <select id="ciDoctor" class="loading">
-              <option value="" disabled selected>Loading doctors…</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Priority</label>
-            <select id="ciPriority">
-              <option value="waiting">Normal</option>
-              <option value="urgent">Urgent</option>
-              <option value="checked-in">Pre-Booked</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Chief Complaint</label>
-          <input type="text" id="ciComplaint" placeholder="e.g. Chest pain, Fever, Headache..." />
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-secondary" onclick="closeModal(null, 'checkInModal')">Cancel</button>
-        <button class="btn-primary" style="background:var(--primary-light);" onclick="checkInPatient()">
-          <span class="material-icons-round">how_to_reg</span> Check In
-        </button>
-      </div>
-    </div>
-  </div>
+
 
   <!-- Add Patient Modal -->
   <div class="modal-overlay" id="addPatientModal" onclick="closeModal(event,'addPatientModal')">

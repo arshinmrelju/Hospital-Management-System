@@ -68,8 +68,8 @@ function renderTable() {
       <td data-label="Actions">
         <button class="icon-btn" title="View" onclick="viewPatient('${p.id}')"><span class="material-icons-round">visibility</span></button>
         <button class="icon-btn" title="Edit" onclick="editPatient('${p.id}')"><span class="material-icons-round">edit</span></button>
-        <button class="icon-btn" title="Add to OPD Queue"
-          onclick="queueCheckinPatient(this)"
+        <button class="icon-btn" title="Add to OPD"
+          onclick="addToOpdRegister(this)"
           data-id="${p.id}" data-name="${esc(patientFullName(p))}"
           data-age="${p.age}" data-gender="${p.gender}"
           data-blood="${p.blood_group}" data-op="${p.op_no}">

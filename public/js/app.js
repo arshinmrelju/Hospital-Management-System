@@ -557,16 +557,6 @@ window.populateDoctorDropdowns = function() {
         : '<option>No doctors available</option>';
     }
 
-    // Check-in doctor
-    var ciDoc = document.getElementById('ciDoctor');
-    if (ciDoc) {
-      ciDoc.classList.remove('loading');
-      ciDoc.innerHTML = '<option value="" disabled selected>Select Doctor</option>' +
-        docs.map(function(d) {
-          return '<option value="' + esc(d.id) + '">' + esc(d.name) + ' (' + esc(d.dept) + ')</option>';
-        }).join('');
-    }
-
     // Add Patient modal — Consulting Doctor
     var pDoc = document.getElementById('pDoctor');
     if (pDoc) {

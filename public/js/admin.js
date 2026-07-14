@@ -109,14 +109,6 @@
         return '<option value="' + esc(d.id) + '">' + esc(d.name) + ' (' + esc(d.dept) + ')</option>';
       }).join('');
     }
-    // Update check-in doctor dropdown if exists
-    var ciDoctor = document.getElementById('ciDoctor');
-    if (ciDoctor) {
-      ciDoctor.innerHTML = '<option value="" disabled selected>Select Doctor</option>' +
-        doctors.map(function(d) {
-          return '<option value="' + esc(d.id) + '">' + esc(d.name) + ' (' + esc(d.dept) + ')</option>';
-        }).join('');
-    }
   }
 
   /* ─── Render Doctors ─── */

@@ -5,8 +5,8 @@
 
 'use strict';
 
-let OPD_QUEUE = [];
-let filteredOpdQueue = null;
+let OPD_RECORDS = [];
+let filteredOpdRecords = null;
 
 /* --- Export Tracker --- */
 const EXPORTED_IDS_KEY = 'hms_exported_patient_ids';
@@ -138,112 +138,7 @@ function initExportTracker() {
   updateExportBadge();
 }
 
-/* --- Render OPD Queue --- */
-function renderOpdQueue() {
-  const list = document.getElementById('opdList');
-  if (!list) return;
-
-  const data = filteredOpdQueue || OPD_QUEUE;
-
-  if (data.length === 0) {
-    list.innerHTML = '<p style="text-align:center;padding:20px;color:var(--outline);font-size:0.85rem">No patients found for this time span.</p>';
-    const countEl = document.getElementById('opdQueueCount');
-    if (countEl) countEl.textContent = '0 Waiting';
-    return;
-  }
-
-  list.innerHTML = data.map(p => `
-    <div class="opd-card ${p.status}" id="opdCard-${p.token}">
-      <div class="queue-num">${p.token}</div>
-      <div style="flex:1;min-width:0;">
-        <div class="opd-name">${p.name} <span style="font-weight:400;color:var(--on-surface-var);font-size:0.78rem">· ${p.age}</span></div>
-        <div class="opd-detail">${p.doctor} · ${p.complaint}</div>
-        <div class="opd-detail" style="margin-top:2px;">${p.time}</div>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-        <span class="opd-status ${p.status}">${p.status === 'checked-in' ? '✓ Checked In' : p.status === 'urgent' ? '⚠ Urgent' : 'Waiting'}</span>
-        ${p.status !== 'checked-in' ? `<button onclick="checkInByToken(${p.token})" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:#059669;border-radius:var(--radius-sm);padding:3px 8px;cursor:pointer;font-size:0.7rem;font-weight:700;">Check In</button>` : ''}
-      </div>
-    </div>
-  `).join('');
-
-  const countEl = document.getElementById('opdQueueCount');
-  const waiting = data.filter(p => p.status === 'waiting' || p.status === 'urgent').length;
-  if (countEl) countEl.textContent = `${waiting} Waiting`;
-}
-
-/* --- Filter OPD Queue --- */
-function filterOpdQueue() {
-  const startDate = document.getElementById('opdStartDate')?.value;
-  const startTime = document.getElementById('opdStartTime')?.value || '00:00';
-  const endDate = document.getElementById('opdEndDate')?.value;
-  const endTime = document.getElementById('opdEndTime')?.value || '23:59';
-
-  if (!startDate) {
-    toast('Please select a start date to filter.', 'warning');
-    return;
-  }
-
-  const startTimestamp = new Date(`${startDate}T${startTime}`).getTime();
-  const endTimestamp = endDate
-    ? new Date(`${endDate}T${endTime}`).getTime()
-    : new Date(`${startDate}T23:59:59`).getTime();
-
-  filteredOpdQueue = OPD_QUEUE.filter(p => {
-    if (!p.timestamp) return false;
-    const pTime = new Date(p.timestamp).getTime();
-    return pTime >= startTimestamp && pTime <= endTimestamp;
-  });
-
-  renderOpdQueue();
-
-  // Show result badge and update count
-  const count = filteredOpdQueue.length;
-  const countEl = document.getElementById('opdResultCount');
-  if (countEl) countEl.textContent = `${count} patient${count !== 1 ? 's' : ''}`;
-  const badge = document.getElementById('opdResultBadge');
-  if (badge) badge.classList.add('visible');
-
-  toast(`Found ${filteredOpdQueue.length} record(s)`, 'info');
-}
-
-function clearOpdQueueFilter() {
-  document.getElementById('opdStartDate').value = '';
-  document.getElementById('opdStartTime').value = '';
-  document.getElementById('opdEndDate').value = '';
-  document.getElementById('opdEndTime').value = '';
-  filteredOpdQueue = null;
-  renderOpdQueue();
-
-  // Hide result badge
-  const badge = document.getElementById('opdResultBadge');
-  if (badge) badge.classList.remove('visible');
-
-  toast('Filter cleared', 'info');
-}
-
-/* --- Check In by Token (quick action from list) --- */
-async function checkInByToken(token) {
-  const btn = document.querySelector(`#opdCard-${token} button`);
-  if (!btn || btn.disabled) return;
-  const patient = OPD_QUEUE.find(p => String(p.token) === String(token));
-  if (!patient) {
-    btn.disabled = false;
-    return;
-  }
-  btn.disabled = true;
-  btn.textContent = '...';
-  patient.status = 'checked-in';
-  try {
-    await window.API.updateAppointment(patient.id, { status: 'checked-in' });
-  } catch (e) {
-    addConsoleLog('WARN', 'Could not update check-in status: ' + e.message);
-  }
-  renderOpdQueue();
-  toast(`${patient.name} checked in successfully!`, 'success', 'how_to_reg');
-}
-
-/* --- Patient Check-In Autocomplete Helpers --- */
+/* --- Patient Helper Functions --- */
 function patientName(p) {
   return String(p.fname || p.FirstName || p.Name || p.name || '');
 }
@@ -271,246 +166,235 @@ function patientFullName(p) {
   return (f + ' ' + l).trim();
 }
 
-/* --- Patient Check-In Autocomplete --- */
-var ciSelectedPatient = null;
+/* --- Render OPD Records --- */
+function renderOpdRecords() {
+  const list = document.getElementById('opdList');
+  if (!list) return;
 
-function initCheckinAutocomplete() {
-  var input = document.getElementById('ciPatientSearch');
-  var dropdown = document.getElementById('ciPatientDropdown');
-  if (!input || !dropdown) return;
+  const data = filteredOpdRecords || OPD_RECORDS;
 
-  function renderOptions(query) {
-    var q = (query || '').toLowerCase();
-    var patients = window.allPatients || [];
-    var filtered = patients.filter(function (p) {
-      return patientFullName(p).toLowerCase().includes(q) || patientContact(p).toLowerCase().includes(q);
-    });
-    if (filtered.length === 0) {
-      dropdown.innerHTML = '<div class="autocomplete-item" style="color:var(--on-surface-var);cursor:default;">No patients found</div>';
-      document.getElementById('ciPatientNotFound').style.display = 'block';
-      return;
-    }
-    document.getElementById('ciPatientNotFound').style.display = 'none';
-    dropdown.innerHTML = filtered.map(function (p, idx) {
-      var f = patientName(p);
-      var l = patientLname(p);
-      if (!f && !l) {
-        var raw = p.Name || p.name || '';
-        var parts = String(raw).trim().split(/\s+/);
-        f = parts[0] || '';
-        l = parts.slice(1).join(' ');
-      }
-      var initials = ((f || '')[0] || '') + ((l || '')[0] || '');
-      var meta = [];
-      var age = patientAge(p);
-      var gender = patientGender(p);
-      if (age) meta.push(age + 'y');
-      if (gender) meta.push(gender);
-      var contact = patientContact(p);
-      if (contact) meta.push(contact);
-      var safeId = String(p.id || '');
-      return '<div class="autocomplete-item" data-id="' + safeId + '">' +
-        '<div class="ac-avatar">' + esc(initials) + '</div>' +
-        '<div class="ac-info">' +
-        '<span class="ac-name">' + esc(f) + ' ' + esc(l) + '</span>' +
-        '<span class="ac-phone">' + esc(meta.join(' · ')) + '</span>' +
-        '</div>' +
-        '</div>';
-    }).join('');
-    // Event delegation on dropdown
-    dropdown.onclick = function(e) {
-      var item = e.target.closest('.autocomplete-item');
-      if (item) selectCheckinPatient(item);
-    };
+  if (data.length === 0) {
+    list.innerHTML = '<p style="text-align:center;padding:20px;color:var(--outline);font-size:0.85rem">No OPD records found for this time span.</p>';
+    return;
   }
 
-  input.addEventListener('focus', function () { if (ciSelectedPatient) return; renderOptions(input.value); dropdown.classList.add('active'); });
-  input.addEventListener('input', function () {
-    if (window._selectingPatient) { window._selectingPatient = false; return; }
-    ciSelectedPatient = null;
-    document.getElementById('ciPatientId').value = '';
-    document.getElementById('ciPatientInfo').style.display = 'none';
-    renderOptions(input.value);
-    dropdown.classList.add('active');
-  });
-  document.addEventListener('click', function (e) {
-    var wrapper = document.getElementById('ciPatientAutocomplete');
-    if (wrapper && !wrapper.contains(e.target)) dropdown.classList.remove('active');
+  list.innerHTML = data.map((p, i) => `
+    <div class="opd-row" id="opdRow-${p.id || i}">
+      <div class="opd-row-main">
+        <span class="opd-row-name">${p.name} <span class="opd-row-age">· ${p.age}</span></span>
+        <span class="opd-row-doctor"><span class="material-icons-round">person</span> ${p.doctor}</span>
+      </div>
+      <div class="opd-row-meta">
+        <span class="opd-row-complaint">${p.complaint}</span>
+        <span class="opd-row-time"><span class="material-icons-round">schedule</span> ${p.time}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* --- Filter OPD Records --- */
+function filterOpdQueue() {
+  const startDate = document.getElementById('opdStartDate')?.value;
+  const startTime = document.getElementById('opdStartTime')?.value || '00:00';
+  const endDate = document.getElementById('opdEndDate')?.value;
+  const endTime = document.getElementById('opdEndTime')?.value || '23:59';
+
+  if (!startDate) {
+    toast('Please select a start date to filter.', 'warning');
+    return;
+  }
+
+  const startTimestamp = new Date(`${startDate}T${startTime}`).getTime();
+  const endTimestamp = endDate
+    ? new Date(`${endDate}T${endTime}`).getTime()
+    : new Date(`${startDate}T23:59:59`).getTime();
+
+  filteredOpdRecords = OPD_RECORDS.filter(p => {
+    if (!p.timestamp) return false;
+    const pTime = new Date(p.timestamp).getTime();
+    return pTime >= startTimestamp && pTime <= endTimestamp;
   });
 
-  window.selectCheckinPatient = function (el) {
-    var id = typeof el === 'string' ? el : (el && el.getAttribute ? el.getAttribute('data-id') : '');
-    if (!id) return;
-    var patients = window.allPatients || [];
-    var p = patients.find(function (x) { return String(x.id) === String(id); });
-    if (!p) return;
-    ciSelectedPatient = p;
-    var f = patientName(p);
-    var l = patientLname(p);
-    if (!f && !l) {
-      var raw = p.Name || p.name || '';
-      var parts = String(raw).trim().split(/\s+/);
-      f = parts[0] || '';
-      l = parts.slice(1).join(' ');
-    }
-    document.getElementById('ciPatientId').value = p.id;
-    window._selectingPatient = true;
-    input.value = (f + ' ' + l).trim();
-    dropdown.classList.remove('active');
-    var initials = ((f || '')[0] || '') + ((l || '')[0] || '');
-    document.getElementById('ciPatientAvatar').textContent = initials;
-    document.getElementById('ciPatientNameDisplay').textContent = (f + ' ' + l).trim();
+  renderOpdRecords();
+
+  const count = filteredOpdRecords.length;
+  const countEl = document.getElementById('opdResultCount');
+  if (countEl) countEl.textContent = `${count} patient${count !== 1 ? 's' : ''}`;
+  const badge = document.getElementById('opdResultBadge');
+  if (badge) badge.classList.add('visible');
+
+  toast(`Found ${filteredOpdRecords.length} record(s)`, 'info');
+}
+
+function clearOpdQueueFilter() {
+  document.getElementById('opdStartDate').value = '';
+  document.getElementById('opdStartTime').value = '';
+  document.getElementById('opdEndDate').value = '';
+  document.getElementById('opdEndTime').value = '';
+  filteredOpdRecords = null;
+  renderOpdRecords();
+
+  const badge = document.getElementById('opdResultBadge');
+  if (badge) badge.classList.remove('visible');
+
+  toast('Filter cleared', 'info');
+}
+
+/* --- Inline OPD Entry Form --- */
+let _opdEntryPatient = null;
+
+function showOpdEntryForm(patient) {
+  _opdEntryPatient = patient;
+  var form = document.getElementById('opdEntryForm');
+  var patientInfo = document.getElementById('opdEntryPatientInfo');
+  if (!form) return;
+
+  form.style.display = 'block';
+
+  /* Pre-fill patient info */
+  if (patientInfo) {
+    var name = patient.name || '';
+    var age = patient.age || '';
     var meta = [];
-    var age = patientAge(p);
-    var gender = patientGender(p);
     if (age) meta.push(age + ' yrs');
-    if (gender) meta.push(gender);
-    if (p.blood_group && p.blood_group !== 'Unknown') meta.push(p.blood_group);
-    if (p.op_no) meta.push('OP: ' + p.op_no);
-    document.getElementById('ciPatientMetaDisplay').textContent = meta.join(' · ');
-    document.getElementById('ciPatientInfo').style.display = 'block';
-    document.getElementById('ciPatientNotFound').style.display = 'none';
+    if (patient.gender) meta.push(patient.gender);
+    if (patient.op) meta.push('OP: ' + patient.op);
+    patientInfo.innerHTML = '<div style="display:flex;align-items:center;gap:10px;">' +
+      '<div class="mini-avatar" style="width:36px;height:36px;font-size:0.85rem;">' + ((name[0] || '') + ((patient.lname || '')[0] || '')) + '</div>' +
+      '<div><div style="font-weight:700;font-size:0.88rem;">' + name + '</div>' +
+      '<div style="font-size:0.75rem;color:var(--on-surface-var);">' + meta.join(' · ') + '</div></div></div>';
+  }
+
+  /* Populate doctor dropdown */
+  populateOpdDoctorDropdown();
+
+  /* Focus complaint */
+  var complaintEl = document.getElementById('opdEntryComplaint');
+  if (complaintEl) setTimeout(function () { complaintEl.focus(); }, 120);
+
+  /* Scroll to form */
+  form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function populateOpdDoctorDropdown() {
+  var sel = document.getElementById('opdEntryDoctor');
+  if (!sel) return;
+  window.API.getDoctors().then(function(resp) {
+    var docs = (resp && resp.data) || [];
+    sel.innerHTML = '<option value="">Select Doctor</option>' +
+      docs.map(function(d) {
+        return '<option value="' + window.esc(d.name || d.id) + '">' + window.esc(d.name) + ' (' + window.esc(d.dept) + ')</option>';
+      }).join('');
+  });
+}
+
+function submitOpdEntry() {
+  var submitBtn = document.getElementById('opdEntrySubmit');
+  if (!submitBtn || submitBtn.disabled) return;
+
+  var patient = _opdEntryPatient;
+  if (!patient) {
+    toast('No patient selected.', 'warning');
+    return;
+  }
+
+  var doctor = document.getElementById('opdEntryDoctor')?.value;
+  var complaint = document.getElementById('opdEntryComplaint')?.value.trim() || 'Not specified';
+
+  if (!doctor) {
+    toast('Please select a doctor.', 'warning');
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Adding...';
+
+  var now = new Date();
+  var timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  var record = {
+    id: 'OPD-' + Date.now(),
+    name: patient.name || '',
+    age: patient.age || 'N/A',
+    doctor: doctor,
+    complaint: complaint,
+    time: timeStr,
+    timestamp: now.toISOString()
   };
+
+  OPD_RECORDS.push(record);
+  if (filteredOpdRecords) filteredOpdRecords.push(record);
+
+  window.API.createAppointment({
+    patient_id: patient.id,
+    doctor_id: doctor,
+    appointment_date: now.toISOString().split('T')[0],
+    appointment_time: timeStr,
+    type: 'OPD',
+    status: 'waiting',
+    reason: complaint
+  }).catch(function (e) {
+    addConsoleLog('WARN', 'Could not save OPD record: ' + e.message);
+  });
+
+  cancelOpdEntry();
+  renderOpdRecords();
+  updateStats();
+
+  toast('Added to OPD: ' + record.name, 'success', 'how_to_reg');
 }
 
-function openNewPatient() {
-  closeModal(null, 'checkInModal');
-  var searchQ = document.getElementById('ciPatientSearch')?.value.trim();
-  if (typeof switchPage === 'function') {
-    switchPage('patients');
-    setTimeout(function() {
-      var btn = document.querySelector('#page-patients #addPatientBtn');
-      if (btn) btn.click();
-    }, 150);
-  } else {
-    var target = 'patients.html' + (searchQ ? '?search=' + encodeURIComponent(searchQ) : '');
-    window.location.href = target;
+function cancelOpdEntry() {
+  _opdEntryPatient = null;
+  var form = document.getElementById('opdEntryForm');
+  if (form) {
+    form.style.display = 'none';
+    var complaint = document.getElementById('opdEntryComplaint');
+    if (complaint) complaint.value = '';
   }
 }
 
-/* --- Populate Doctor Dropdown in Check-In Modal --- */
-function populateDoctorDropdown() {
-  if (typeof window.populateDoctorDropdowns === 'function') {
-    window.populateDoctorDropdowns();
-  }
-}
-
-/* --- Open Check-In Modal --- */
-function openCheckInModal() {
-  openModal('checkInModal');
-  populateDoctorDropdown();
-  // Reset form state
-  var input = document.getElementById('ciPatientSearch');
-  if (input) input.value = '';
-  document.getElementById('ciPatientId').value = '';
-  document.getElementById('ciPatientInfo').style.display = 'none';
-  document.getElementById('ciPatientNotFound').style.display = 'none';
-  document.getElementById('ciComplaint').value = '';
-  ciSelectedPatient = null;
-  // Focus the search box
-  setTimeout(function () { if (input) input.focus(); }, 120);
-}
-
-/* --- Queue Check-In from Patient Registry --- */
-window.queueCheckinPatient = function(btn) {
-  var p = {
+/* --- Add to OPD from Patient Registry (standalone) --- */
+window.addToOpdRegister = function(btn) {
+  var patient = {
     id: btn.getAttribute('data-id') || '',
-    fname: btn.getAttribute('data-name') || '',
+    name: btn.getAttribute('data-name') || '',
     lname: '',
     age: btn.getAttribute('data-age') || '',
     gender: btn.getAttribute('data-gender') || '',
-    blood_group: btn.getAttribute('data-blood') || 'Unknown',
-    op_no: btn.getAttribute('data-op') || ''
+    blood: btn.getAttribute('data-blood') || 'Unknown',
+    op: btn.getAttribute('data-op') || ''
   };
-  ciSelectedPatient = p;
-  openModal('checkInModal');
-  populateDoctorDropdown();
-  var input = document.getElementById('ciPatientSearch');
-  if (input) {
-    input.value = btn.getAttribute('data-name');
-    window._selectingPatient = true;
+
+  var isSPA = typeof switchPage === 'function' && document.getElementById('page-patients');
+  if (isSPA) {
+    var dashboardTab = document.querySelector('.dashboard-tab-btn.active');
+    if (dashboardTab && dashboardTab.textContent.trim() !== 'OPD Register') {
+      switchDashboardTab('tab-opd');
+    }
+    showOpdEntryForm(patient);
+  } else {
+    addToOpdDirect(patient);
   }
-  document.getElementById('ciPatientId').value = p.id;
-  document.getElementById('ciPatientInfo').style.display = 'block';
-  document.getElementById('ciPatientNotFound').style.display = 'none';
-  document.getElementById('ciComplaint').value = '';
-  var initials = ((patientName(p) || '')[0] || '') + ((patientLname(p) || '')[0] || '');
-  document.getElementById('ciPatientAvatar').textContent = initials;
-  document.getElementById('ciPatientNameDisplay').textContent = btn.getAttribute('data-name');
-  var meta = [];
-  var age = btn.getAttribute('data-age');
-  var gender = btn.getAttribute('data-gender');
-  if (age) meta.push(age + ' yrs');
-  if (gender) meta.push(gender);
-  if (p.blood_group && p.blood_group !== 'Unknown') meta.push(p.blood_group);
-  if (p.op_no) meta.push('OP: ' + p.op_no);
-  document.getElementById('ciPatientMetaDisplay').textContent = meta.join(' · ');
-  setTimeout(function () { if (input) input.focus(); }, 120);
 };
 
-/* --- Patient Check-In (from modal) --- */
-async function checkInPatient() {
-  var submitBtn = document.querySelector('#checkInModal .btn-primary');
-  if (!submitBtn || submitBtn.disabled) return;
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Checking In...';
-
-  var p = ciSelectedPatient;
-  if (!p) {
-    toast('Please search and select a patient from the registry, or register a new one.', 'warning');
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Check In';
-    return;
-  }
-  var doctor = document.getElementById('ciDoctor')?.value;
-  var priority = document.getElementById('ciPriority')?.value || 'waiting';
-  var complaint = document.getElementById('ciComplaint')?.value.trim() || 'Not specified';
-
-  var maxToken = OPD_QUEUE.reduce(function(m, r) { return Math.max(m, Number(r.token) || 0); }, 0);
-  var nextToken = maxToken + 1;
+function addToOpdDirect(patient) {
   var now = new Date();
-  var record = {
-    token: nextToken,
-    id: p.id,
-    name: patientFullName(p),
-    age: p.age || 'N/A',
-    doctor: doctor,
-    complaint: complaint,
-    status: priority,
+  var timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+  window.API.createAppointment({
+    patient_id: patient.id,
+    doctor_id: '',
+    appointment_date: now.toISOString().split('T')[0],
+    appointment_time: timeStr,
     type: 'OPD',
-    time: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-    timestamp: now.toISOString()
-  };
-  OPD_QUEUE.push(record);
-  if (filteredOpdQueue) filteredOpdQueue.push(record);
-
-  try {
-    await window.API.createAppointment({
-      patient_id: p.id,
-      doctor_id: doctor,
-      appointment_date: now.toISOString().split('T')[0],
-      appointment_time: record.time,
-      type: 'OPD',
-      status: priority,
-      reason: complaint
-    });
-  } catch (e) {
-    addConsoleLog('WARN', 'Could not save check-in: ' + e.message);
-  }
-
-  renderOpdQueue();
-  closeModal(null, 'checkInModal');
-
-  ciSelectedPatient = null;
-  document.getElementById('ciPatientSearch').value = '';
-  document.getElementById('ciPatientId').value = '';
-  document.getElementById('ciPatientInfo').style.display = 'none';
-  document.getElementById('ciComplaint').value = '';
-
-  submitBtn.disabled = false;
-  submitBtn.textContent = 'Check In';
-
-  toast('Token #' + nextToken + ' issued to ' + record.name + '!', 'success', 'how_to_reg');
+    status: 'waiting',
+    reason: ''
+  }).then(function () {
+    toast('Added to OPD: ' + patient.name, 'success', 'how_to_reg');
+  }).catch(function (e) {
+    addConsoleLog('WARN', 'Could not save OPD record: ' + e.message);
+    toast('Added to OPD: ' + patient.name, 'success', 'how_to_reg');
+  });
 }
 
 /* --- Book Appointment --- */
@@ -524,7 +408,6 @@ async function bookAppointment(e) {
 
   if (!patient) { toast('Please enter patient name.', 'warning'); return; }
 
-  // Persist via API
   try {
     await window.API.createAppointment({
       patient_id: patient,
@@ -541,27 +424,23 @@ async function bookAppointment(e) {
 
   toast(`Appointment confirmed! ${patient} → ${doctor} on ${date || 'Today'} at ${time}`, 'success', 'event_available');
 
-  // Reset form
   document.getElementById('apptForm')?.reset();
 
-  // Set today as default
   const dateEl = document.getElementById('apptDate');
   if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
 
-  // Refresh stats immediately
   updateStats();
 }
 
 /* --- API Data Loaders --- */
-async function loadOpdQueueFromFirestore() {
+async function loadOpdRecords() {
   try {
     const response = await window.API.getAppointments({ limit: 50 });
     const appointments = (response && response.success) ? (response.data || []) : [];
     var patientLookup = window.allPatients || [];
-    OPD_QUEUE = appointments
+    OPD_RECORDS = appointments
       .filter(a => a.type === 'OPD' || a.type === 'OPD Consultation')
       .map((a, i) => {
-        const tokenNum = a.token || i + 1;
         var name = a.patient_name || a.patientName || '';
         var age = a.patient_age || a.patientAge || a.age || '';
         var doctor = a.doctor || a.doctor_name || a.doctor_id || '';
@@ -579,25 +458,23 @@ async function loadOpdQueueFromFirestore() {
             if (!doctor) doctor = match.doctor || match.doctor_name || '';
           }
         }
-        if (!name) name = 'Walk-in #' + tokenNum;
+        if (!name) name = 'Unknown Patient';
         if (!age) age = 'N/A';
         if (!doctor) doctor = 'Unassigned';
         return {
-          id: a.id || tokenNum,
-          token: tokenNum,
+          id: a.id || 'OPD-' + i,
           name: name,
           age: age,
           doctor: doctor,
           complaint: a.reason || a.complaint || '—',
-          status: a.status || 'waiting',
           time: a.appointment_time || a.time || '—',
           timestamp: a.createdAt || a.appointment_date || new Date().toISOString()
         };
       });
   } catch (e) {
-    addConsoleLog('WARN', 'Could not load OPD queue: ' + e.message);
+    addConsoleLog('WARN', 'Could not load OPD records: ' + e.message);
   } finally {
-    renderOpdQueue();
+    renderOpdRecords();
   }
 }
 
@@ -609,7 +486,7 @@ async function ensurePatientsLoaded() {
       window.allPatients = result.data;
     }
   } catch (e) {
-    console.warn('Could not load patients for autocomplete:', e);
+    console.warn('Could not load patients:', e);
   }
 }
 
@@ -631,7 +508,7 @@ function getYesterdayStr() {
 /* --- Update KPI Stat Cards --- */
 function updateStats() {
   var todayStr = new Date().toISOString().split('T')[0];
-  var todayOPD = OPD_QUEUE.filter(function (p) { return p.timestamp && p.timestamp.slice(0, 10) === todayStr; });
+  var todayOPD = OPD_RECORDS.filter(function (p) { return p.timestamp && p.timestamp.slice(0, 10) === todayStr; });
 
   var opdTotalEl = document.querySelector('.stat-card[style*="--accent:#00685f"] .stat-value');
   if (opdTotalEl) {
@@ -639,7 +516,6 @@ function updateStats() {
     else opdTotalEl.textContent = todayOPD.length;
   }
 
-  // Store today's count & compute vs yesterday delta
   var counts = getDailyCounts();
   counts[todayStr] = todayOPD.length;
   setDailyCounts(counts);
@@ -661,16 +537,6 @@ function updateStats() {
     }
   }
 
-  var waitingEl = document.querySelector('.stat-card[style*="--accent:#0D9488"] .stat-value');
-  var waiting = todayOPD.filter(function (p) { return p.status === 'waiting' || p.status === 'urgent'; });
-  if (waitingEl) {
-    if (window.animateCounter) window.animateCounter(waitingEl, waiting.length);
-    else waitingEl.textContent = waiting.length;
-  }
-
-  var waitingDelta = document.querySelector('.stat-card[style*="--accent:#0D9488"] .stat-delta');
-  if (waitingDelta) waitingDelta.innerHTML = '<span class="material-icons-round">hourglass_empty</span>' + waiting.length + ' waiting now';
-
   var todayApptsEl = document.querySelector('.stat-card[style*="--accent:#004d46"] .stat-value');
   if (todayApptsEl) {
     window.API.getAppointments().then(function (resp) {
@@ -688,7 +554,6 @@ function updateStats() {
 
 /* --- DOMContentLoaded --- */
 document.addEventListener('DOMContentLoaded', async () => {
-  // Apply dynamic user details and greeting
   var stored = localStorage.getItem('hms_auth');
   var userAvatar = document.getElementById('userAvatar');
   var topbarAvatar = document.getElementById('topbarAvatar');
@@ -704,33 +569,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     greeting.textContent = greet + '! Front Desk is ready.';
   }
 
-  // Update today's date badge
   var todayDateEl = document.getElementById('todayDate');
   if (todayDateEl) {
     todayDateEl.textContent = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   }
 
   await ensurePatientsLoaded();
-  await loadOpdQueueFromFirestore();
+  await loadOpdRecords();
   updateStats();
   initExportTracker();
 
-  // Re-run stats after OPD queue is filtered
-  var origRender = renderOpdQueue;
-  renderOpdQueue = function () { origRender(); updateStats(); };
+  var origRender = renderOpdRecords;
+  renderOpdRecords = function () { origRender(); updateStats(); };
 
   const todayChip = document.querySelector(`#opdSmartFilter .sf-chip[onclick*="'today'"]`);
   if (todayChip) {
     sfChipSelect(todayChip, 'opd', 'today');
   } else {
-    renderOpdQueue();
+    renderOpdRecords();
   }
 
   var dateEl = document.getElementById('apptDate');
   if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
 
-  initCheckinAutocomplete();
-
-  // Populate dynamic dropdowns
   if (typeof window.populateAllDropdowns === 'function') window.populateAllDropdowns();
 });
