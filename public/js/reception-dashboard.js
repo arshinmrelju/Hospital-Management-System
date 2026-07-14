@@ -613,6 +613,21 @@ async function ensurePatientsLoaded() {
   }
 }
 
+/* --- Daily OPD count storage (local) --- */
+function getDailyCounts() {
+  try {
+    return JSON.parse(localStorage.getItem('hms_opd_daily_counts') || '{}');
+  } catch (e) { return {}; }
+}
+function setDailyCounts(counts) {
+  localStorage.setItem('hms_opd_daily_counts', JSON.stringify(counts));
+}
+function getYesterdayStr() {
+  var d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().split('T')[0];
+}
+
 /* --- Update KPI Stat Cards --- */
 function updateStats() {
   var todayStr = new Date().toISOString().split('T')[0];
@@ -622,6 +637,28 @@ function updateStats() {
   if (opdTotalEl) {
     if (window.animateCounter) window.animateCounter(opdTotalEl, todayOPD.length);
     else opdTotalEl.textContent = todayOPD.length;
+  }
+
+  // Store today's count & compute vs yesterday delta
+  var counts = getDailyCounts();
+  counts[todayStr] = todayOPD.length;
+  setDailyCounts(counts);
+
+  var yesterdayStr = getYesterdayStr();
+  var yesterdayCount = counts[yesterdayStr];
+  var opdDelta = document.querySelector('.stat-card[style*="--accent:#00685f"] .stat-delta');
+  if (opdDelta) {
+    if (yesterdayCount !== undefined && yesterdayCount !== null) {
+      var diff = todayOPD.length - yesterdayCount;
+      var icon = diff >= 0 ? 'trending_up' : 'trending_down';
+      var cls = diff >= 0 ? 'positive' : 'negative';
+      var sign = diff >= 0 ? '+' : '';
+      opdDelta.className = 'stat-delta ' + cls;
+      opdDelta.innerHTML = '<span class="material-icons-round">' + icon + '</span>' + sign + diff + ' vs yesterday';
+    } else {
+      opdDelta.className = 'stat-delta';
+      opdDelta.innerHTML = '<span class="material-icons-round">show_chart</span>No prior data';
+    }
   }
 
   var waitingEl = document.querySelector('.stat-card[style*="--accent:#0D9488"] .stat-value');
