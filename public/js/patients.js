@@ -85,7 +85,7 @@ function renderTable() {
 function validatePatientInput(data) {
   const errors = [];
   if (!data.fname || data.fname.trim().length < 1) errors.push('First name is required');
-  if (!data.lname || data.lname.trim().length < 1) errors.push('Last name is required');
+
   if (data.contact && data.contact.length > 50) errors.push('Contact too long');
   if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) errors.push('Invalid email format');
   if (data.age && (isNaN(data.age) || data.age < 0 || data.age > 150)) errors.push('Invalid age');
