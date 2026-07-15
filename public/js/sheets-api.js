@@ -1,6 +1,6 @@
 'use strict';
 
-var SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbxGUPU1wpL1SyagZ1pXX47No1qY3EoQQAj2RNFobyv9U_kB1zMcsQL-6VtP5WA140hfQQ/exec';
+var SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbyEZNRHEKuTL_cvmhbz1FzQNN2H0Xvst31Ks7g7rJqislV0OILTgCpwkexA4uUPHuOfiw/exec';
 
 var _patientsCache = null;
 var _appointmentsCache = null;
@@ -683,6 +683,135 @@ window.API = {
         return { success: true, fallback: true };
       }
       return { success: false, error: 'Skin patient not found' };
+    });
+  },
+
+  /* ─── ORTHOPEDIC PATIENTS ─── */
+
+  _orthopedicPatientsCache: null,
+
+  normalizeOrthopedicPatient: function(p) {
+    p.id = p['Ortho ID'] || p.ortho_id || '';
+    p.ortho_id = p.id;
+    p.patient_name = p['Patient Name'] || p.patient_name || '';
+    p.age = p['Age'] || p.age || '';
+    p.gender = p['Gender'] || p.gender || '';
+    p.contact = p['Contact'] || p.contact || '';
+    p.diagnosis = p['Diagnosis'] || p.diagnosis || '';
+    p.body_part = p['Body Part'] || p.body_part || '';
+    p.side = p['Side'] || p.side || '';
+    p.condition_type = p['Condition Type'] || p.condition_type || '';
+    p.severity = p['Severity'] || p.severity || 'Mild';
+    p.treatment = p['Treatment'] || p.treatment || '';
+    p.notes = p['Notes'] || p.notes || '';
+    p.created_on = p['Created On'] || p.created_on || '';
+    return p;
+  },
+
+  getOrthopedicPatients: function() {
+    return sheetsFetch({ action: 'getOrthopedicPatients' }).then(function(resp) {
+      if (resp.success && resp.data) {
+        resp.data = resp.data.map(window.API.normalizeOrthopedicPatient);
+        window.API._orthopedicPatientsCache = resp.data;
+        setLocalData('orthopedicPatients', resp.data);
+        return resp;
+      }
+      console.warn('Using LocalStorage orthopedic patients fallback.');
+      var local = getLocalData('orthopedicPatients') || [];
+      window.API._orthopedicPatientsCache = local.map(window.API.normalizeOrthopedicPatient);
+      return { success: true, data: window.API._orthopedicPatientsCache, fallback: true };
+    });
+  },
+
+  getOrthopedicPatient: function(id) {
+    return sheetsFetch({ action: 'getOrthopedicPatient', id: id }).then(function(resp) {
+      if (resp.success && resp.data) {
+        resp.data = window.API.normalizeOrthopedicPatient(resp.data);
+        return resp;
+      }
+      var local = getLocalData('orthopedicPatients') || [];
+      var found = local.filter(function(p) { return String(p['Ortho ID'] || p.ortho_id || p.id) === String(id); });
+      if (found.length > 0) return { success: true, data: window.API.normalizeOrthopedicPatient(found[0]), fallback: true };
+      return { success: false, error: 'Orthopedic patient not found' };
+    });
+  },
+
+  createOrthopedicPatient: function(data) {
+    var q = { action: 'createOrthopedicPatient' };
+    ['ortho_id','patient_name','age','gender','contact','diagnosis','body_part','side','condition_type','severity','treatment','notes'].forEach(function(k) {
+      if (data[k]) q[k] = data[k];
+    });
+    return sheetsFetch(q).then(function(resp) {
+      if (resp.success) {
+        return resp;
+      }
+      var local = getLocalData('orthopedicPatients') || [];
+      var now = new Date();
+      var newPatient = window.API.normalizeOrthopedicPatient({
+        'Ortho ID': data.ortho_id || '',
+        'Patient Name': data.patient_name || '',
+        'Age': data.age || '',
+        'Gender': data.gender || '',
+        'Contact': data.contact || '',
+        'Diagnosis': data.diagnosis || '',
+        'Body Part': data.body_part || '',
+        'Side': data.side || '',
+        'Condition Type': data.condition_type || '',
+        'Severity': data.severity || 'Mild',
+        'Treatment': data.treatment || '',
+        'Notes': data.notes || '',
+        'Created On': now.toISOString().split('T')[0]
+      });
+      local.push(newPatient);
+      setLocalData('orthopedicPatients', local);
+      return { success: true, data: newPatient, fallback: true };
+    });
+  },
+
+  updateOrthopedicPatient: function(id, data) {
+    var q = { action: 'updateOrthopedicPatient', id: id };
+    for (var k in data) {
+      if (data.hasOwnProperty(k)) q[k] = data[k];
+    }
+    return sheetsFetch(q).then(function(resp) {
+      if (resp.success) {
+        return resp;
+      }
+      var local = getLocalData('orthopedicPatients') || [];
+      var idx = -1;
+      for (var i = 0; i < local.length; i++) {
+        var pid = local[i]['Ortho ID'] || local[i].ortho_id || local[i].id || '';
+        if (String(pid) === String(id)) { idx = i; break; }
+      }
+      if (idx >= 0) {
+        for (var key in data) {
+          if (data.hasOwnProperty(key)) {
+            local[idx][key] = data[key];
+          }
+        }
+        setLocalData('orthopedicPatients', local);
+        return { success: true, data: window.API.normalizeOrthopedicPatient(local[idx]), fallback: true };
+      }
+      return { success: false, error: 'Orthopedic patient not found' };
+    });
+  },
+
+  deleteOrthopedicPatient: function(id) {
+    return sheetsFetch({ action: 'deleteOrthopedicPatient', id: id }).then(function(resp) {
+      if (resp.success) {
+        return resp;
+      }
+      var local = getLocalData('orthopedicPatients') || [];
+      var originalLength = local.length;
+      local = local.filter(function(p) {
+        var pid = p['Ortho ID'] || p.ortho_id || p.id || '';
+        return String(pid) !== String(id);
+      });
+      if (local.length < originalLength) {
+        setLocalData('orthopedicPatients', local);
+        return { success: true, fallback: true };
+      }
+      return { success: false, error: 'Orthopedic patient not found' };
     });
   }
 };

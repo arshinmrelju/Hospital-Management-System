@@ -461,6 +461,9 @@ function initGlobalSearch() {
     } else if (pageSection && pageSection.id === 'page-skin') {
       var skinSearch = document.getElementById('skinSearch');
       if (skinSearch) { skinSearch.value = q; skinSearch.dispatchEvent(new Event('input')); toast('Filtering skin registry for "' + q + '"', 'info', 'search'); }
+    } else if (pageSection && pageSection.id === 'page-ortho') {
+      var orthoSearch = document.getElementById('orthoSearch');
+      if (orthoSearch) { orthoSearch.value = q; orthoSearch.dispatchEvent(new Event('input')); toast('Filtering orthopedic registry for "' + q + '"', 'info', 'search'); }
     } else {
       toast('Searching for "' + q + '" in patient registry...', 'info', 'search');
       switchPage('patients');
@@ -598,6 +601,9 @@ window.switchPage = function(page) {
   }
   if (page === 'skin' && typeof initSkinPage === 'function') {
     initSkinPage();
+  }
+  if (page === 'ortho' && typeof initOrthoPage === 'function') {
+    initOrthoPage();
   }
 };
 

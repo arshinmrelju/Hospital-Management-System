@@ -236,6 +236,10 @@
             <span class="material-icons-round">palette</span>
             <span class="nav-label">Skin Registry</span>
           </a>
+<a href="#" class="nav-item" id="nav-ortho" onclick="switchPage('ortho');return false">
+            <span class="material-icons-round">accessibility_new</span>
+            <span class="nav-label">Orthopedic Registry</span>
+          </a>
 <a href="#" class="nav-item" id="nav-export" onclick="switchPage('export');return false">
             <span class="material-icons-round">file_download</span>
             <span class="nav-label">Export Contacts</span>
@@ -778,6 +782,90 @@
       </div>
     </div>
 
+    <!-- ===== ORTHOPEDIC REGISTRY PAGE ===== -->
+    <div class="page-section" id="page-ortho">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Orthopedic Registry</h1>
+          <p class="page-sub">Showing <span id="orthoCount">0</span> registered orthopedic patients</p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <button class="btn-primary" onclick="openAddOrthoModal()">
+            <span class="material-icons-round">person_add</span> Add Orthopedic Patient
+          </button>
+          <button class="btn-secondary" onclick="refreshOrthoPatients()" title="Refresh">
+            <span class="material-icons-round">refresh</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-bar glass-card">
+        <div class="filter-search-row">
+          <span class="material-icons-round" style="font-size:18px;color:var(--outline)">search</span>
+          <input type="text" id="orthoSearch" class="filter-search-input" placeholder="Search by Ortho ID, name or contact…" oninput="filterOrthoPatients()" />
+        </div>
+        <div class="filter-bar-row">
+          <div class="filter-selects">
+            <select id="orthoTypeFilter" onchange="filterOrthoPatients()" class="filter-select">
+              <option value="">All Condition Types</option>
+              <option value="fracture">Fracture</option>
+              <option value="dislocation">Dislocation</option>
+              <option value="sprain">Sprain</option>
+              <option value="strain">Strain</option>
+              <option value="arthritis">Arthritis</option>
+              <option value="tendonitis">Tendonitis</option>
+              <option value="bursitis">Bursitis</option>
+              <option value="sciatica">Sciatica</option>
+              <option value="scoliosis">Scoliosis</option>
+              <option value="osteoporosis">Osteoporosis</option>
+              <option value="herniated_disc">Herniated Disc</option>
+              <option value="other">Other</option>
+            </select>
+            <select id="orthoPartFilter" onchange="filterOrthoPatients()" class="filter-select">
+              <option value="">All Body Parts</option>
+              <option>Knee</option><option>Hip</option><option>Shoulder</option>
+              <option>Spine</option><option>Ankle</option><option>Elbow</option>
+              <option>Wrist</option><option>Hand</option><option>Foot</option>
+              <option>Neck</option><option>Rib</option><option>Pelvis</option>
+              <option>Femur</option><option>Tibia</option><option>Other</option>
+            </select>
+            <select id="orthoSeverityFilter" onchange="filterOrthoPatients()" class="filter-select">
+              <option value="">All Severity</option>
+              <option>Mild</option><option>Moderate</option><option>Severe</option><option>Critical</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="widget glass-card table-widget">
+        <div class="table-scroll">
+          <table class="data-table" id="orthoTable">
+            <thead>
+              <tr>
+                <th class="sortable" onclick="orthoSortCol='ortho_id';orthoSortDir=orthoSortDir===1?-1:1;applyOrthoFilters()">Ortho ID <span class="material-icons-round">unfold_more</span></th>
+                <th class="sortable" onclick="orthoSortCol='patient_name';orthoSortDir=orthoSortDir===1?-1:1;applyOrthoFilters()">Name <span class="material-icons-round">unfold_more</span></th>
+                <th>Diagnosis</th>
+                <th>Body Part</th>
+                <th>Condition</th>
+                <th>Severity</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="orthoTableBody">
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span class="pagination-info" id="orthoPaginationInfo">Showing 1–10 of 0</span>
+          <div class="pagination-btns">
+            <button class="page-btn" id="orthoPrevPage" onclick="changeOrthoPage(-1)" disabled><span class="material-icons-round">chevron_left</span></button>
+            <div class="page-numbers" id="orthoPageNumbers"></div>
+            <button class="page-btn" id="orthoNextPage" onclick="changeOrthoPage(1)"><span class="material-icons-round">chevron_right</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ===== EXPORT CONTACTS PAGE ===== -->
     <div class="page-section" id="page-export">
       <div class="page-header">
@@ -1109,6 +1197,109 @@
     </div>
   </div>
 
+  <!-- Add Orthopedic Patient Modal -->
+  <div class="modal-overlay" id="addOrthoModal" onclick="closeModal(event,'addOrthoModal')">
+    <div class="modal glass-card">
+      <div class="modal-header">
+        <h2>Add Orthopedic Patient</h2>
+        <button class="modal-close" onclick="closeModal(null,'addOrthoModal')"><span class="material-icons-round">close</span></button>
+      </div>
+      <form id="addOrthoForm" class="modal-form" onsubmit="submitAddOrtho(event)">
+        <div class="form-group"><label>Ortho ID *</label><input type="text" id="addOrthoId" placeholder="Enter existing Ortho ID" required /></div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Patient Name *</label><input type="text" id="addOrthoPatientName" required /></div>
+          <div class="form-group"><label>Age</label><input type="number" id="addOrthoAge" min="0" max="150" /></div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Gender</label>
+            <select id="addOrthoGender"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select>
+          </div>
+          <div class="form-group"><label>Contact</label><input type="tel" id="addOrthoContact" /></div>
+        </div>
+        <div class="form-group"><label>Diagnosis</label><input type="text" id="addOrthoDiagnosis" placeholder="E.g., ACL tear, Hip fracture…" /></div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Body Part</label>
+            <select id="addOrthoBodyPart"><option value="">Select</option><option>Knee</option><option>Hip</option><option>Shoulder</option><option>Spine</option><option>Ankle</option><option>Elbow</option><option>Wrist</option><option>Hand</option><option>Foot</option><option>Neck</option><option>Rib</option><option>Pelvis</option><option>Femur</option><option>Tibia</option><option>Other</option></select>
+          </div>
+          <div class="form-group"><label>Side</label>
+            <select id="addOrthoSide"><option value="">Select</option><option>Left</option><option>Right</option><option>Bilateral</option></select>
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Condition Type</label>
+            <select id="addOrthoConditionType"><option value="">Select</option><option value="fracture">Fracture</option><option value="dislocation">Dislocation</option><option value="sprain">Sprain</option><option value="strain">Strain</option><option value="arthritis">Arthritis</option><option value="tendonitis">Tendonitis</option><option value="bursitis">Bursitis</option><option value="sciatica">Sciatica</option><option value="scoliosis">Scoliosis</option><option value="osteoporosis">Osteoporosis</option><option value="herniated_disc">Herniated Disc</option><option value="other">Other</option></select>
+          </div>
+          <div class="form-group"><label>Severity</label>
+            <select id="addOrthoSeverity"><option value="Mild">Mild</option><option value="Moderate" selected>Moderate</option><option value="Severe">Severe</option><option value="Critical">Critical</option></select>
+          </div>
+        </div>
+        <div class="form-group"><label>Treatment Prescribed</label><textarea id="addOrthoTreatment" rows="2" placeholder="Surgery, medication, physiotherapy…"></textarea></div>
+        <div class="form-group"><label>Notes</label><textarea id="addOrthoNotes" rows="2"></textarea></div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal(null,'addOrthoModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Register Orthopedic Patient</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Orthopedic Patient Modal -->
+  <div class="modal-overlay" id="editOrthoModal" onclick="closeModal(event,'editOrthoModal')">
+    <div class="modal glass-card">
+      <div class="modal-header">
+        <h2 id="editOrthoTitle">Edit Orthopedic Patient</h2>
+        <button class="modal-close" onclick="closeModal(null,'editOrthoModal')"><span class="material-icons-round">close</span></button>
+      </div>
+      <form id="editOrthoForm" class="modal-form" onsubmit="submitEditOrthoPatient(event)">
+        <input type="hidden" id="editOrthoId" />
+        <div class="form-row-2">
+          <div class="form-group"><label>Patient Name *</label><input type="text" id="editOrthoPatientName" required /></div>
+          <div class="form-group"><label>Age</label><input type="number" id="editOrthoAge" min="0" max="150" /></div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Gender</label>
+            <select id="editOrthoGender"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select>
+          </div>
+          <div class="form-group"><label>Contact</label><input type="tel" id="editOrthoContact" /></div>
+        </div>
+        <div class="form-group"><label>Diagnosis</label><input type="text" id="editOrthoDiagnosis" /></div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Body Part</label>
+            <select id="editOrthoBodyPart"><option value="">Select</option><option>Knee</option><option>Hip</option><option>Shoulder</option><option>Spine</option><option>Ankle</option><option>Elbow</option><option>Wrist</option><option>Hand</option><option>Foot</option><option>Neck</option><option>Rib</option><option>Pelvis</option><option>Femur</option><option>Tibia</option><option>Other</option></select>
+          </div>
+          <div class="form-group"><label>Side</label>
+            <select id="editOrthoSide"><option value="">Select</option><option>Left</option><option>Right</option><option>Bilateral</option></select>
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Condition Type</label>
+            <select id="editOrthoConditionType"><option value="">Select</option><option value="fracture">Fracture</option><option value="dislocation">Dislocation</option><option value="sprain">Sprain</option><option value="strain">Strain</option><option value="arthritis">Arthritis</option><option value="tendonitis">Tendonitis</option><option value="bursitis">Bursitis</option><option value="sciatica">Sciatica</option><option value="scoliosis">Scoliosis</option><option value="osteoporosis">Osteoporosis</option><option value="herniated_disc">Herniated Disc</option><option value="other">Other</option></select>
+          </div>
+          <div class="form-group"><label>Severity</label>
+            <select id="editOrthoSeverity"><option value="Mild">Mild</option><option value="Moderate">Moderate</option><option value="Severe">Severe</option><option value="Critical">Critical</option></select>
+          </div>
+        </div>
+        <div class="form-group"><label>Treatment Prescribed</label><textarea id="editOrthoTreatment" rows="2"></textarea></div>
+        <div class="form-group"><label>Notes</label><textarea id="editOrthoNotes" rows="2"></textarea></div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal(null,'editOrthoModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- View Orthopedic Patient Modal -->
+  <div class="modal-overlay" id="viewOrthoModal" onclick="closeModal(event,'viewOrthoModal')">
+    <div class="modal glass-card wide-modal">
+      <div class="modal-header">
+        <h2 id="viewOrthoTitle">Orthopedic Patient</h2>
+        <button class="modal-close" onclick="closeModal(null,'viewOrthoModal')"><span class="material-icons-round">close</span></button>
+      </div>
+      <div id="viewOrthoBody"></div>
+    </div>
+  </div>
+
   <!-- View Patient Modal -->
   <div class="modal-overlay" id="viewPatientModal" onclick="closeModal(event,'viewPatientModal')">
     <div class="modal glass-card wide-modal">
@@ -1144,6 +1335,7 @@
   <script src="js/reception-dashboard.js?v=3"></script>
   <script src="js/patients.js?v=3"></script>
   <script src="js/skin.js?v=1"></script>
+  <script src="js/ortho.js?v=1"></script>
 </body>
 
 </html>

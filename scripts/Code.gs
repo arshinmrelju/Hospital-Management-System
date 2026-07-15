@@ -31,6 +31,11 @@ function doGet(e) {
   else if (action === 'createSkinPatient') result = handleCreateSkinPatient(e);
   else if (action === 'updateSkinPatient') result = handleUpdateSkinPatient(e);
   else if (action === 'deleteSkinPatient') result = handleDeleteSkinPatient(e);
+  else if (action === 'getOrthopedicPatients') result = handleGetOrthopedicPatients(e);
+  else if (action === 'getOrthopedicPatient') result = handleGetOrthopedicPatient(e);
+  else if (action === 'createOrthopedicPatient') result = handleCreateOrthopedicPatient(e);
+  else if (action === 'updateOrthopedicPatient') result = handleUpdateOrthopedicPatient(e);
+  else if (action === 'deleteOrthopedicPatient') result = handleDeleteOrthopedicPatient(e);
 
   var output = JSON.stringify(result);
   if (cb) output = cb + '(' + output + ')';
@@ -796,6 +801,108 @@ function handleDeleteSkinPatient(e) {
   var sheet = getSkinPatientsSheet(ss);
   var idx = findRowIndex(sheet, 'Skin ID', id);
   if (idx === -1) return { success: false, error: 'Skin patient not found' };
+  sheet.deleteRow(idx + 1);
+  return { success: true };
+}
+
+/* ─── ORTHOPEDIC PATIENTS ─── */
+
+var ORTHOPEDIC_PATIENT_HEADERS = ['Ortho ID', 'Patient Name', 'Age', 'Gender', 'Contact', 'Diagnosis', 'Body Part', 'Side', 'Condition Type', 'Severity', 'Treatment', 'Notes', 'Created On'];
+
+function getOrthopedicPatientsSheet(ss) {
+  return getOrCreateSheet(ss, 'OrthopedicPatients', ORTHOPEDIC_PATIENT_HEADERS);
+}
+
+function handleGetOrthopedicPatients(e) {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getOrthopedicPatientsSheet(ss);
+  var data = sheetToObjects(sheet);
+  return { success: true, data: data };
+}
+
+function handleGetOrthopedicPatient(e) {
+  var id = e.parameter.id;
+  if (!id) return { success: false, error: 'Ortho ID required' };
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getOrthopedicPatientsSheet(ss);
+  var rows = sheet.getDataRange().getValues();
+  var headers = rows[0];
+  var idCol = headers.indexOf('Ortho ID');
+  if (idCol === -1) return { success: false, error: 'Ortho ID column not found' };
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][idCol]) === String(id)) {
+      var p = {};
+      for (var j = 0; j < headers.length; j++) p[headers[j]] = rows[i][j];
+      return { success: true, data: p };
+    }
+  }
+  return { success: false, error: 'Orthopedic patient not found' };
+}
+
+function handleCreateOrthopedicPatient(e) {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getOrthopedicPatientsSheet(ss);
+  var headers = sheet.getDataRange().getValues()[0];
+  var now = new Date();
+  var patient = {
+    'Ortho ID': e.parameter.ortho_id || '',
+    'Patient Name': e.parameter.patient_name || '',
+    'Age': e.parameter.age || '',
+    'Gender': e.parameter.gender || '',
+    'Contact': e.parameter.contact || '',
+    'Diagnosis': e.parameter.diagnosis || '',
+    'Body Part': e.parameter.body_part || '',
+    'Side': e.parameter.side || '',
+    'Condition Type': e.parameter.condition_type || '',
+    'Severity': e.parameter.severity || 'Mild',
+    'Treatment': e.parameter.treatment || '',
+    'Notes': e.parameter.notes || '',
+    'Created On': Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd')
+  };
+  appendRowToSheet(sheet, patient, headers);
+  return { success: true, data: patient };
+}
+
+function handleUpdateOrthopedicPatient(e) {
+  var id = e.parameter.id;
+  if (!id) return { success: false, error: 'Ortho ID required' };
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getOrthopedicPatientsSheet(ss);
+  var allData = sheet.getDataRange().getValues();
+  var headers = allData[0];
+  var idCol = headers.indexOf('Ortho ID');
+  if (idCol === -1) return { success: false, error: 'Ortho ID column not found' };
+  var idx = -1;
+  for (var i = 1; i < allData.length; i++) {
+    if (String(allData[i][idCol]) === String(id)) { idx = i; break; }
+  }
+  if (idx === -1) return { success: false, error: 'Orthopedic patient not found' };
+  var row = allData[idx];
+  var map = {
+    'ortho_id': 'Ortho ID', 'patient_name': 'Patient Name', 'age': 'Age',
+    'gender': 'Gender', 'contact': 'Contact', 'diagnosis': 'Diagnosis',
+    'body_part': 'Body Part', 'side': 'Side', 'condition_type': 'Condition Type',
+    'severity': 'Severity', 'treatment': 'Treatment', 'notes': 'Notes'
+  };
+  for (var key in map) {
+    if (e.parameter[key] !== undefined) {
+      var col = headers.indexOf(map[key]);
+      if (col >= 0) row[col] = e.parameter[key];
+    }
+  }
+  sheet.getRange(idx + 1, 1, 1, headers.length).setValues([row]);
+  var p = {};
+  for (var j = 0; j < headers.length; j++) p[headers[j]] = row[j];
+  return { success: true, data: p };
+}
+
+function handleDeleteOrthopedicPatient(e) {
+  var id = e.parameter.id;
+  if (!id) return { success: false, error: 'Ortho ID required' };
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getOrthopedicPatientsSheet(ss);
+  var idx = findRowIndex(sheet, 'Ortho ID', id);
+  if (idx === -1) return { success: false, error: 'Orthopedic patient not found' };
   sheet.deleteRow(idx + 1);
   return { success: true };
 }
