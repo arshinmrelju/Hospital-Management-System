@@ -431,6 +431,50 @@
   box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
 }
 
+/* ================== TOPBAR BRAND (Mobile Header) ================== */
+.topbar-brand {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+.topbar-brand-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.topbar-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  min-width: 0;
+}
+.topbar-brand-title {
+  font-family: var(--font-head);
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.topbar-brand-sub {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--on-surface-var);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+@media (max-width: 900px) {
+  .topbar-brand {
+    display: flex;
+  }
+}
+
 /* ================== DOCTOR CELL ================== */
 .doctor-cell {
   display: flex;
