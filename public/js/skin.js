@@ -66,7 +66,7 @@ function renderSkinTable() {
       '<td data-label="Actions">' +
         '<button class="icon-btn" title="View" onclick="viewSkinPatient(\'' + esc(sid) + '\')"><span class="material-icons-round">visibility</span></button>' +
         '<button class="icon-btn" title="Edit" onclick="editSkinPatient(\'' + esc(sid) + '\')"><span class="material-icons-round">edit</span></button>' +
-        '<button class="icon-btn" title="Add to OPD" onclick="addSkinToOpd(this)" data-id="' + esc(sid) + '" data-name="' + esc(name) + '" data-age="' + esc(age) + '" data-contact="' + esc(p.contact || '') + '"><span class="material-icons-round">how_to_reg</span></button>' +
+        '<button class="icon-btn" title="Add to Skin OPD" onclick="addSkinToOpd(this)" data-id="' + esc(sid) + '" data-name="' + esc(name) + '" data-age="' + esc(age) + '" data-gender="' + esc(p.gender || '') + '" data-contact="' + esc(p.contact || '') + '" data-source="skin"><span class="material-icons-round" style="color:var(--accent-teal, #0891b2)">how_to_reg</span></button>' +
         '<button class="icon-btn danger" title="Delete" onclick="deleteSkinPatient(\'' + esc(sid) + '\')"><span class="material-icons-round">delete</span></button>' +
       '</td>' +
     '</tr>';

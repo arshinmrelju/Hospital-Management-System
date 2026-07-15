@@ -7,6 +7,7 @@
 
 let OPD_RECORDS = [];
 let filteredOpdRecords = null;
+let opdDimension = 'all';
 
 /* --- Export Tracker --- */
 const EXPORTED_IDS_KEY = 'hms_exported_patient_ids';
@@ -171,37 +172,56 @@ function renderOpdRecords() {
   const list = document.getElementById('opdList');
   if (!list) return;
 
-  const data = filteredOpdRecords || OPD_RECORDS;
+  var data = filteredOpdRecords || OPD_RECORDS;
+
+  if (opdDimension !== 'all') {
+    var dimLabel = opdDimension === 'skin' ? 'Skin' : 'General';
+    data = data.filter(function (r) { return (r.department || 'General') === dimLabel; });
+  }
 
   if (data.length === 0) {
     list.innerHTML = '<p style="text-align:center;padding:20px;color:var(--outline);font-size:0.85rem">No OPD records found for this time span.</p>';
     return;
   }
 
-  list.innerHTML = `<table class="data-table">
-    <thead>
-      <tr>
-        <th>SI No</th>
-        <th>Patient Id</th>
-        <th>Name</th>
-        <th>Age</th>
-        <th>Sex</th>
-        <th>Phone Number</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${data.map((p, i) => `
-        <tr>
-          <td>${i + 1}</td>
-          <td>${p.op_no || p.patient_id || p.id || '—'}</td>
-          <td><strong>${p.name}</strong></td>
-          <td>${p.age}</td>
-          <td>${p.gender || '—'}</td>
-          <td>${p.contact || '—'}</td>
-        </tr>
-      `).join('')}
-    </tbody>
-  </table>`;
+  list.innerHTML = '<table class="data-table">' +
+    '<thead><tr>' +
+      '<th>SI No</th>' +
+      '<th>Patient Id</th>' +
+      '<th>Name</th>' +
+      '<th>Age</th>' +
+      '<th>Sex</th>' +
+      '<th>Phone Number</th>' +
+      '<th>Department</th>' +
+    '</tr></thead><tbody>' +
+    data.map(function (p, i) {
+      var deptBadge = '';
+      if (p.department === 'Skin') {
+        deptBadge = '<span class="badge-status mild" style="background:var(--accent-teal-bg,rgba(8,145,178,0.15));color:var(--accent-teal,#0891b2);font-size:.7rem">Skin</span>';
+      } else if (p.department === 'Consultation') {
+        deptBadge = '<span class="badge-status" style="background:var(--surface-mid);font-size:.7rem">Consultation</span>';
+      } else {
+        deptBadge = '<span class="badge-status" style="font-size:.7rem">General</span>';
+      }
+      return '<tr>' +
+        '<td>' + (i + 1) + '</td>' +
+        '<td>' + (p.op_no || p.patient_id || p.id || '—') + '</td>' +
+        '<td><strong>' + (p.name || '') + '</strong></td>' +
+        '<td>' + (p.age || '') + '</td>' +
+        '<td>' + (p.gender || '—') + '</td>' +
+        '<td>' + (p.contact || '—') + '</td>' +
+        '<td>' + deptBadge + '</td>' +
+      '</tr>';
+    }).join('') +
+    '</tbody></table>';
+}
+
+function setOpdDimension(dim) {
+  opdDimension = dim;
+  document.querySelectorAll('.sf-dim-chip').forEach(function (c) { c.classList.remove('active'); });
+  var chip = document.querySelector('.sf-dim-chip[data-dim="' + dim + '"]');
+  if (chip) chip.classList.add('active');
+  renderOpdRecords();
 }
 
 /* --- Filter OPD Records --- */
@@ -244,6 +264,10 @@ function clearOpdQueueFilter() {
   document.getElementById('opdEndDate').value = '';
   document.getElementById('opdEndTime').value = '';
   filteredOpdRecords = null;
+  opdDimension = 'all';
+  document.querySelectorAll('.sf-dim-chip').forEach(function (c) { c.classList.remove('active'); });
+  var allChip = document.querySelector('.sf-dim-chip[data-dim="all"]');
+  if (allChip) allChip.classList.add('active');
   renderOpdRecords();
 
   const badge = document.getElementById('opdResultBadge');
@@ -263,7 +287,8 @@ window.addToOpdRegister = function(btn) {
     gender: btn.getAttribute('data-gender') || '',
     blood: btn.getAttribute('data-blood') || 'Unknown',
     op: btn.getAttribute('data-op') || '',
-    contact: btn.getAttribute('data-contact') || ''
+    contact: btn.getAttribute('data-contact') || '',
+    source: btn.getAttribute('data-source') || ''
   };
 
   var nameEl = document.getElementById('opdAssignName');
@@ -311,8 +336,9 @@ function submitOpdAssign() {
 
   var now = new Date();
   var timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  var isSkin = patient.source === 'skin';
   var record = {
-    id: 'OPD-' + Date.now(),
+    id: isSkin ? 'SKIN-OPD-' + Date.now() : 'OPD-' + Date.now(),
     patient_id: patient.id || patient.op || '',
     name: patient.name || '',
     age: patient.age || 'N/A',
@@ -320,6 +346,7 @@ function submitOpdAssign() {
     contact: patient.contact || '',
     op_no: patient.op || '',
     doctor: doctor,
+    department: isSkin ? 'Skin' : 'General',
     complaint: '—',
     time: timeStr,
     timestamp: now.toISOString()
@@ -336,7 +363,7 @@ function submitOpdAssign() {
     doctor_name: doctor,
     appointment_date: now.toISOString().split('T')[0],
     appointment_time: timeStr,
-    type: 'OPD',
+    type: isSkin ? 'Skin OPD' : 'OPD',
     status: 'waiting',
     reason: ''
   }).catch(function (e) {
@@ -395,7 +422,7 @@ async function loadOpdRecords() {
     const appointments = (response && response.success) ? (response.data || []) : [];
     var patientLookup = window.allPatients || [];
     OPD_RECORDS = appointments
-      .filter(a => a.type === 'OPD' || a.type === 'OPD Consultation')
+      .filter(a => a.type === 'OPD' || a.type === 'OPD Consultation' || a.type === 'Skin OPD')
       .map((a, i) => {
         var name = a.patient_name || a.patientName || '';
         var age = a.patient_age || a.patientAge || a.age || '';
@@ -427,6 +454,7 @@ async function loadOpdRecords() {
           contact: (match2 ? patientContact(match2) : a.phone || a.contact || ''),
           op_no: (match2 ? (match2.op_no || match2['Hosp. OP No'] || match2['OP No'] || '') : ''),
           doctor: doctor,
+          department: a.type === 'Skin OPD' ? 'Skin' : (a.type === 'OPD Consultation' ? 'Consultation' : 'General'),
           complaint: a.reason || a.complaint || '—',
           time: a.appointment_time || a.time || '—',
           timestamp: a.createdAt || a.appointment_date || new Date().toISOString()

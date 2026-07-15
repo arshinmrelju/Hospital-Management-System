@@ -474,6 +474,11 @@
                       <span class="material-icons-round" style="font-size:13px">date_range</span> Custom
                     </button>
                   </div>
+                  <div class="sf-chips" style="margin-top:4px;border-top:1px solid var(--surface-mid);padding-top:6px">
+                    <button class="sf-chip sf-dim-chip active" data-dim="all" onclick="setOpdDimension('all')">All</button>
+                    <button class="sf-chip sf-dim-chip" data-dim="general" onclick="setOpdDimension('general')">General OPD</button>
+                    <button class="sf-chip sf-dim-chip" data-dim="skin" onclick="setOpdDimension('skin')">Skin OPD</button>
+                  </div>
                   <span class="sf-result-badge" id="opdResultBadge">
                     <span class="material-icons-round">people</span>
                     <span id="opdResultCount">0 patients</span>
