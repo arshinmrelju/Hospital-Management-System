@@ -83,13 +83,10 @@ window.addSkinToOpd = function(btn) {
 };
 
 function generateNextSkinId() {
-  var maxNum = 3800;
-  (allSkinPatients || []).forEach(function(p) {
-    var val = String(p.skin_id || p.id || '');
-    var num = parseInt(val.replace(/[^0-9]/g, ''), 10);
-    if (!isNaN(num) && num > maxNum) maxNum = num;
-  });
-  return String(maxNum + 1);
+  var next = parseInt(localStorage.getItem('hms_skin_next_id') || '3801', 10);
+  if (isNaN(next) || next < 3801) next = 3801;
+  localStorage.setItem('hms_skin_next_id', String(next + 1));
+  return String(next);
 }
 
 function validateSkinInput(data) {

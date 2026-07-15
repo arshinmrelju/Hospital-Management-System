@@ -616,13 +616,10 @@ window.API = {
       var now = new Date();
       var skinId = data.skin_id || '';
       if (!skinId) {
-        var maxNum = 3800;
-        local.forEach(function(p) {
-          var val = p['Skin ID'] || p.skin_id || p.id || '';
-          var num = parseInt(val.replace(/[^0-9]/g, ''), 10);
-          if (!isNaN(num) && num > maxNum) maxNum = num;
-        });
-        skinId = String(maxNum + 1);
+        var nextId = parseInt(localStorage.getItem('hms_skin_next_id') || '3801', 10);
+        if (isNaN(nextId) || nextId < 3801) nextId = 3801;
+        localStorage.setItem('hms_skin_next_id', String(nextId + 1));
+        skinId = String(nextId);
       }
       var newPatient = window.API.normalizeSkinPatient({
         'Skin ID': skinId,
