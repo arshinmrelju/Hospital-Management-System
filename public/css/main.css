@@ -819,7 +819,8 @@ select.loading option {
 .filter-bar .filter-bar-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: space-between;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
@@ -857,16 +858,21 @@ select.loading option {
 
 .filter-chips {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
+  align-items: center;
   flex: 1;
+  min-width: 0;
+  padding-right: 12px;
+  border-right: 1.5px solid var(--outline-var);
+  margin-right: 4px;
 }
 
 .chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 14px;
+  padding: 6px 16px;
   border-radius: var(--radius-full);
   background: var(--surface-low);
   border: 1.5px solid var(--outline-var);
@@ -875,17 +881,20 @@ select.loading option {
   color: var(--on-surface-var);
   transition: all 0.15s;
   white-space: nowrap;
+  cursor: pointer;
 }
 
 .chip:hover {
   border-color: var(--primary-light);
   color: var(--primary-light);
+  background: var(--primary-soft);
 }
 
 .chip.active {
   background: var(--primary-soft);
   border-color: var(--primary-light);
   color: var(--primary-light);
+  font-weight: 700;
 }
 
 .filter-select {
@@ -1501,6 +1510,9 @@ select.loading option {
     flex-wrap: nowrap;
     -webkit-overflow-scrolling: touch;
     padding-bottom: 4px;
+    border-right: none;
+    padding-right: 0;
+    margin-right: 0;
   }
   .chip {
     flex: 0 0 auto;
@@ -1670,7 +1682,19 @@ select.loading option {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Vertical divider between chip groups */
+.sf-divider {
+  width: 1.5px;
+  height: 22px;
+  background: var(--outline-var);
+  border-radius: 2px;
+  flex-shrink: 0;
+  margin: 0 2px;
 }
 
 .sf-label {
@@ -1694,8 +1718,14 @@ select.loading option {
 .sf-chips {
   display: flex;
   gap: 6px;
-  flex-wrap: wrap;
-  flex: 1;
+  flex-wrap: nowrap;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Dimension chip group (All / General OPD / Skin OPD) */
+.sf-dim-chips {
+  flex-shrink: 0;
 }
 
 .sf-chip {
