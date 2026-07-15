@@ -24,6 +24,13 @@ function doGet(e) {
   else if (action === 'createAppointment') result = handleCreateAppointment(e);
   else if (action === 'updateAppointment') result = handleUpdateAppointment(e);
   else if (action === 'deleteAppointment') result = handleDeleteAppointment(e);
+  else if (action === 'getMessages') result = handleGetMessages(e);
+  else if (action === 'createMessage') result = handleCreateMessage(e);
+  else if (action === 'getSkinPatients') result = handleGetSkinPatients(e);
+  else if (action === 'getSkinPatient') result = handleGetSkinPatient(e);
+  else if (action === 'createSkinPatient') result = handleCreateSkinPatient(e);
+  else if (action === 'updateSkinPatient') result = handleUpdateSkinPatient(e);
+  else if (action === 'deleteSkinPatient') result = handleDeleteSkinPatient(e);
 
   var output = JSON.stringify(result);
   if (cb) output = cb + '(' + output + ')';
@@ -638,6 +645,157 @@ function handleDeleteDepartment(e) {
   var sheet = getDepartmentsSheet(ss);
   var idx = findRowIndex(sheet, 'id', id);
   if (idx === -1) return { success: false, error: 'Department not found' };
+  sheet.deleteRow(idx + 1);
+  return { success: true };
+}
+
+/* ─── BROADCAST MESSAGES ─── */
+
+var EXPECTED_BROADCAST_HEADERS = ['id', 'title', 'message', 'sender', 'status', 'createdAt', 'target'];
+
+function getMessagesSheet(ss) {
+  var sheet = getOrCreateSheet(ss, 'Broadcasts', EXPECTED_BROADCAST_HEADERS);
+  var existing = sheet.getDataRange().getValues();
+  if (existing.length > 0 && existing[0].length < EXPECTED_BROADCAST_HEADERS.length) {
+    sheet.getRange(1, existing[0].length + 1, 1, EXPECTED_BROADCAST_HEADERS.length - existing[0].length)
+        .setValues([EXPECTED_BROADCAST_HEADERS.slice(existing[0].length)]);
+  }
+  return sheet;
+}
+
+function handleGetMessages(e) {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getMessagesSheet(ss);
+  var data = sheetToObjects(sheet);
+  return { success: true, data: data };
+}
+
+function handleCreateMessage(e) {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getMessagesSheet(ss);
+  var headers = sheet.getDataRange().getValues()[0];
+  var now = new Date();
+  var id = 'MSG' + String(now.getTime()).slice(-8);
+  var message = {
+    id: id,
+    title: e.parameter.title || '',
+    message: e.parameter.message || '',
+    sender: e.parameter.sender || 'Developer',
+    status: e.parameter.status || 'active',
+    target: e.parameter.target || 'all',
+    createdAt: now.toISOString()
+  };
+  appendRowToSheet(sheet, message, headers);
+  return { success: true, data: message };
+}
+
+function handleDeleteMessage(e) {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getMessagesSheet(ss);
+  var idx = findRowIndex(sheet, 'id', e.parameter.id);
+  if (idx === -1) return { success: false, error: 'Message not found' };
+  sheet.deleteRow(idx + 1);
+  return { success: true };
+}
+
+/* ─── SKIN PATIENTS ─── */
+
+var SKIN_PATIENT_HEADERS = ['Skin ID', 'Patient Name', 'Age', 'Gender', 'Contact', 'Skin Type', 'Condition', 'Body Area', 'Severity', 'Allergies', 'Treatment', 'Notes', 'Created On'];
+
+function getSkinPatientsSheet(ss) {
+  return getOrCreateSheet(ss, 'SkinPatients', SKIN_PATIENT_HEADERS);
+}
+
+function handleGetSkinPatients(e) {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getSkinPatientsSheet(ss);
+  var data = sheetToObjects(sheet);
+  return { success: true, data: data };
+}
+
+function handleGetSkinPatient(e) {
+  var id = e.parameter.id;
+  if (!id) return { success: false, error: 'Skin ID required' };
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getSkinPatientsSheet(ss);
+  var rows = sheet.getDataRange().getValues();
+  var headers = rows[0];
+  var idCol = headers.indexOf('Skin ID');
+  if (idCol === -1) return { success: false, error: 'Skin ID column not found' };
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][idCol]) === String(id)) {
+      var p = {};
+      for (var j = 0; j < headers.length; j++) p[headers[j]] = rows[i][j];
+      return { success: true, data: p };
+    }
+  }
+  return { success: false, error: 'Skin patient not found' };
+}
+
+function handleCreateSkinPatient(e) {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getSkinPatientsSheet(ss);
+  var headers = sheet.getDataRange().getValues()[0];
+  var now = new Date();
+  var patient = {
+    'Skin ID': e.parameter.skin_id || '',
+    'Patient Name': e.parameter.patient_name || '',
+    'Age': e.parameter.age || '',
+    'Gender': e.parameter.gender || '',
+    'Contact': e.parameter.contact || '',
+    'Skin Type': e.parameter.skin_type || '',
+    'Condition': e.parameter.condition || '',
+    'Body Area': e.parameter.body_area || '',
+    'Severity': e.parameter.severity || 'Mild',
+    'Allergies': e.parameter.allergies || '',
+    'Treatment': e.parameter.treatment || '',
+    'Notes': e.parameter.notes || '',
+    'Created On': Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd')
+  };
+  appendRowToSheet(sheet, patient, headers);
+  return { success: true, data: patient };
+}
+
+function handleUpdateSkinPatient(e) {
+  var id = e.parameter.id;
+  if (!id) return { success: false, error: 'Skin ID required' };
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getSkinPatientsSheet(ss);
+  var allData = sheet.getDataRange().getValues();
+  var headers = allData[0];
+  var idCol = headers.indexOf('Skin ID');
+  if (idCol === -1) return { success: false, error: 'Skin ID column not found' };
+  var idx = -1;
+  for (var i = 1; i < allData.length; i++) {
+    if (String(allData[i][idCol]) === String(id)) { idx = i; break; }
+  }
+  if (idx === -1) return { success: false, error: 'Skin patient not found' };
+  var row = allData[idx];
+  var map = {
+    'skin_id': 'Skin ID', 'patient_name': 'Patient Name', 'age': 'Age',
+    'gender': 'Gender', 'contact': 'Contact', 'skin_type': 'Skin Type',
+    'condition': 'Condition', 'body_area': 'Body Area', 'severity': 'Severity',
+    'allergies': 'Allergies', 'treatment': 'Treatment', 'notes': 'Notes'
+  };
+  for (var key in map) {
+    if (e.parameter[key] !== undefined) {
+      var col = headers.indexOf(map[key]);
+      if (col >= 0) row[col] = e.parameter[key];
+    }
+  }
+  sheet.getRange(idx + 1, 1, 1, headers.length).setValues([row]);
+  var p = {};
+  for (var j = 0; j < headers.length; j++) p[headers[j]] = row[j];
+  return { success: true, data: p };
+}
+
+function handleDeleteSkinPatient(e) {
+  var id = e.parameter.id;
+  if (!id) return { success: false, error: 'Skin ID required' };
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getSkinPatientsSheet(ss);
+  var idx = findRowIndex(sheet, 'Skin ID', id);
+  if (idx === -1) return { success: false, error: 'Skin patient not found' };
   sheet.deleteRow(idx + 1);
   return { success: true };
 }

@@ -11,11 +11,12 @@ var AUTH_DURATION_MS = 12 * 60 * 60 * 1000;
 
 window.HMS = {
   isAuthenticated() {
+    var VALID_CODES = ['WMP01', 'WMPAD01', 'WMPDEV01'];
     var stored = localStorage.getItem('hms_auth');
     if (!stored) return false;
     try {
       var parsed = JSON.parse(stored);
-      if (parsed.code === 'WMP01' && Date.now() - parsed.timestamp < AUTH_DURATION_MS) {
+      if (VALID_CODES.indexOf(parsed.code) !== -1 && Date.now() - parsed.timestamp < AUTH_DURATION_MS) {
         return true;
       }
     } catch (_) {}
@@ -457,6 +458,9 @@ function initGlobalSearch() {
     if (pageSection && pageSection.id === 'page-patients') {
       var patientSearch = document.getElementById('patientSearch');
       if (patientSearch) { patientSearch.value = q; patientSearch.dispatchEvent(new Event('input')); toast('Filtering patients for "' + q + '"', 'info', 'search'); }
+    } else if (pageSection && pageSection.id === 'page-skin') {
+      var skinSearch = document.getElementById('skinSearch');
+      if (skinSearch) { skinSearch.value = q; skinSearch.dispatchEvent(new Event('input')); toast('Filtering skin registry for "' + q + '"', 'info', 'search'); }
     } else {
       toast('Searching for "' + q + '" in patient registry...', 'info', 'search');
       switchPage('patients');
@@ -535,9 +539,14 @@ window.populateDepartmentSelects = function() {
   });
 };
 
+window.populateSkinDropdowns = function() {
+  // Skin dropdowns are static HTML; no dynamic population needed.
+};
+
 window.populateAllDropdowns = function() {
   if (typeof window.populateDepartmentSelects === 'function') window.populateDepartmentSelects();
   if (typeof window.populateDoctorDropdowns === 'function') window.populateDoctorDropdowns();
+  if (typeof window.populateSkinDropdowns === 'function') window.populateSkinDropdowns();
 };
 
 window.populateDoctorDropdowns = function() {
@@ -586,6 +595,9 @@ window.switchPage = function(page) {
   if (navItem) navItem.classList.add('active');
   if (page === 'patients' && typeof initPatientsPage === 'function') {
     initPatientsPage();
+  }
+  if (page === 'skin' && typeof initSkinPage === 'function') {
+    initSkinPage();
   }
 };
 

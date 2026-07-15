@@ -1,6 +1,6 @@
 'use strict';
 
-var SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbzEbmUnbE4Wut_PG9QeJSpZhzLD9BDyD_HCGsaiqzySjzppN2DcVYHFv26uZLFGIXDLbQ/exec';
+var SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbxGUPU1wpL1SyagZ1pXX47No1qY3EoQQAj2RNFobyv9U_kB1zMcsQL-6VtP5WA140hfQQ/exec';
 
 var _patientsCache = null;
 var _appointmentsCache = null;
@@ -533,6 +533,156 @@ window.API = {
       } else {
         return { success: true, data: [], fallback: true };
       }
+    });
+  },
+
+  getMessages: function() {
+    return sheetsFetch({ action: 'getMessages' }).then(function(resp) {
+      if (resp.success && resp.data) {
+        return resp;
+      }
+      return { success: true, data: [], fallback: true };
+    });
+  },
+
+  createMessage: function(data) {
+    var q = { action: 'createMessage' };
+    ['title','message','sender','status','target'].forEach(function(k) {
+      if (data[k]) q[k] = data[k];
+    });
+    return sheetsFetch(q);
+  },
+
+  deleteMessage: function(id) {
+    return sheetsFetch({ action: 'deleteMessage', id: id });
+  },
+
+  /* ─── SKIN PATIENTS ─── */
+
+  _skinPatientsCache: null,
+
+  normalizeSkinPatient: function(p) {
+    p.id = p['Skin ID'] || p.skin_id || '';
+    p.skin_id = p.id;
+    p.patient_name = p['Patient Name'] || p.patient_name || '';
+    p.age = p['Age'] || p.age || '';
+    p.gender = p['Gender'] || p.gender || '';
+    p.contact = p['Contact'] || p.contact || '';
+    p.skin_type = p['Skin Type'] || p.skin_type || '';
+    p.condition = p['Condition'] || p.condition || '';
+    p.body_area = p['Body Area'] || p.body_area || '';
+    p.severity = p['Severity'] || p.severity || 'Mild';
+    p.allergies = p['Allergies'] || p.allergies || '';
+    p.treatment = p['Treatment'] || p.treatment || '';
+    p.notes = p['Notes'] || p.notes || '';
+    p.created_on = p['Created On'] || p.created_on || '';
+    return p;
+  },
+
+  getSkinPatients: function() {
+    return sheetsFetch({ action: 'getSkinPatients' }).then(function(resp) {
+      if (resp.success && resp.data) {
+        resp.data = resp.data.map(window.API.normalizeSkinPatient);
+        window.API._skinPatientsCache = resp.data;
+        setLocalData('skinPatients', resp.data);
+        return resp;
+      }
+      console.warn('Using LocalStorage skin patients fallback.');
+      var local = getLocalData('skinPatients') || [];
+      window.API._skinPatientsCache = local.map(window.API.normalizeSkinPatient);
+      return { success: true, data: window.API._skinPatientsCache, fallback: true };
+    });
+  },
+
+  getSkinPatient: function(id) {
+    return sheetsFetch({ action: 'getSkinPatient', id: id }).then(function(resp) {
+      if (resp.success && resp.data) {
+        resp.data = window.API.normalizeSkinPatient(resp.data);
+        return resp;
+      }
+      var local = getLocalData('skinPatients') || [];
+      var found = local.filter(function(p) { return String(p['Skin ID'] || p.skin_id || p.id) === String(id); });
+      if (found.length > 0) return { success: true, data: window.API.normalizeSkinPatient(found[0]), fallback: true };
+      return { success: false, error: 'Skin patient not found' };
+    });
+  },
+
+  createSkinPatient: function(data) {
+    var q = { action: 'createSkinPatient' };
+    ['skin_id','patient_name','age','gender','contact','skin_type','condition','body_area','severity','allergies','treatment','notes'].forEach(function(k) {
+      if (data[k]) q[k] = data[k];
+    });
+    return sheetsFetch(q).then(function(resp) {
+      if (resp.success) {
+        return resp;
+      }
+      var local = getLocalData('skinPatients') || [];
+      var now = new Date();
+      var newPatient = window.API.normalizeSkinPatient({
+        'Skin ID': data.skin_id || '',
+        'Patient Name': data.patient_name || '',
+        'Age': data.age || '',
+        'Gender': data.gender || '',
+        'Contact': data.contact || '',
+        'Skin Type': data.skin_type || '',
+        'Condition': data.condition || '',
+        'Body Area': data.body_area || '',
+        'Severity': data.severity || 'Mild',
+        'Allergies': data.allergies || '',
+        'Treatment': data.treatment || '',
+        'Notes': data.notes || '',
+        'Created On': now.toISOString().split('T')[0]
+      });
+      local.push(newPatient);
+      setLocalData('skinPatients', local);
+      return { success: true, data: newPatient, fallback: true };
+    });
+  },
+
+  updateSkinPatient: function(id, data) {
+    var q = { action: 'updateSkinPatient', id: id };
+    for (var k in data) {
+      if (data.hasOwnProperty(k)) q[k] = data[k];
+    }
+    return sheetsFetch(q).then(function(resp) {
+      if (resp.success) {
+        return resp;
+      }
+      var local = getLocalData('skinPatients') || [];
+      var idx = -1;
+      for (var i = 0; i < local.length; i++) {
+        var pid = local[i]['Skin ID'] || local[i].skin_id || local[i].id || '';
+        if (String(pid) === String(id)) { idx = i; break; }
+      }
+      if (idx >= 0) {
+        for (var key in data) {
+          if (data.hasOwnProperty(key)) {
+            local[idx][key] = data[key];
+          }
+        }
+        setLocalData('skinPatients', local);
+        return { success: true, data: window.API.normalizeSkinPatient(local[idx]), fallback: true };
+      }
+      return { success: false, error: 'Skin patient not found' };
+    });
+  },
+
+  deleteSkinPatient: function(id) {
+    return sheetsFetch({ action: 'deleteSkinPatient', id: id }).then(function(resp) {
+      if (resp.success) {
+        return resp;
+      }
+      var local = getLocalData('skinPatients') || [];
+      var originalLength = local.length;
+      local = local.filter(function(p) {
+        var pid = p['Skin ID'] || p.skin_id || p.id || '';
+        return String(pid) !== String(id);
+      });
+      if (local.length < originalLength) {
+        setLocalData('skinPatients', local);
+        return { success: true, fallback: true };
+      }
+      return { success: false, error: 'Skin patient not found' };
     });
   }
 };

@@ -508,6 +508,21 @@ select.loading option {
   color: #6B7280;
 }
 
+.badge-status.mild {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.badge-status.moderate {
+  background: rgba(245, 158, 11, 0.12);
+  color: #D97706;
+}
+
+.badge-status.severe {
+  background: rgba(239, 68, 68, 0.12);
+  color: #DC2626;
+}
+
 .status-dot {
   width: 8px;
   height: 8px;
