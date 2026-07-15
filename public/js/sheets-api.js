@@ -568,6 +568,8 @@ window.API = {
     p.age = p['Age'] || p.age || '';
     p.gender = p['Gender'] || p.gender || '';
     p.contact = p['Contact'] || p.contact || '';
+    p.place = p['Place'] || p.place || '';
+    p.notes = p['Notes'] || p.notes || '';
     p.last_visit = p['Last Visit'] || p.last_visit || '';
     p.created_on = p['Created On'] || p.created_on || '';
     return p;
@@ -603,7 +605,7 @@ window.API = {
 
   createSkinPatient: function(data) {
     var q = { action: 'createSkinPatient' };
-    ['skin_id','patient_name','age','gender','contact'].forEach(function(k) {
+    ['skin_id','patient_name','age','gender','contact','place','notes'].forEach(function(k) {
       if (data[k]) q[k] = data[k];
     });
     return sheetsFetch(q).then(function(resp) {
@@ -612,12 +614,24 @@ window.API = {
       }
       var local = getLocalData('skinPatients') || [];
       var now = new Date();
+      var skinId = data.skin_id || '';
+      if (!skinId) {
+        var maxNum = 0;
+        local.forEach(function(p) {
+          var val = p['Skin ID'] || p.skin_id || p.id || '';
+          var num = parseInt(val.replace(/[^0-9]/g, ''), 10);
+          if (!isNaN(num) && num > maxNum) maxNum = num;
+        });
+        skinId = 'SKIN-' + String(maxNum + 1).padStart(5, '0');
+      }
       var newPatient = window.API.normalizeSkinPatient({
-        'Skin ID': data.skin_id || '',
+        'Skin ID': skinId,
         'Patient Name': data.patient_name || '',
         'Age': data.age || '',
         'Gender': data.gender || '',
         'Contact': data.contact || '',
+        'Place': data.place || '',
+        'Notes': data.notes || '',
         'Last Visit': data.last_visit || now.toISOString().split('T')[0],
         'Created On': now.toISOString().split('T')[0]
       });

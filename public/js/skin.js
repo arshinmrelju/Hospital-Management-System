@@ -82,9 +82,18 @@ window.addSkinToOpd = function(btn) {
   }
 };
 
+function generateNextSkinId() {
+  var maxNum = 0;
+  (allSkinPatients || []).forEach(function(p) {
+    var val = p.skin_id || p.id || '';
+    var num = parseInt(val.replace(/[^0-9]/g, ''), 10);
+    if (!isNaN(num) && num > maxNum) maxNum = num;
+  });
+  return 'SKIN-' + String(maxNum + 1).padStart(5, '0');
+}
+
 function validateSkinInput(data) {
   const errors = [];
-  if (!data.skin_id || data.skin_id.trim().length < 1) errors.push('Skin ID is required');
   if (!data.patient_name || data.patient_name.trim().length < 1) errors.push('Patient name is required');
   if (data.age && (isNaN(data.age) || data.age < 0 || data.age > 150)) errors.push('Invalid age');
   if (data.contact && data.contact.length > 50) errors.push('Contact too long');
@@ -166,7 +175,9 @@ function viewSkinPatient(id) {
       '<div class="form-group"><label>Age</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">' + esc(p.age) + ' years</div></div>' +
       '<div class="form-group"><label>Gender</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">' + esc(p.gender) + '</div></div>' +
       '<div class="form-group"><label>Contact</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">' + esc(p.contact) + '</div></div>' +
+      '<div class="form-group"><label>Place</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">' + esc(p.place || '—') + '</div></div>' +
       '<div class="form-group"><label>Last Visit</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">' + skinFormatDate(p.last_visit) + '</div></div>' +
+      '<div class="form-group" style="grid-column:1/-1"><label>Notes</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">' + esc(p.notes || '—') + '</div></div>' +
       '<div class="form-group"><label>Registered On</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">' + (p.created_on || '—') + '</div></div>' +
     '</div>' +
     '<div style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end">' +
@@ -185,7 +196,9 @@ function editSkinPatient(id) {
   document.getElementById('editSkinAge').value = p.age || '';
   document.getElementById('editSkinGender').value = p.gender || '';
   document.getElementById('editSkinContact').value = p.contact || '';
+  if (document.getElementById('editSkinPlace')) document.getElementById('editSkinPlace').value = p.place || '';
   if (document.getElementById('editSkinLastVisit')) document.getElementById('editSkinLastVisit').value = p.last_visit || '';
+  if (document.getElementById('editSkinNotes')) document.getElementById('editSkinNotes').value = p.notes || '';
   openModal('editSkinModal');
 }
 
@@ -197,9 +210,11 @@ async function submitEditSkinPatient(e) {
     age: document.getElementById('editSkinAge').value,
     gender: document.getElementById('editSkinGender').value,
     contact: document.getElementById('editSkinContact').value.replace(/<[^>]*>/g, '').trim(),
+    place: document.getElementById('editSkinPlace')?.value.replace(/<[^>]*>/g, '').trim() || '',
     last_visit: document.getElementById('editSkinLastVisit')?.value || '',
+    notes: document.getElementById('editSkinNotes')?.value.replace(/<[^>]*>/g, '').trim() || '',
   };
-  const errors = validateSkinInput({ skin_id: id, ...raw });
+  const errors = validateSkinInput(raw);
   if (errors.length > 0) { toast(errors.join('. '), 'error'); return; }
   const submitBtn = e.target.querySelector('button[type="submit"]');
   setButtonLoading(submitBtn, 'Saving...');
@@ -304,20 +319,22 @@ function initSkinPage() {
 
 function openAddSkinModal() {
   document.getElementById('addSkinForm').reset();
-  document.getElementById('addSkinLastVisit').value = new Date().toISOString().split('T')[0];
+  document.getElementById('addSkinIdDisplay').value = generateNextSkinId();
   openModal('addSkinModal');
 }
 window.openAddSkinModal = openAddSkinModal;
 
 async function submitAddSkin(e) {
   e.preventDefault();
+  var skinId = document.getElementById('addSkinIdDisplay').value.replace(/<[^>]*>/g, '').trim();
   const raw = {
-    skin_id: document.getElementById('addSkinId').value.replace(/<[^>]*>/g, '').trim(),
+    skin_id: skinId,
     patient_name: document.getElementById('addSkinPatientName').value.replace(/<[^>]*>/g, '').trim(),
     age: document.getElementById('addSkinAge').value,
     gender: document.getElementById('addSkinGender').value,
     contact: document.getElementById('addSkinContact').value.replace(/<[^>]*>/g, '').trim(),
-    last_visit: document.getElementById('addSkinLastVisit').value,
+    place: document.getElementById('addSkinPlace').value.replace(/<[^>]*>/g, '').trim(),
+    notes: document.getElementById('addSkinNotes').value.replace(/<[^>]*>/g, '').trim(),
   };
   const errors = validateSkinInput(raw);
   if (errors.length > 0) { toast(errors.join('. '), 'error'); return; }
@@ -325,14 +342,17 @@ async function submitAddSkin(e) {
   setButtonLoading(submitBtn, 'Registering...');
   try {
     const result = await window.API.createSkinPatient(raw);
+    var returnedId = (result.data && (result.data.skin_id || result.data.id)) || skinId;
     const newP = {
-      skin_id: raw.skin_id,
-      id: raw.skin_id,
+      skin_id: returnedId,
+      id: returnedId,
       patient_name: raw.patient_name,
       age: raw.age,
       gender: raw.gender,
       contact: raw.contact || '',
-      last_visit: raw.last_visit || new Date().toISOString().slice(0,10),
+      place: raw.place || '',
+      notes: raw.notes || '',
+      last_visit: new Date().toISOString().slice(0,10),
       created_on: new Date().toISOString().slice(0,10),
     };
     allSkinPatients.unshift(newP);
@@ -341,7 +361,7 @@ async function submitAddSkin(e) {
     applySkinFilters();
     closeModal(null, 'addSkinModal');
     document.getElementById('addSkinForm').reset();
-    toast('Skin patient ' + raw.patient_name + ' registered! ID: ' + raw.skin_id, 'success');
+    toast('Skin patient ' + raw.patient_name + ' registered! ID: ' + returnedId, 'success');
   } catch (err) {
     toast('Failed to register: ' + err.message, 'error');
   }

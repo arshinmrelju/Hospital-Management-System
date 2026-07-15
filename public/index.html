@@ -713,9 +713,6 @@
           <button class="btn-primary" onclick="openAddSkinModal()">
             <span class="material-icons-round">person_add</span> Add Skin Patient
           </button>
-          <button class="btn-secondary" onclick="refreshSkinPatients()" title="Refresh">
-            <span class="material-icons-round">refresh</span>
-          </button>
         </div>
       </div>
 
@@ -1074,18 +1071,19 @@
         <button class="modal-close" onclick="closeModal(null,'addSkinModal')"><span class="material-icons-round">close</span></button>
       </div>
       <form id="addSkinForm" class="modal-form" onsubmit="submitAddSkin(event)">
-        <div class="form-group"><label>Skin ID *</label><input type="text" id="addSkinId" placeholder="Enter existing Skin ID" required /></div>
+        <div class="form-group"><label>Skin ID</label><input type="text" id="addSkinIdDisplay" readonly style="background:var(--surface-low);color:var(--primary-light);font-weight:600" /></div>
+        <div class="form-group"><label>Patient Name *</label><input type="text" id="addSkinPatientName" required /></div>
         <div class="form-row-2">
-          <div class="form-group"><label>Patient Name *</label><input type="text" id="addSkinPatientName" required /></div>
           <div class="form-group"><label>Age</label><input type="number" id="addSkinAge" min="0" max="150" /></div>
-        </div>
-        <div class="form-row-2">
           <div class="form-group"><label>Gender</label>
             <select id="addSkinGender"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select>
           </div>
-          <div class="form-group"><label>Contact</label><input type="tel" id="addSkinContact" /></div>
         </div>
-        <div class="form-group"><label>Last Visit</label><input type="date" id="addSkinLastVisit" /></div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Contact</label><input type="tel" id="addSkinContact" /></div>
+          <div class="form-group"><label>Place</label><input type="text" id="addSkinPlace" placeholder="City / Area" /></div>
+        </div>
+        <div class="form-group"><label>Notes</label><textarea id="addSkinNotes" rows="2" style="resize:vertical"></textarea></div>
         <div class="modal-footer">
           <button type="button" class="btn-secondary" onclick="closeModal(null,'addSkinModal')">Cancel</button>
           <button type="submit" class="btn-primary">Register Skin Patient</button>
@@ -1113,7 +1111,11 @@
           </div>
           <div class="form-group"><label>Contact</label><input type="tel" id="editSkinContact" /></div>
         </div>
-        <div class="form-group"><label>Last Visit</label><input type="date" id="editSkinLastVisit" /></div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Place</label><input type="text" id="editSkinPlace" /></div>
+          <div class="form-group"><label>Last Visit</label><input type="date" id="editSkinLastVisit" /></div>
+        </div>
+        <div class="form-group"><label>Notes</label><textarea id="editSkinNotes" rows="2" style="resize:vertical"></textarea></div>
         <div class="modal-footer">
           <button type="button" class="btn-secondary" onclick="closeModal(null,'editSkinModal')">Cancel</button>
           <button type="submit" class="btn-primary">Save Changes</button>

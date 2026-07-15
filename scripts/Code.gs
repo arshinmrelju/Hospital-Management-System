@@ -705,7 +705,7 @@ function handleDeleteMessage(e) {
 
 /* ─── SKIN PATIENTS ─── */
 
-var SKIN_PATIENT_HEADERS = ['Skin ID', 'Patient Name', 'Age', 'Gender', 'Contact', 'Last Visit', 'Created On'];
+var SKIN_PATIENT_HEADERS = ['Skin ID', 'Patient Name', 'Age', 'Gender', 'Contact', 'Place', 'Notes', 'Last Visit', 'Created On'];
 
 function getSkinPatientsSheet(ss) {
   return getOrCreateSheet(ss, 'SkinPatients', SKIN_PATIENT_HEADERS);
@@ -740,14 +740,28 @@ function handleGetSkinPatient(e) {
 function handleCreateSkinPatient(e) {
   var ss = SpreadsheetApp.openById(SHEET_ID);
   var sheet = getSkinPatientsSheet(ss);
-  var headers = sheet.getDataRange().getValues()[0];
+  var allData = sheet.getDataRange().getValues();
+  var headers = allData[0];
   var now = new Date();
+  var skinId = e.parameter.skin_id || '';
+  if (!skinId) {
+    var maxNum = 0;
+    var idCol = headers.indexOf('Skin ID');
+    for (var i = 1; i < allData.length; i++) {
+      var val = String(allData[i][idCol] || '');
+      var num = parseInt(val.replace(/[^0-9]/g, ''), 10);
+      if (!isNaN(num) && num > maxNum) maxNum = num;
+    }
+    skinId = 'SKIN-' + String(maxNum + 1).padStart(5, '0');
+  }
   var patient = {
-    'Skin ID': e.parameter.skin_id || '',
+    'Skin ID': skinId,
     'Patient Name': e.parameter.patient_name || '',
     'Age': e.parameter.age || '',
     'Gender': e.parameter.gender || '',
     'Contact': e.parameter.contact || '',
+    'Place': e.parameter.place || '',
+    'Notes': e.parameter.notes || '',
     'Last Visit': e.parameter.last_visit || Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd'),
     'Created On': Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd')
   };
@@ -772,7 +786,8 @@ function handleUpdateSkinPatient(e) {
   var row = allData[idx];
   var map = {
     'skin_id': 'Skin ID', 'patient_name': 'Patient Name', 'age': 'Age',
-    'gender': 'Gender', 'contact': 'Contact', 'last_visit': 'Last Visit'
+    'gender': 'Gender', 'contact': 'Contact', 'place': 'Place',
+    'notes': 'Notes', 'last_visit': 'Last Visit'
   };
   for (var key in map) {
     if (e.parameter[key] !== undefined) {
