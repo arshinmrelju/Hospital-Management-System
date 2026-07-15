@@ -83,8 +83,13 @@ window.addSkinToOpd = function(btn) {
 };
 
 function generateNextSkinId() {
+  var existing = {};
+  (allSkinPatients || []).forEach(function(p) {
+    existing[String(p.skin_id || p.id || '')] = true;
+  });
   var next = parseInt(localStorage.getItem('hms_skin_next_id') || '3801', 10);
   if (isNaN(next) || next < 3801) next = 3801;
+  while (existing[String(next)]) next++;
   localStorage.setItem('hms_skin_next_id', String(next + 1));
   return String(next);
 }
