@@ -525,6 +525,7 @@ window.populateDepartmentSelects = function() {
       var sel = document.getElementById(id);
       if (!sel) return;
       var currentVal = sel.value;
+      if (id === 'pDept' && !currentVal) currentVal = 'General Practitioner';
       var defaultLabel = id === 'deptFilter' ? 'All Departments' : 'Select';
       sel.innerHTML = '<option value="">' + defaultLabel + '</option>';
       deptNames.forEach(function(n) {
