@@ -568,13 +568,6 @@ window.API = {
     p.age = p['Age'] || p.age || '';
     p.gender = p['Gender'] || p.gender || '';
     p.contact = p['Contact'] || p.contact || '';
-    p.skin_type = p['Skin Type'] || p.skin_type || '';
-    p.condition = p['Condition'] || p.condition || '';
-    p.body_area = p['Body Area'] || p.body_area || '';
-    p.severity = p['Severity'] || p.severity || 'Mild';
-    p.allergies = p['Allergies'] || p.allergies || '';
-    p.treatment = p['Treatment'] || p.treatment || '';
-    p.notes = p['Notes'] || p.notes || '';
     p.created_on = p['Created On'] || p.created_on || '';
     return p;
   },
@@ -609,7 +602,7 @@ window.API = {
 
   createSkinPatient: function(data) {
     var q = { action: 'createSkinPatient' };
-    ['skin_id','patient_name','age','gender','contact','skin_type','condition','body_area','severity','allergies','treatment','notes'].forEach(function(k) {
+    ['skin_id','patient_name','age','gender','contact'].forEach(function(k) {
       if (data[k]) q[k] = data[k];
     });
     return sheetsFetch(q).then(function(resp) {
@@ -624,13 +617,6 @@ window.API = {
         'Age': data.age || '',
         'Gender': data.gender || '',
         'Contact': data.contact || '',
-        'Skin Type': data.skin_type || '',
-        'Condition': data.condition || '',
-        'Body Area': data.body_area || '',
-        'Severity': data.severity || 'Mild',
-        'Allergies': data.allergies || '',
-        'Treatment': data.treatment || '',
-        'Notes': data.notes || '',
         'Created On': now.toISOString().split('T')[0]
       });
       local.push(newPatient);

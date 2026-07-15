@@ -719,38 +719,6 @@
           <span class="material-icons-round" style="font-size:18px;color:var(--outline)">search</span>
           <input type="text" id="skinSearch" class="filter-search-input" placeholder="Search by Skin ID, name or contact…" oninput="filterSkinPatients()" />
         </div>
-        <div class="filter-bar-row">
-          <div class="filter-selects">
-            <select id="skinTypeFilter" onchange="filterSkinPatients()" class="filter-select">
-              <option value="">All Skin Types</option>
-              <option>Dry</option>
-              <option>Oily</option>
-              <option>Combination</option>
-              <option>Sensitive</option>
-              <option>Normal</option>
-            </select>
-            <select id="skinConditionFilter" onchange="filterSkinPatients()" class="filter-select">
-              <option value="">All Conditions</option>
-              <option value="acne">Acne</option>
-              <option value="eczema">Eczema</option>
-              <option value="psoriasis">Psoriasis</option>
-              <option value="rash">Rash</option>
-              <option value="fungal">Fungal Infection</option>
-              <option value="vitiligo">Vitiligo</option>
-              <option value="dermatitis">Dermatitis</option>
-              <option value="hives">Hives/Urticaria</option>
-              <option value="warts">Warts</option>
-              <option value="melasma">Melasma</option>
-              <option value="other">Other</option>
-            </select>
-            <select id="skinSeverityFilter" onchange="filterSkinPatients()" class="filter-select">
-              <option value="">All Severity</option>
-              <option>Mild</option>
-              <option>Moderate</option>
-              <option>Severe</option>
-            </select>
-          </div>
-        </div>
       </div>
 
       <div class="widget glass-card table-widget">
@@ -760,10 +728,6 @@
               <tr>
                 <th class="sortable" onclick="skinSortCol='skin_id';skinSortDir=skinSortDir===1?-1:1;applySkinFilters()">Skin ID <span class="material-icons-round">unfold_more</span></th>
                 <th class="sortable" onclick="skinSortCol='patient_name';skinSortDir=skinSortDir===1?-1:1;applySkinFilters()">Name <span class="material-icons-round">unfold_more</span></th>
-                <th>Skin Type</th>
-                <th>Condition</th>
-                <th>Body Area</th>
-                <th>Severity</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -1113,25 +1077,7 @@
           </div>
           <div class="form-group"><label>Contact</label><input type="tel" id="addSkinContact" /></div>
         </div>
-        <div class="form-row-2">
-          <div class="form-group"><label>Skin Type</label>
-            <select id="addSkinType"><option value="">Select</option><option>Dry</option><option>Oily</option><option>Combination</option><option>Sensitive</option><option>Normal</option></select>
-          </div>
-          <div class="form-group"><label>Condition</label>
-            <select id="addSkinCondition"><option value="">Select</option><option value="acne">Acne</option><option value="eczema">Eczema</option><option value="psoriasis">Psoriasis</option><option value="rash">Rash</option><option value="fungal">Fungal Infection</option><option value="vitiligo">Vitiligo</option><option value="dermatitis">Dermatitis</option><option value="hives">Hives/Urticaria</option><option value="warts">Warts</option><option value="melasma">Melasma</option><option value="other">Other</option></select>
-          </div>
-        </div>
-        <div class="form-row-2">
-          <div class="form-group"><label>Body Area</label>
-            <select id="addSkinBodyArea"><option value="">Select</option><option>Face</option><option>Scalp</option><option>Arms</option><option>Legs</option><option>Back</option><option>Chest</option><option>Abdomen</option><option>Hands</option><option>Feet</option><option>Neck</option><option>Full Body</option><option>Other</option></select>
-          </div>
-          <div class="form-group"><label>Severity</label>
-            <select id="addSkinSeverity"><option value="Mild">Mild</option><option value="Moderate" selected>Moderate</option><option value="Severe">Severe</option></select>
-          </div>
-        </div>
-        <div class="form-group"><label>Allergies / Sensitivities</label><input type="text" id="addSkinAllergies" placeholder="E.g., Niacinamide, Retinol, Fragrance…" /></div>
-        <div class="form-group"><label>Treatment Prescribed</label><textarea id="addSkinTreatment" rows="2" placeholder="Prescribed medications, procedures…"></textarea></div>
-        <div class="form-group"><label>Notes</label><textarea id="addSkinNotes" rows="2" placeholder="Additional notes…"></textarea></div>
+
         <div class="modal-footer">
           <button type="button" class="btn-secondary" onclick="closeModal(null,'addSkinModal')">Cancel</button>
           <button type="submit" class="btn-primary">Register Skin Patient</button>
@@ -1159,25 +1105,7 @@
           </div>
           <div class="form-group"><label>Contact</label><input type="tel" id="editSkinContact" /></div>
         </div>
-        <div class="form-row-2">
-          <div class="form-group"><label>Skin Type</label>
-            <select id="editSkinType"><option value="">Select</option><option>Dry</option><option>Oily</option><option>Combination</option><option>Sensitive</option><option>Normal</option></select>
-          </div>
-          <div class="form-group"><label>Condition</label>
-            <select id="editSkinCondition"><option value="">Select</option><option value="acne">Acne</option><option value="eczema">Eczema</option><option value="psoriasis">Psoriasis</option><option value="rash">Rash</option><option value="fungal">Fungal Infection</option><option value="vitiligo">Vitiligo</option><option value="dermatitis">Dermatitis</option><option value="hives">Hives/Urticaria</option><option value="warts">Warts</option><option value="melasma">Melasma</option><option value="other">Other</option></select>
-          </div>
-        </div>
-        <div class="form-row-2">
-          <div class="form-group"><label>Body Area</label>
-            <select id="editSkinBodyArea"><option value="">Select</option><option>Face</option><option>Scalp</option><option>Arms</option><option>Legs</option><option>Back</option><option>Chest</option><option>Abdomen</option><option>Hands</option><option>Feet</option><option>Neck</option><option>Full Body</option><option>Other</option></select>
-          </div>
-          <div class="form-group"><label>Severity</label>
-            <select id="editSkinSeverity"><option value="Mild">Mild</option><option value="Moderate">Moderate</option><option value="Severe">Severe</option></select>
-          </div>
-        </div>
-        <div class="form-group"><label>Allergies / Sensitivities</label><input type="text" id="editSkinAllergies" /></div>
-        <div class="form-group"><label>Treatment Prescribed</label><textarea id="editSkinTreatment" rows="2"></textarea></div>
-        <div class="form-group"><label>Notes</label><textarea id="editSkinNotes" rows="2"></textarea></div>
+
         <div class="modal-footer">
           <button type="button" class="btn-secondary" onclick="closeModal(null,'editSkinModal')">Cancel</button>
           <button type="submit" class="btn-primary">Save Changes</button>

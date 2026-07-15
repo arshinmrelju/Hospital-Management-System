@@ -705,7 +705,7 @@ function handleDeleteMessage(e) {
 
 /* ─── SKIN PATIENTS ─── */
 
-var SKIN_PATIENT_HEADERS = ['Skin ID', 'Patient Name', 'Age', 'Gender', 'Contact', 'Skin Type', 'Condition', 'Body Area', 'Severity', 'Allergies', 'Treatment', 'Notes', 'Created On'];
+var SKIN_PATIENT_HEADERS = ['Skin ID', 'Patient Name', 'Age', 'Gender', 'Contact', 'Created On'];
 
 function getSkinPatientsSheet(ss) {
   return getOrCreateSheet(ss, 'SkinPatients', SKIN_PATIENT_HEADERS);
@@ -748,13 +748,6 @@ function handleCreateSkinPatient(e) {
     'Age': e.parameter.age || '',
     'Gender': e.parameter.gender || '',
     'Contact': e.parameter.contact || '',
-    'Skin Type': e.parameter.skin_type || '',
-    'Condition': e.parameter.condition || '',
-    'Body Area': e.parameter.body_area || '',
-    'Severity': e.parameter.severity || 'Mild',
-    'Allergies': e.parameter.allergies || '',
-    'Treatment': e.parameter.treatment || '',
-    'Notes': e.parameter.notes || '',
     'Created On': Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd')
   };
   appendRowToSheet(sheet, patient, headers);
@@ -778,9 +771,7 @@ function handleUpdateSkinPatient(e) {
   var row = allData[idx];
   var map = {
     'skin_id': 'Skin ID', 'patient_name': 'Patient Name', 'age': 'Age',
-    'gender': 'Gender', 'contact': 'Contact', 'skin_type': 'Skin Type',
-    'condition': 'Condition', 'body_area': 'Body Area', 'severity': 'Severity',
-    'allergies': 'Allergies', 'treatment': 'Treatment', 'notes': 'Notes'
+    'gender': 'Gender', 'contact': 'Contact'
   };
   for (var key in map) {
     if (e.parameter[key] !== undefined) {

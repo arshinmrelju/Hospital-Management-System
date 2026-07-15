@@ -33,19 +33,8 @@ let allSkinPatients = []; window.allSkinPatients = allSkinPatients;
 let filteredSkinPatients = [];
 let skinCurrentPage = 1;
 const SKIN_ROWS_PER_PAGE = 10;
-let skinActiveFilter = 'all';
 let skinSortCol = null, skinSortDir = 1;
 var _skinInitialized = false;
-
-function getSkinConditionLabel(val) {
-  var labels = {
-    'acne': 'Acne', 'eczema': 'Eczema', 'psoriasis': 'Psoriasis',
-    'rash': 'Rash', 'fungal': 'Fungal Infection', 'vitiligo': 'Vitiligo',
-    'dermatitis': 'Dermatitis', 'hives': 'Hives/Urticaria', 'warts': 'Warts',
-    'melasma': 'Melasma', 'other': 'Other'
-  };
-  return labels[val] || val;
-}
 
 function renderSkinTable() {
   const tbody = document.getElementById('skinTableBody');
@@ -53,25 +42,16 @@ function renderSkinTable() {
   const start = (skinCurrentPage - 1) * SKIN_ROWS_PER_PAGE;
   const pageItems = filteredSkinPatients.slice(start, start + SKIN_ROWS_PER_PAGE);
   if (pageItems.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--on-surface-var)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px;color:var(--outline-var)">search_off</span>No skin patients found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--on-surface-var)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px;color:var(--outline-var)">search_off</span>No skin patients found</td></tr>';
     return;
   }
   tbody.innerHTML = pageItems.map(p => {
     var sid = p.skin_id || p.id || '';
     var name = p.patient_name || '';
     var age = p.age || '';
-    var stype = p.skin_type || '';
-    var cond = getSkinConditionLabel(p.condition) || p.condition || '';
-    var area = p.body_area || '';
-    var sev = p.severity || '';
-    var sevClass = (sev || '').toLowerCase();
     return '<tr>' +
       '<td data-label="Skin ID"><code style="font-size:.78rem;background:var(--surface-mid);padding:2px 6px;border-radius:4px;color:var(--primary-light)">' + esc(sid) + '</code></td>' +
       '<td data-label="Name"><strong>' + esc(name) + '</strong><br><span style="font-size:.72rem;color:var(--on-surface-var)">' + esc(age) + ' yrs</span></td>' +
-      '<td data-label="Skin Type">' + esc(stype) + '</td>' +
-      '<td data-label="Condition">' + esc(cond) + '</td>' +
-      '<td data-label="Body Area">' + esc(area) + '</td>' +
-      '<td data-label="Severity"><span class="badge-status ' + sevClass + '">' + esc(sev) + '</span></td>' +
       '<td data-label="Actions">' +
         '<button class="icon-btn" title="View" onclick="viewSkinPatient(\'' + esc(sid) + '\')"><span class="material-icons-round">visibility</span></button>' +
         '<button class="icon-btn" title="Edit" onclick="editSkinPatient(\'' + esc(sid) + '\')"><span class="material-icons-round">edit</span></button>' +
@@ -93,18 +73,12 @@ function validateSkinInput(data) {
 
 function applySkinFilters() {
   const search = (document.getElementById('skinSearch')?.value || '').toLowerCase();
-  const typeFilter = document.getElementById('skinTypeFilter')?.value || '';
-  const conditionFilter = document.getElementById('skinConditionFilter')?.value || '';
-  const severityFilter = document.getElementById('skinSeverityFilter')?.value || '';
 
   filteredSkinPatients = allSkinPatients.filter(p => {
     const pid = p.skin_id || p.id || '';
     const name = p.patient_name || '';
     const haystack = (pid + ' ' + name + ' ' + (p.contact || '')).toLowerCase();
     if (search && !haystack.includes(search)) return false;
-    if (typeFilter && (p.skin_type || '') !== typeFilter) return false;
-    if (conditionFilter && (p.condition || '') !== conditionFilter) return false;
-    if (severityFilter && (p.severity || '') !== severityFilter) return false;
     return true;
   });
 
@@ -125,14 +99,6 @@ function filterSkinPatients() {
   applySkinFilters();
 }
 window.filterSkinPatients = filterSkinPatients;
-
-function setSkinFilter(btn, filter) {
-  document.querySelectorAll('.skin-chip').forEach(c => c.classList.remove('active'));
-  btn.classList.add('active');
-  skinActiveFilter = filter;
-  applySkinFilters();
-}
-window.setSkinFilter = setSkinFilter;
 
 function updateSkinPagination() {
   const total = filteredSkinPatients.length;
@@ -180,13 +146,6 @@ function viewSkinPatient(id) {
       '<div class="form-group"><label>Age</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">' + esc(p.age) + ' years</div></div>' +
       '<div class="form-group"><label>Gender</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">' + esc(p.gender) + '</div></div>' +
       '<div class="form-group"><label>Contact</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">' + esc(p.contact) + '</div></div>' +
-      '<div class="form-group"><label>Skin Type</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">' + esc(p.skin_type) + '</div></div>' +
-      '<div class="form-group"><label>Condition</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">' + esc(getSkinConditionLabel(p.condition) || p.condition) + '</div></div>' +
-      '<div class="form-group"><label>Body Area</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">' + esc(p.body_area) + '</div></div>' +
-      '<div class="form-group"><label>Severity</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)"><span class="badge-status ' + (p.severity || '').toLowerCase() + '">' + esc(p.severity) + '</span></div></div>' +
-      '<div class="form-group"><label>Allergies</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">' + (p.allergies ? esc(p.allergies) : '<span style="color:var(--outline)">None</span>') + '</div></div>' +
-      '<div class="form-group" style="grid-column:1/-1"><label>Treatment</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">' + (p.treatment ? esc(p.treatment) : '<span style="color:var(--outline)">Not specified</span>') + '</div></div>' +
-      '<div class="form-group" style="grid-column:1/-1"><label>Notes</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">' + (p.notes ? esc(p.notes) : '<span style="color:var(--outline)">No notes</span>') + '</div></div>' +
       '<div class="form-group"><label>Registered On</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">' + (p.created_on || '—') + '</div></div>' +
     '</div>' +
     '<div style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end">' +
@@ -205,13 +164,6 @@ function editSkinPatient(id) {
   document.getElementById('editSkinAge').value = p.age || '';
   document.getElementById('editSkinGender').value = p.gender || '';
   document.getElementById('editSkinContact').value = p.contact || '';
-  document.getElementById('editSkinType').value = p.skin_type || '';
-  document.getElementById('editSkinCondition').value = p.condition || '';
-  document.getElementById('editSkinBodyArea').value = p.body_area || '';
-  document.getElementById('editSkinSeverity').value = p.severity || 'Mild';
-  document.getElementById('editSkinAllergies').value = p.allergies || '';
-  document.getElementById('editSkinTreatment').value = p.treatment || '';
-  document.getElementById('editSkinNotes').value = p.notes || '';
   openModal('editSkinModal');
 }
 
@@ -223,13 +175,6 @@ async function submitEditSkinPatient(e) {
     age: document.getElementById('editSkinAge').value,
     gender: document.getElementById('editSkinGender').value,
     contact: document.getElementById('editSkinContact').value.replace(/<[^>]*>/g, '').trim(),
-    skin_type: document.getElementById('editSkinType').value,
-    condition: document.getElementById('editSkinCondition').value,
-    body_area: document.getElementById('editSkinBodyArea').value,
-    severity: document.getElementById('editSkinSeverity').value,
-    allergies: document.getElementById('editSkinAllergies').value.replace(/<[^>]*>/g, '').trim(),
-    treatment: document.getElementById('editSkinTreatment').value.replace(/<[^>]*>/g, '').trim(),
-    notes: document.getElementById('editSkinNotes').value.replace(/<[^>]*>/g, '').trim(),
   };
   const errors = validateSkinInput({ skin_id: id, ...raw });
   if (errors.length > 0) { toast(errors.join('. '), 'error'); return; }
@@ -294,10 +239,6 @@ async function loadSkinPatients(skipCache) {
       skeletonHTML += '<tr class="skeleton-row">' +
         '<td><div class="skeleton-cell" style="width:60px;"></div></td>' +
         '<td><div class="skeleton-cell" style="width:120px;"></div></td>' +
-        '<td><div class="skeleton-cell" style="width:70px;"></div></td>' +
-        '<td><div class="skeleton-cell" style="width:80px;"></div></td>' +
-        '<td><div class="skeleton-cell" style="width:80px;"></div></td>' +
-        '<td><div class="skeleton-cell" style="width:60px;height:22px;border-radius:12px;"></div></td>' +
         '<td><div style="display:flex;gap:6px;">' +
           '<div class="skeleton-cell" style="width:30px;height:30px;border-radius:6px;"></div>' +
           '<div class="skeleton-cell" style="width:30px;height:30px;border-radius:6px;"></div>' +
@@ -318,7 +259,7 @@ async function loadSkinPatients(skipCache) {
     console.error('Failed to load skin patients:', e);
     if (!hasRenderedCache && _skinInitialized) {
       if (typeof toast === 'function') toast('Could not load skin patients: ' + (e.message || e), 'error');
-      if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--error,#ef4444)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px">error_outline</span>Failed to load<br><button class="btn-secondary" style="margin-top:12px" onclick="loadSkinPatients()">Retry</button></td></tr>';
+      if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--error,#ef4444)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px">error_outline</span>Failed to load<br><button class="btn-secondary" style="margin-top:12px" onclick="loadSkinPatients()">Retry</button></td></tr>';
       allSkinPatients = [];
       window.allSkinPatients = allSkinPatients;
     }
@@ -348,13 +289,6 @@ async function submitAddSkin(e) {
     age: document.getElementById('addSkinAge').value,
     gender: document.getElementById('addSkinGender').value,
     contact: document.getElementById('addSkinContact').value.replace(/<[^>]*>/g, '').trim(),
-    skin_type: document.getElementById('addSkinType').value,
-    condition: document.getElementById('addSkinCondition').value,
-    body_area: document.getElementById('addSkinBodyArea').value,
-    severity: document.getElementById('addSkinSeverity').value,
-    allergies: document.getElementById('addSkinAllergies').value.replace(/<[^>]*>/g, '').trim(),
-    treatment: document.getElementById('addSkinTreatment').value.replace(/<[^>]*>/g, '').trim(),
-    notes: document.getElementById('addSkinNotes').value.replace(/<[^>]*>/g, '').trim(),
   };
   const errors = validateSkinInput(raw);
   if (errors.length > 0) { toast(errors.join('. '), 'error'); return; }
@@ -369,13 +303,6 @@ async function submitAddSkin(e) {
       age: raw.age,
       gender: raw.gender,
       contact: raw.contact || '',
-      skin_type: raw.skin_type,
-      condition: raw.condition,
-      body_area: raw.body_area,
-      severity: raw.severity || 'Mild',
-      allergies: raw.allergies || '',
-      treatment: raw.treatment || '',
-      notes: raw.notes || '',
       created_on: new Date().toISOString().slice(0,10),
     };
     allSkinPatients.unshift(newP);
