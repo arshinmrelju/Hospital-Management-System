@@ -315,14 +315,36 @@ window.addToOpdRegister = function(btn) {
 function populateAssignDoctor() {
   var sel = document.getElementById('opdAssignDoctor');
   if (!sel) return;
-  sel.innerHTML = '<option value="">Loading doctors...</option>';
-  window.API.getDoctors().then(function(resp) {
-    var docs = (resp && resp.data) || [];
-    sel.innerHTML = '<option value="">Select Doctor</option>' +
-      docs.map(function(d) {
-        return '<option value="' + window.esc(d.name || d.id) + '">' + window.esc(d.name) + ' (' + window.esc(d.dept) + ')</option>';
-      }).join('');
-  });
+  var defaultDoctor = (_opdAssignPatient && _opdAssignPatient.source === 'skin') ? 'Dr. Ashok' : 'Dr. Sofiya';
+  var docs = getCachedDoctors();
+  if (docs) {
+    renderDoctorOptions(sel, docs, defaultDoctor);
+  } else {
+    sel.innerHTML = '<option value="">Loading doctors...</option>';
+    window.API.getDoctors().then(function(resp) {
+      renderDoctorOptions(sel, (resp && resp.data) || [], defaultDoctor);
+    });
+  }
+}
+
+function renderDoctorOptions(sel, docs, selectedName) {
+  sel.innerHTML = '<option value="">Select Doctor</option>' +
+    docs.map(function(d) {
+      var val = window.esc(d.name || d.id);
+      var match = selectedName && d.name && d.name.trim().toLowerCase().includes(selectedName.trim().toLowerCase().replace(/^dr\.?\s*/i, ''));
+      if (!match && selectedName && d.name) {
+        match = selectedName.trim().toLowerCase().includes(d.name.trim().toLowerCase());
+      }
+      return '<option value="' + val + '"' + (match ? ' selected' : '') + '>' + window.esc(d.name) + ' (' + window.esc(d.dept) + ')</option>';
+    }).join('');
+}
+
+function getCachedDoctors() {
+  try {
+    return window.API.getCachedDoctors ? window.API.getCachedDoctors() : null;
+  } catch (e) {
+    return null;
+  }
 }
 
 function submitOpdAssign() {

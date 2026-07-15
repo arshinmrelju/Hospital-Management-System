@@ -4,6 +4,39 @@ var SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbxJISKokZ3KzPXU7MG
 
 var _patientsCache = null;
 var _appointmentsCache = null;
+var _doctorsCache = null;
+var _doctorsCacheTime = 0;
+var DOCTORS_CACHE_TTL = 5 * 60 * 1000;
+var DOCTORS_CACHE_KEY = 'hms_doctors_cache';
+
+function _loadDoctorsCache() {
+  try {
+    var raw = localStorage.getItem(DOCTORS_CACHE_KEY);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      if (parsed.data && parsed.timestamp && (Date.now() - parsed.timestamp < DOCTORS_CACHE_TTL)) {
+        _doctorsCache = parsed.data;
+        _doctorsCacheTime = parsed.timestamp;
+      }
+    }
+  } catch (e) {}
+}
+_loadDoctorsCache();
+
+function _saveDoctorsCache(data) {
+  _doctorsCache = data;
+  _doctorsCacheTime = Date.now();
+  try {
+    localStorage.setItem(DOCTORS_CACHE_KEY, JSON.stringify({ data: data, timestamp: _doctorsCacheTime }));
+  } catch (e) {}
+}
+
+function _clearDoctorsCache() {
+  _doctorsCache = null;
+  _doctorsCacheTime = 0;
+  try { localStorage.removeItem(DOCTORS_CACHE_KEY); } catch (e) {}
+}
+
 var _patientsTotal = 0;
 var _batchSize = 5000;
 var _patientsLoading = null;
@@ -456,8 +489,12 @@ window.API = {
   },
 
   getDoctors: function() {
+    if (_doctorsCache && (Date.now() - _doctorsCacheTime < DOCTORS_CACHE_TTL)) {
+      return Promise.resolve({ success: true, data: _doctorsCache, cached: true });
+    }
     return sheetsFetch({ action: 'getDoctors' }).then(function(resp) {
       if (resp.success && resp.data) {
+        _saveDoctorsCache(resp.data);
         return resp;
       } else {
         return { success: true, data: [
@@ -469,7 +506,12 @@ window.API = {
     });
   },
 
+  getCachedDoctors: function() {
+    return (_doctorsCache && (Date.now() - _doctorsCacheTime < DOCTORS_CACHE_TTL)) ? _doctorsCache : null;
+  },
+
   createDoctor: function(data) {
+    _clearDoctorsCache();
     var q = { action: 'createDoctor' };
     ['name','initials','dept','phone','email','qualification','status'].forEach(function(k) {
       if (data[k]) q[k] = data[k];
@@ -478,6 +520,7 @@ window.API = {
   },
 
   updateDoctor: function(id, data) {
+    _clearDoctorsCache();
     var q = { action: 'updateDoctor', id: id };
     for (var k in data) {
       if (data.hasOwnProperty(k)) q[k] = data[k];
@@ -486,6 +529,7 @@ window.API = {
   },
 
   deleteDoctor: function(id) {
+    _clearDoctorsCache();
     return sheetsFetch({ action: 'deleteDoctor', id: id });
   },
 
