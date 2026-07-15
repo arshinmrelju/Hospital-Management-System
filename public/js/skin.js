@@ -91,7 +91,7 @@ function padNum(n, len) {
 function generateNextSkinId() {
   var maxNum = 0;
   (allSkinPatients || []).forEach(function(p) {
-    var val = p.skin_id || p.id || '';
+    var val = String(p.skin_id || p.id || '');
     var num = parseInt(val.replace(/[^0-9]/g, ''), 10);
     if (!isNaN(num) && num > maxNum) maxNum = num;
   });
