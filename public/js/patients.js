@@ -664,6 +664,47 @@ async function submitAddPatient(e) {
     PatientCache.clear();
     applyFilters();
     if (typeof updateExportBadge === 'function') updateExportBadge();
+
+    // Auto-add to today's OPD
+    try {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+      const fullName = (raw.fname + ' ' + raw.lname).trim();
+      window.API.createAppointment({
+        patient_id: newP.op_no || newP.id,
+        patient_name: fullName,
+        name: fullName,
+        age: raw.age,
+        doctor_id: raw.doctor || '',
+        doctor_name: raw.doctor || '',
+        appointment_date: now.toISOString().split('T')[0],
+        appointment_time: timeStr,
+        type: 'OPD',
+        status: 'waiting',
+        reason: raw.notes || ''
+      }).then(function() {
+        if (typeof OPD_RECORDS !== 'undefined' && OPD_RECORDS !== null) {
+          OPD_RECORDS.push({
+            id: 'OPD-' + Date.now(),
+            patient_id: newP.op_no || newP.id,
+            name: fullName,
+            age: raw.age || 'N/A',
+            gender: raw.gender || '',
+            contact: raw.contact || '',
+            op_no: newP.op_no || newP.id,
+            doctor: raw.doctor || 'Unassigned',
+            complaint: raw.notes || '—',
+            time: timeStr,
+            timestamp: now.toISOString()
+          });
+          if (typeof renderOpdRecords === 'function') renderOpdRecords();
+          if (typeof updateStats === 'function') updateStats();
+        }
+      });
+    } catch (_e) {
+      console.warn('Auto-add to OPD failed:', _e);
+    }
+
     closeModal(null, 'addPatientModal');
     document.getElementById('addPatientForm').reset();
     toast(`Patient ${raw.fname} ${raw.lname} registered! OP No: ${newP.op_no || newP.id}`, 'success');
