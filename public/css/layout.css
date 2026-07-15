@@ -429,7 +429,7 @@
   }
   .main-content { margin-left: 0; }
   .menu-toggle { display: flex; }
-  .page-body { padding: 20px 16px 40px; }
+  .page-body { padding: 20px 10px 40px; }
   .notif-panel {
     right: 12px;
     width: 320px;
@@ -449,7 +449,7 @@
   .mobile-search-toggle { display: flex; }
   .page-header { flex-direction: column; }
   .page-title { font-size: 1.4rem; }
-  .page-body { padding: 14px 10px 32px; }
+  .page-body { padding: 14px 6px 32px; }
   .topbar-btn { padding: 10px; }
   .date-badge { font-size: 0.72rem; padding: 4px 10px; }
   .sidebar-nav { padding: 12px 8px; }
@@ -460,8 +460,8 @@
   .view-btn { padding: 8px 10px; }
 }
 @media (max-width: 400px) {
-  .page-body { padding: 10px 6px 24px; }
-  .topbar { padding: 0 6px; gap: 4px; }
+  .page-body { padding: 10px 2px 24px; }
+  .topbar { padding: 0 4px; gap: 4px; }
 }
 
 /* ================== TECHSIAH BRANDING ================== */
