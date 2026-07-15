@@ -366,7 +366,39 @@ async function submitAddSkin(e) {
     applySkinFilters();
     closeModal(null, 'addSkinModal');
     document.getElementById('addSkinForm').reset();
-    toast('Skin patient ' + raw.patient_name + ' registered! ID: ' + returnedId, 'success');
+
+    var now = new Date();
+    var timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    var opdRecord = {
+      id: 'SKIN-OPD-' + Date.now(),
+      patient_id: returnedId,
+      name: raw.patient_name,
+      age: raw.age || 'N/A',
+      gender: raw.gender || '',
+      contact: raw.contact || '',
+      op_no: returnedId,
+      doctor: 'Unassigned',
+      department: 'Skin',
+      complaint: '—',
+      time: timeStr,
+      timestamp: now.toISOString()
+    };
+    if (window.OPD_RECORDS) {
+      window.OPD_RECORDS.push(opdRecord);
+      if (typeof renderOpdRecords === 'function') renderOpdRecords();
+    }
+    window.API.createAppointment({
+      patient_id: returnedId,
+      patient_name: raw.patient_name,
+      name: raw.patient_name,
+      appointment_date: now.toISOString().split('T')[0],
+      appointment_time: timeStr,
+      type: 'Skin OPD',
+      status: 'waiting',
+      reason: ''
+    }).catch(function() {});
+
+    toast('Skin patient ' + raw.patient_name + ' registered! ID: ' + returnedId + ' — added to Skin OPD', 'success');
   } catch (err) {
     toast('Failed to register: ' + err.message, 'error');
   }

@@ -6,6 +6,7 @@
 'use strict';
 
 let OPD_RECORDS = [];
+window.OPD_RECORDS = OPD_RECORDS;
 let filteredOpdRecords = null;
 let opdDimension = 'all';
 

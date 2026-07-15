@@ -460,8 +460,8 @@
               </div>
               <!-- Smart Filter Bar -->
               <div class="smart-filter" id="opdSmartFilter">
-                <div class="smart-filter-top">
-                  <div class="sf-label">
+                <div class="smart-filter-top" style="display:flex; align-items:center; gap:12px;">
+                  <div class="sf-label" style="display:flex; align-items:center; gap:6px;">
                     <span class="material-icons-round">tune</span>
                     Filter Records
                   </div>
@@ -474,12 +474,13 @@
                       <span class="material-icons-round" style="font-size:13px">date_range</span> Custom
                     </button>
                   </div>
-                  <div class="sf-chips" style="margin-top:4px;border-top:1px solid var(--surface-mid);padding-top:6px">
+                  <div class="sf-divider"></div>
+                  <div class="sf-chips sf-dim-chips">
                     <button class="sf-chip sf-dim-chip active" data-dim="all" onclick="setOpdDimension('all')">All</button>
                     <button class="sf-chip sf-dim-chip" data-dim="general" onclick="setOpdDimension('general')">General OPD</button>
                     <button class="sf-chip sf-dim-chip" data-dim="skin" onclick="setOpdDimension('skin')">Skin OPD</button>
                   </div>
-                  <span class="sf-result-badge" id="opdResultBadge">
+                  <span class="sf-result-badge" id="opdResultBadge" style="margin-left:auto;">
                     <span class="material-icons-round">people</span>
                     <span id="opdResultCount">0 patients</span>
                   </span>
@@ -1274,9 +1275,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
   <script src="js/firebase-init.js?v=3"></script>
   <script src="js/app.js?v=3"></script>
-  <script src="js/reception-dashboard.js?v=3"></script>
+  <script src="js/reception-dashboard.js?v=4"></script>
   <script src="js/patients.js?v=3"></script>
-  <script src="js/skin.js?v=9"></script>
+  <script src="js/skin.js?v=10"></script>
   <script src="js/ortho.js?v=1"></script>
 </body>
 
