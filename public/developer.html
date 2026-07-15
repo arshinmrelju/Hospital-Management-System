@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Developer Console – Wellness Medicals HMS</title>
+  <link rel="icon" type="image/jpeg" href="assets/hms-logo.jpg">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0D9488">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="description" content="Developer console: system overview, contacts, and broadcast messaging." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" media="print" onload="this.media='all';this.onload=null" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/administration.css" />
+  <link rel="stylesheet" href="css/portals.css" />
+  <style>
+    .dev-tab-pane { display: none; }
+    .dev-tab-pane.active { display: block; }
+    .dev-page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .dev-page-header h1 {
+      font-family: var(--font-head);
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--on-surface);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .dev-page-header h1 .material-icons-round {
+      font-size: 28px;
+      color: var(--portal-accent);
+    }
+    .dev-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 1024px) {
+      .dev-grid { grid-template-columns: 1fr; }
+    }
+    .dev-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .dev-section-header h3 {
+      font-family: var(--font-head);
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--on-surface);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dev-section-header h3 .material-icons-round {
+      font-size: 20px;
+      color: var(--portal-accent);
+    }
+    .dev-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .dev-stat-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px 24px;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: var(--glass-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.22s;
+    }
+    .dev-stat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+    }
+    .dev-stat-icon-wrap {
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .dev-stat-icon-wrap .material-icons-round {
+      font-size: 26px;
+    }
+    .dev-stat-info { flex: 1; }
+    .dev-stat-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--on-surface-var);
+    }
+    .dev-stat-value {
+      font-size: 1.85rem;
+      font-weight: 800;
+      font-family: var(--font-head);
+      color: var(--on-surface);
+      margin-top: 2px;
+      line-height: 1.15;
+    }
+    .dev-stat-desc {
+      font-size: 0.72rem;
+      color: var(--outline);
+      margin-top: 4px;
+    }
+    #broadcastForm .form-group textarea {
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      padding: 10px 14px;
+      border: 1.5px solid var(--outline-var);
+      border-radius: var(--radius-md);
+      background: var(--surface-low);
+      color: var(--on-surface);
+      width: 100%;
+      box-sizing: border-box;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    #broadcastForm .form-group textarea:focus {
+      border-color: var(--portal-accent);
+      box-shadow: 0 0 0 3px var(--portal-accent-soft);
+      outline: none;
+    }
+    @media (max-width: 600px) {
+      .dev-section-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .dev-section-header .admin-search {
+        max-width: 100% !important;
+      }
+      .dev-stats {
+        grid-template-columns: 1fr;
+      }
+      .dev-stat-card {
+        padding: 14px 16px;
+      }
+      .dev-stat-value {
+        font-size: 1.4rem;
+      }
+      .dev-stat-icon-wrap {
+        width: 40px;
+        height: 40px;
+      }
+      .dev-stat-icon-wrap .material-icons-round {
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body class="app-body portal-reception">
+
+  <div id="pageLoader">
+    <div class="loader-glass">
+      <div class="loader-logo-wrap">
+        <div class="loader-logo-ring">
+          <img src="assets/hms-logo.jpg" alt="Wellness Medicals" />
+        </div>
+      </div>
+      <div class="loader-heartbeat">
+        <svg width="120" height="40" viewBox="0 0 120 40" fill="none">
+          <path class="heartbeat-path" d="M0 20 H40 L45 10 L50 30 L55 15 L60 25 L65 20 H120" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h2 class="loader-title">Wellness Medicals</h2>
+      <p class="loader-subtitle">Hospital Management System</p>
+      <p class="loader-msg" id="loaderMsg">Initializing developer console...</p>
+      <div class="loader-dots"><div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div></div>
+    </div>
+  </div>
+
+  <!-- Login Overlay -->
+  <div class="modal-overlay active" id="loginOverlay" style="background:linear-gradient(135deg, rgba(0,72,64,0.72) 0%, rgba(13,148,136,0.48) 100%);backdrop-filter:blur(18px);">
+    <div style="width:100%;max-width:400px;background:rgba(255,255,255,0.97);border-radius:28px;box-shadow:0 32px 80px rgba(30,58,138,0.28),0 0 0 1.5px rgba(59,130,246,0.18);overflow:hidden;animation:modalIn 0.36s cubic-bezier(0.34,1.56,0.64,1);">
+      <div style="background:linear-gradient(135deg, #00685f 0%, #0D9488 60%, #14b8a6 100%);padding:36px 32px 28px;text-align:center;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.06);pointer-events:none;"></div>
+        <div style="position:absolute;bottom:-20px;left:-20px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,0.05);pointer-events:none;"></div>
+        <div style="width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,0.15);border:3px solid rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 0 0 6px rgba(255,255,255,0.08);">
+          <img src="assets/hms-logo.jpg" alt="Wellness Medicals" style="width:64px;height:64px;border-radius:50%;object-fit:cover;display:block;" />
+        </div>
+        <h2 style="color:#fff;font-family:var(--font-head);font-size:1.25rem;font-weight:800;margin:0 0 4px;letter-spacing:-0.01em;">Wellness Medicals</h2>
+        <p style="color:rgba(255,255,255,0.78);font-size:0.82rem;margin:0;font-weight:500;">Developer · System Console</p>
+      </div>
+      <div style="padding:28px 32px 32px;">
+        <p style="text-align:center;font-size:0.82rem;color:var(--on-surface-var);margin:0 0 20px;line-height:1.5;">Enter your developer access code to continue.</p>
+        <form id="loginForm">
+          <div style="position:relative;margin-bottom:6px;">
+            <span class="material-icons-round" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--primary-light);pointer-events:none;">lock</span>
+            <input type="password" id="loginCodeInput" placeholder="● ● ● ● ● ● ●" autocomplete="off"
+              style="width:100%;background:var(--surface-low);border:2px solid var(--outline-var);border-radius:var(--radius-md);padding:13px 14px 13px 44px;font-size:1.15rem;text-align:left;letter-spacing:5px;font-weight:700;color:var(--on-surface);transition:border-color 0.2s,box-shadow 0.2s;box-sizing:border-box;"
+              onfocus="this.style.borderColor='#0D9488';this.style.boxShadow='0 0 0 3px rgba(13,148,136,0.15)'"
+              onblur="this.style.borderColor='var(--outline-var)';this.style.boxShadow='none'" />
+          </div>
+          <p id="loginError" style="display:none;color:#ef4444;font-size:0.78rem;font-weight:600;text-align:center;margin:8px 0 0;padding:8px 12px;background:rgba(239,68,68,0.08);border-radius:var(--radius-sm);"></p>
+          <button type="submit" id="loginBtn"
+            style="width:100%;margin-top:18px;background:linear-gradient(135deg,#00685f,#0D9488);color:#fff;border:none;border-radius:var(--radius-md);padding:14px 20px;font-family:var(--font-body);font-size:0.95rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 6px 24px rgba(13,148,136,0.35);transition:all 0.2s;letter-spacing:0.02em;"
+            onmouseover="this.style.background='linear-gradient(135deg,#005a52,#0c8076)';this.style.transform='translateY(-1px)';this.style.boxShadow='0 10px 32px rgba(13,148,136,0.45)'"
+            onmouseout="this.style.background='linear-gradient(135deg,#00685f,#0D9488)';this.style.transform='translateY(0)';this.style.boxShadow='0 6px 24px rgba(13,148,136,0.35)'">
+            <span class="material-icons-round" style="font-size:18px;">login</span>
+            Access Developer Console
+          </button>
+        </form>
+        <p style="text-align:center;margin:18px 0 0;font-size:0.72rem;color:var(--outline);">Wellness Medicals HMS · <span style="color:var(--primary-light);font-weight:600;">Developer</span></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img src="assets/hms-logo.jpg" alt="Wellness Medicals Logo" class="brand-icon" />
+      <div class="brand-text">
+        <span class="brand-title">Wellness</span>
+        <span class="brand-sub">Medicals HMS</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav">
+      <a href="#" class="nav-item active" id="nav-overview" onclick="switchDevTab('tab-overview', this);return false">
+        <span class="material-icons-round">dashboard</span>
+        <span class="nav-label">Overview</span>
+      </a>
+      <a href="#" class="nav-item" id="nav-broadcast" onclick="switchDevTab('tab-broadcast', this);return false">
+        <span class="material-icons-round">campaign</span>
+        <span class="nav-label">Broadcast</span>
+      </a>
+      <div class="nav-divider"></div>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="userAvatar">DV</div>
+      <div class="user-info">
+        <span class="user-name" id="sidebarUserName">Developer</span>
+        <span class="user-role" id="sidebarUserRole">Developer</span>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()" title="Logout">
+        <span class="material-icons-round">logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+        <span class="material-icons-round">menu</span>
+      </button>
+      <div class="topbar-brand">
+        <img src="assets/hms-logo.jpg" alt="Wellness Medicals" class="topbar-brand-icon" />
+        <div class="topbar-brand-text">
+          <span class="topbar-brand-title">Wellness Medicals</span>
+          <span class="topbar-brand-sub">Developer</span>
+        </div>
+      </div>
+      <div class="topbar-search" style="visibility:hidden;">
+        <span class="material-icons-round search-icon">search</span>
+        <input type="text" placeholder="Search..." />
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-avatar" id="topbarAvatar">DV</div>
+      </div>
+    </header>
+
+    <main class="page-body">
+
+      <!-- Announcements Bar -->
+      <div class="announcements-bar" id="announcementsBar" style="display:none;margin-bottom:20px">
+        <div class="announcements-header" onclick="toggleDevAnnouncements()">
+          <span class="material-icons-round">campaign</span>
+          <span id="devAnnouncementsTitle">Announcements</span>
+          <span class="material-icons-round toggle-icon">expand_less</span>
+        </div>
+        <div class="announcements-body" id="devAnnouncementsBody"></div>
+      </div>
+
+      <!-- Overview Tab -->
+      <div class="dev-tab-pane active" id="tab-overview">
+        <div class="dev-page-header">
+          <h1><span class="material-icons-round">dashboard</span> Developer Console</h1>
+          <span class="date-badge" id="todayDate"></span>
+        </div>
+
+        <div class="dev-stats">
+          <div class="dev-stat-card">
+            <div class="dev-stat-icon-wrap bg-green-soft">
+              <span class="material-icons-round text-green">local_hospital</span>
+            </div>
+            <div class="dev-stat-info">
+              <div class="dev-stat-label">Doctors</div>
+              <div class="dev-stat-value" id="statTotalDoctors">0</div>
+              <div class="dev-stat-desc">Medical staff</div>
+            </div>
+          </div>
+          <div class="dev-stat-card">
+            <div class="dev-stat-icon-wrap bg-purple-soft">
+              <span class="material-icons-round text-purple">business</span>
+            </div>
+            <div class="dev-stat-info">
+              <div class="dev-stat-label">Departments</div>
+              <div class="dev-stat-value" id="statTotalDepts">0</div>
+              <div class="dev-stat-desc">Service divisions</div>
+            </div>
+          </div>
+          <div class="dev-stat-card">
+            <div class="dev-stat-icon-wrap bg-blue-soft">
+              <span class="material-icons-round text-blue">campaign</span>
+            </div>
+            <div class="dev-stat-info">
+              <div class="dev-stat-label">Broadcasts Sent</div>
+              <div class="dev-stat-value" id="statTotalBroadcasts">0</div>
+              <div class="dev-stat-desc">Messages dispatched</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Broadcast Tab -->
+      <div class="dev-tab-pane" id="tab-broadcast">
+        <div class="dev-page-header">
+          <h1><span class="material-icons-round">campaign</span> Broadcast Messages</h1>
+        </div>
+
+        <div class="dev-stats">
+          <div class="dev-stat-card">
+            <div class="dev-stat-icon-wrap bg-teal-soft">
+              <span class="material-icons-round text-teal">send</span>
+            </div>
+            <div class="dev-stat-info">
+              <div class="dev-stat-label">Total Sent</div>
+              <div class="dev-stat-value" id="statBroadcastTotal">0</div>
+              <div class="dev-stat-desc">All broadcasts</div>
+            </div>
+          </div>
+          <div class="dev-stat-card">
+            <div class="dev-stat-icon-wrap bg-green-soft">
+              <span class="material-icons-round text-green">notifications_active</span>
+            </div>
+            <div class="dev-stat-info">
+              <div class="dev-stat-label">Active</div>
+              <div class="dev-stat-value" id="statBroadcastActive">0</div>
+              <div class="dev-stat-desc">Visible to users</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dev-grid">
+          <div class="widget glass-card">
+            <div class="dev-section-header">
+              <h3><span class="material-icons-round">add_circle</span> New Broadcast</h3>
+            </div>
+            <form id="broadcastForm" class="modal-form" onsubmit="submitBroadcast(event)" style="padding:0">
+              <div class="form-group">
+                <label>Title *</label>
+                <input type="text" id="broadcastTitle" placeholder="e.g. Holiday Notice" required />
+              </div>
+              <div class="form-group">
+                <label>Message *</label>
+                <textarea id="broadcastMessage" rows="4" placeholder="Type your broadcast message here..." required style="resize:vertical"></textarea>
+              </div>
+              <div class="form-group">
+                <label>Target</label>
+                <select id="broadcastTarget">
+                  <option value="all">All Portals</option>
+                  <option value="reception">Reception Portal</option>
+                  <option value="admin">Admin Portal</option>
+                  <option value="developer">Developer Console</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Status</label>
+                <select id="broadcastStatus">
+                  <option value="active">Active (visible to users)</option>
+                  <option value="inactive">Inactive (draft)</option>
+                </select>
+              </div>
+              <div class="modal-footer" style="padding:12px 0 0">
+                <button type="submit" class="btn-primary" id="broadcastSubmitBtn">
+                  <span class="material-icons-round">send</span> Send Broadcast
+                </button>
+              </div>
+            </form>
+          </div>
+          <div class="widget glass-card">
+            <div class="dev-section-header">
+              <h3><span class="material-icons-round">history</span> Recent Broadcasts</h3>
+            </div>
+            <div id="recentBroadcasts" style="max-height:320px;overflow-y:auto">
+              <p style="text-align:center;padding:20px;color:var(--on-surface-var);font-size:0.85rem">No broadcasts yet</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="widget glass-card" style="margin-top:20px">
+          <div class="dev-section-header">
+            <h3><span class="material-icons-round">list_alt</span> Broadcast History</h3>
+          </div>
+          <div class="table-scroll">
+            <table class="data-table" id="broadcastTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Title</th>
+                  <th>Message</th>
+                  <th>Sender</th>
+                  <th>Status</th>
+                  <th style="width:60px">Action</th>
+                </tr>
+              </thead>
+              <tbody id="broadcastTableBody">
+                <tr class="skeleton-row"><td colspan="6" style="padding:16px"><div class="loading-pulse"></div><span style="color:var(--on-surface-var);font-size:0.85rem;">Loading broadcasts<span class="loading-dots"></span></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <div id="toastContainer"></div>
+
+  <!-- Login Success Overlay -->
+  <div class="modal-overlay" id="loginSuccessOverlay" style="background:linear-gradient(135deg, rgba(0,72,64,0.82) 0%, rgba(13,148,136,0.55) 100%);backdrop-filter:blur(24px);z-index:10000;">
+    <div style="width:100%;max-width:380px;background:rgba(255,255,255,0.97);border-radius:28px;box-shadow:0 32px 80px rgba(0,80,70,0.30);overflow:hidden;animation:modalIn 0.4s cubic-bezier(0.34,1.56,0.64,1);text-align:center;padding:48px 32px 40px;">
+      <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#10B981,#059669);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;box-shadow:0 8px 32px rgba(16,185,129,0.35);">
+        <span class="material-icons-round" style="font-size:38px;color:#fff;">check_circle</span>
+      </div>
+      <h2 style="color:var(--on-surface);font-family:var(--font-head);font-size:1.3rem;font-weight:800;margin:0 0 4px;">Welcome, Developer!</h2>
+      <p style="color:var(--outline);font-size:0.92rem;margin:0 4px;line-height:1.5;">
+        <span class="material-icons-round" style="font-size:16px;vertical-align:-2px;">badge</span>
+        <span class="ls-role" style="font-weight:700;color:var(--primary-light);">Developer</span>
+      </p>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+  <script src="js/sheets-api.js"></script>
+  <script src="js/firebase-init.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/developer.js"></script>
+</body>
+
+</html>
