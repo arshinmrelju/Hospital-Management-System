@@ -325,7 +325,7 @@ function initSkinPage() {
 
 function openAddSkinModal() {
   try {
-    document.getElementById('addSkinIdDisplay').value = generateNextSkinId();
+    document.getElementById('addSkinIdDisplay').textContent = generateNextSkinId();
   } catch(e) {
     if (typeof toast === 'function') toast('Error: ' + e.message, 'error');
   }
@@ -335,7 +335,7 @@ window.openAddSkinModal = openAddSkinModal;
 
 async function submitAddSkin(e) {
   e.preventDefault();
-  var skinId = document.getElementById('addSkinIdDisplay').value.replace(/<[^>]*>/g, '').trim();
+  var skinId = (document.getElementById('addSkinIdDisplay').textContent || '').trim();
   const raw = {
     skin_id: skinId,
     patient_name: document.getElementById('addSkinPatientName').value.replace(/<[^>]*>/g, '').trim(),
