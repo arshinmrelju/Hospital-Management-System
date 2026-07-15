@@ -193,7 +193,7 @@ function renderOpdRecords() {
       ${data.map((p, i) => `
         <tr>
           <td>${i + 1}</td>
-          <td>${p.patient_id || p.id || p.op_no || '—'}</td>
+          <td>${p.op_no || p.patient_id || p.id || '—'}</td>
           <td><strong>${p.name}</strong></td>
           <td>${p.age}</td>
           <td>${p.gender || '—'}</td>

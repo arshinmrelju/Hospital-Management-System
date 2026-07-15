@@ -70,7 +70,7 @@ function renderTable() {
         <button class="icon-btn" title="Edit" onclick="editPatient('${p.id}')"><span class="material-icons-round">edit</span></button>
         <button class="icon-btn" title="Add to OPD"
           onclick="addToOpdRegister(this)"
-          data-id="${esc(p['OP No'] || p['Hosp. OP No'] || p.id || p.op_no || p['UHID'] || p['ID'] || p.uhid || '')}" data-name="${esc(patientFullName(p))}"
+          data-id="${esc(p.op_no || p.id)}" data-name="${esc(patientFullName(p))}"
           data-age="${p.age}" data-gender="${p.gender}"
           data-blood="${p.blood_group}" data-op="${p.op_no}"
           data-contact="${esc(patientContact(p))}">
