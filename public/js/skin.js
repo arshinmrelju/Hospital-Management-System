@@ -83,7 +83,7 @@ window.addSkinToOpd = function(btn) {
 };
 
 function generateNextSkinId() {
-  var maxNum = 0;
+  var maxNum = 3800;
   (allSkinPatients || []).forEach(function(p) {
     var val = String(p.skin_id || p.id || '');
     var num = parseInt(val.replace(/[^0-9]/g, ''), 10);

@@ -616,13 +616,13 @@ window.API = {
       var now = new Date();
       var skinId = data.skin_id || '';
       if (!skinId) {
-        var maxNum = 0;
+        var maxNum = 3800;
         local.forEach(function(p) {
           var val = p['Skin ID'] || p.skin_id || p.id || '';
           var num = parseInt(val.replace(/[^0-9]/g, ''), 10);
           if (!isNaN(num) && num > maxNum) maxNum = num;
         });
-        skinId = 'SKIN-' + String(maxNum + 1).padStart(5, '0');
+        skinId = String(maxNum + 1);
       }
       var newPatient = window.API.normalizeSkinPatient({
         'Skin ID': skinId,

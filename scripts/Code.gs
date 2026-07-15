@@ -745,14 +745,14 @@ function handleCreateSkinPatient(e) {
   var now = new Date();
   var skinId = e.parameter.skin_id || '';
   if (!skinId) {
-    var maxNum = 0;
+    var maxNum = 3800;
     var idCol = headers.indexOf('Skin ID');
     for (var i = 1; i < allData.length; i++) {
       var val = String(allData[i][idCol] || '');
       var num = parseInt(val.replace(/[^0-9]/g, ''), 10);
       if (!isNaN(num) && num > maxNum) maxNum = num;
     }
-    skinId = 'SKIN-' + String(maxNum + 1).padStart(5, '0');
+    skinId = String(maxNum + 1);
   }
   var patient = {
     'Skin ID': skinId,
