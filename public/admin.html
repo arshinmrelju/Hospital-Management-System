@@ -161,6 +161,16 @@
         </div>
       </div>
 
+      <!-- Announcements Bar -->
+      <div class="announcements-bar" id="announcementsBar" style="display:none;margin-bottom:20px">
+        <div class="announcements-header" onclick="toggleAdminAnnouncements()">
+          <span class="material-icons-round">campaign</span>
+          <span id="adminAnnouncementsTitle">Announcements</span>
+          <span class="material-icons-round toggle-icon">expand_less</span>
+        </div>
+        <div class="announcements-body" id="adminAnnouncementsBody"></div>
+      </div>
+
       <!-- Tab Bar -->
       <div class="admin-tab-bar">
         <button class="admin-tab active" onclick="switchAdminTab('tab-overview',this)">

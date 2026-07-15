@@ -555,6 +555,44 @@ function updateStats() {
   }
 }
 
+/* --- Announcements / Broadcasts --- */
+function loadAnnouncements() {
+  window.API.getMessages().then(function(resp) {
+    var msgs = (resp && resp.data) || [];
+    var active = msgs.filter(function(m) { return m.status === 'active' && (m.target === 'reception' || m.target === 'all' || !m.target); });
+    var bar = document.getElementById('announcementsBar');
+    var body = document.getElementById('announcementsBody');
+    if (!bar || !body) return;
+    if (active.length === 0) {
+      bar.style.display = 'none';
+      return;
+    }
+    bar.style.display = 'block';
+    document.getElementById('announcementsTitle').textContent = active.length === 1 ? '1 Announcement' : active.length + ' Announcements';
+    body.innerHTML = active.sort(function(a, b) {
+      return (b.createdAt || '').localeCompare(a.createdAt || '');
+    }).map(function(m) {
+      var date = m.createdAt ? new Date(m.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+      return '<div class="announcement-item">' +
+        '<h4>' + window.esc(m.title) + '</h4>' +
+        '<p>' + window.esc(m.message) + '</p>' +
+        (date ? '<div class="ann-date">' + date + '</div>' : '') +
+        '</div>';
+    }).join('');
+  }).catch(function(err) {
+    console.warn('Failed to load announcements:', err);
+  });
+}
+
+window.toggleAnnouncements = function() {
+  var body = document.getElementById('announcementsBody');
+  var icon = document.querySelector('.announcements-header .toggle-icon');
+  if (!body || !icon) return;
+  var hidden = body.style.display === 'none';
+  body.style.display = hidden ? '' : 'none';
+  icon.classList.toggle('collapsed', !hidden);
+};
+
 /* --- DOMContentLoaded --- */
 document.addEventListener('DOMContentLoaded', async () => {
   var stored = localStorage.getItem('hms_auth');
@@ -581,6 +619,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadOpdRecords();
   updateStats();
   initExportTracker();
+  loadAnnouncements();
 
   var origRender = renderOpdRecords;
   renderOpdRecords = function () { origRender(); updateStats(); };

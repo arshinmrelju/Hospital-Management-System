@@ -9,6 +9,7 @@
   var allDeptsLoaded = false;
   var deptChartInstance = null;
   var statusChartInstance = null;
+  var chartsInitialized = false;
 
   /* ─── Auth ─── */
   function adminLogin(code) {
@@ -220,10 +221,16 @@
       }
     });
 
-    // 3. Render Department Chart (Bar Chart)
+    // 3. Render Department Chart (Bar Chart) - Professional gradient bars
     if (deptChartInstance) {
       deptChartInstance.destroy();
     }
+    var deptCtx = deptCanvas.getContext('2d');
+    var deptGradient = deptCtx.createLinearGradient(0, 0, 0, 300);
+    deptGradient.addColorStop(0, '#0D9488');
+    deptGradient.addColorStop(0.5, '#14b8a6');
+    deptGradient.addColorStop(1, 'rgba(20, 184, 166, 0.15)');
+
     deptChartInstance = new Chart(deptCanvas, {
       type: 'bar',
       data: {
@@ -231,31 +238,65 @@
         datasets: [{
           label: 'Number of Doctors',
           data: deptData,
-          backgroundColor: 'rgba(13, 148, 136, 0.15)', // Logo Teal soft
-          borderColor: '#0D9488', // Logo Teal
-          borderWidth: 2,
-          borderRadius: 6,
-          barThickness: 24
+          backgroundColor: deptGradient,
+          borderColor: '#0D9488',
+          borderWidth: 1,
+          borderRadius: 8,
+          borderSkipped: false,
+          barThickness: 32,
+          hoverBackgroundColor: 'rgba(13, 148, 136, 0.9)',
+          hoverBorderColor: '#0D9488',
+          hoverBorderWidth: 2
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        animation: {
+          duration: 800,
+          easing: 'easeOutQuart'
+        },
         plugins: {
-          legend: { display: false }
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(255,255,255,0.95)',
+            titleColor: '#0D9488',
+            titleFont: { family: 'Manrope', size: 13, weight: '700' },
+            bodyColor: '#1e293b',
+            bodyFont: { family: 'Inter', size: 12, weight: '600' },
+            borderColor: 'rgba(13,148,136,0.15)',
+            borderWidth: 1,
+            cornerRadius: 10,
+            padding: 12,
+            boxPadding: 6,
+            usePointStyle: true,
+            callbacks: {
+              label: function(ctx) {
+                return ctx.parsed.y + ' doctor' + (ctx.parsed.y !== 1 ? 's' : '');
+              }
+            }
+          }
         },
         scales: {
           y: {
             beginAtZero: true,
             ticks: {
               stepSize: 1,
-              font: { family: 'Inter', size: 11, weight: '500' }
+              font: { family: 'Inter', size: 11, weight: '600' },
+              color: '#64748b',
+              padding: 8
             },
-            grid: { color: 'rgba(0, 0, 0, 0.04)' }
+            grid: {
+              color: 'rgba(0, 0, 0, 0.04)',
+              drawBorder: false,
+              drawTicks: false
+            }
           },
           x: {
             ticks: {
-              font: { family: 'Inter', size: 11, weight: '500' }
+              font: { family: 'Inter', size: 11, weight: '600' },
+              color: '#475569',
+              maxRotation: 30
             },
             grid: { display: false }
           }
@@ -263,43 +304,78 @@
       }
     });
 
-    // 4. Render Status Chart (Doughnut Chart)
+    // 4. Render Status Chart (Doughnut Chart) - Modern ring
     if (statusChartInstance) {
       statusChartInstance.destroy();
     }
+    var statusCtx = statusCanvas.getContext('2d');
+    var greenGrad = statusCtx.createLinearGradient(0, 0, 200, 200);
+    greenGrad.addColorStop(0, '#34D399');
+    greenGrad.addColorStop(1, '#059669');
+    var amberGrad = statusCtx.createLinearGradient(0, 0, 200, 200);
+    amberGrad.addColorStop(0, '#FBBF24');
+    amberGrad.addColorStop(1, '#D97706');
+    var greyGrad = statusCtx.createLinearGradient(0, 0, 200, 200);
+    greyGrad.addColorStop(0, '#D1D5DB');
+    greyGrad.addColorStop(1, '#6B7280');
+
     statusChartInstance = new Chart(statusCanvas, {
       type: 'doughnut',
       data: {
         labels: ['Available', 'Busy', 'Off Duty'],
         datasets: [{
           data: [statusCounts.available || 0, statusCounts.busy || 0, statusCounts.off || 0],
-          backgroundColor: [
-            'rgba(16, 185, 129, 0.15)', // Green soft
-            'rgba(245, 158, 11, 0.15)', // Amber soft
-            'rgba(107, 114, 128, 0.15)'  // Grey soft
-          ],
-          borderColor: [
-            '#10B981', // Green
-            '#F59E0B', // Amber
-            '#6B7280'  // Grey
-          ],
-          borderWidth: 2
+          backgroundColor: [greenGrad, amberGrad, greyGrad],
+          borderColor: ['#10B981', '#F59E0B', '#6B7280'],
+          borderWidth: 3,
+          hoverOffset: 12,
+          hoverBorderWidth: 4,
+          hoverBorderColor: ['#059669', '#D97706', '#4B5563']
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        animation: {
+          animateRotate: true,
+          duration: 900,
+          easing: 'easeOutQuart'
+        },
+        cutout: '72%',
         plugins: {
           legend: {
             position: 'bottom',
             labels: {
-              boxWidth: 10,
-              padding: 15,
-              font: { family: 'Inter', size: 11, weight: '600' }
+              boxWidth: 12,
+              boxHeight: 12,
+              padding: 18,
+              font: { family: 'Inter', size: 12, weight: '600' },
+              color: '#334155',
+              usePointStyle: true,
+              pointStyle: 'circle'
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(255,255,255,0.95)',
+            titleColor: '#1e293b',
+            titleFont: { family: 'Manrope', size: 13, weight: '700' },
+            bodyColor: '#1e293b',
+            bodyFont: { family: 'Inter', size: 12, weight: '600' },
+            borderColor: 'rgba(0,0,0,0.06)',
+            borderWidth: 1,
+            cornerRadius: 10,
+            padding: 12,
+            boxPadding: 8,
+            usePointStyle: true,
+            callbacks: {
+              label: function(ctx) {
+                var total = ctx.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+                var pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
+                return ctx.label + ': ' + ctx.parsed + ' (' + pct + '%)';
+              }
             }
           }
-        },
-        cutout: '70%'
+        }
       }
     });
   }
@@ -695,10 +771,97 @@
     });
   }
 
+  /* ─── Announcements ─── */
+  function loadAdminAnnouncements() {
+    window.API.getMessages().then(function(resp) {
+      var msgs = (resp && resp.data) || [];
+      var active = msgs.filter(function(m) { return m.status === 'active' && (m.target === 'admin' || m.target === 'all' || !m.target); });
+      var bar = document.getElementById('announcementsBar');
+      var body = document.getElementById('adminAnnouncementsBody');
+      if (!bar || !body) return;
+      if (active.length === 0) {
+        bar.style.display = 'none';
+        return;
+      }
+      bar.style.display = 'block';
+      document.getElementById('adminAnnouncementsTitle').textContent = active.length === 1 ? '1 Announcement' : active.length + ' Announcements';
+      body.innerHTML = active.sort(function(a, b) {
+        return (b.createdAt || '').localeCompare(a.createdAt || '');
+      }).map(function(m) {
+        var date = m.createdAt ? new Date(m.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+        return '<div class="announcement-item">' +
+          '<h4>' + window.esc(m.title) + '</h4>' +
+          '<p>' + window.esc(m.message) + '</p>' +
+          (date ? '<div class="ann-date">' + date + '</div>' : '') +
+          '</div>';
+      }).join('');
+    }).catch(function(err) {
+      console.warn('[Admin] Failed to load announcements:', err);
+    });
+  }
+
+  window.toggleAdminAnnouncements = function() {
+    var body = document.getElementById('adminAnnouncementsBody');
+    var icon = document.querySelector('#announcementsBar .toggle-icon');
+    if (!body || !icon) return;
+    var hidden = body.style.display === 'none';
+    body.style.display = hidden ? '' : 'none';
+    icon.classList.toggle('collapsed', !hidden);
+  };
+
   /* ─── Init ─── */
   function initAdmin() {
     if (typeof window.hideLoader === 'function') window.hideLoader();
     console.info('[Admin] Initializing admin panel...');
+
+    // Register Chart.js plugins once
+    if (!chartsInitialized && typeof Chart !== 'undefined') {
+      Chart.register({
+        id: 'barShadow',
+        beforeDraw: function(chart) {
+          if (chart.config.type !== 'bar') return;
+          var ctx = chart.ctx;
+          chart.data.datasets.forEach(function(ds, i) {
+            var meta = chart.getDatasetMeta(i);
+            if (!meta.hidden) {
+              meta.data.forEach(function(bar) {
+                if (bar && bar.x !== undefined) {
+                  ctx.save();
+                  ctx.shadowColor = 'rgba(13, 148, 136, 0.18)';
+                  ctx.shadowBlur = 12;
+                  ctx.shadowOffsetX = 0;
+                  ctx.shadowOffsetY = 4;
+                  ctx.fillStyle = 'transparent';
+                  ctx.fillRect(bar.x - bar.width / 2, bar.y, bar.width, chart.chartArea.bottom - bar.y);
+                  ctx.restore();
+                }
+              });
+            }
+          });
+        }
+      });
+      Chart.register({
+        id: 'centerText',
+        beforeDraw: function(chart) {
+          if (chart.config.type !== 'doughnut') return;
+          var width = chart.width, height = chart.height, ctx = chart.ctx;
+          ctx.restore();
+          ctx.textBaseline = 'middle';
+          var total = chart.data.datasets[0].data.reduce(function(a, b) { return a + b; }, 0);
+          var text = total.toString();
+          var textX = Math.round((width - ctx.measureText(text).width) / 2);
+          var textY = height / 2;
+          ctx.fillStyle = '#0f172a';
+          ctx.font = '700 26px Manrope, sans-serif';
+          ctx.fillText(text, textX, textY);
+          ctx.font = '600 11px Inter, sans-serif';
+          ctx.fillStyle = '#94a3b8';
+          ctx.fillText('Total', textX, textY + 20);
+          ctx.save();
+        }
+      });
+      chartsInitialized = true;
+    }
 
     var dateEl = document.getElementById('todayDate');
     if (dateEl) dateEl.textContent = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -733,6 +896,9 @@
       if (typeof window.populateAllDropdowns === 'function') window.populateAllDropdowns();
       console.info('[Admin] Data loaded successfully.');
     });
+
+    // Load announcements
+    loadAdminAnnouncements();
 
     // Start login history listener
     loadLoginHistory();
