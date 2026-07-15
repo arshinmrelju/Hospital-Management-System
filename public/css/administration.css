@@ -431,7 +431,126 @@
   box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
 }
 
+/* ================== DOCTOR CELL ================== */
+.doctor-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.doctor-avatar-sm {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
 /* ================== RESPONSIVE – ADMIN PORTAL ================== */
+
+/* --- Loader mobile --- */
+@media (max-width: 480px) {
+  .loader-glass {
+    padding: 24px 20px 22px !important;
+    margin: 0 12px;
+  }
+  .loader-logo-ring {
+    width: 72px !important;
+    height: 72px !important;
+  }
+  .loader-logo-ring img {
+    width: 52px !important;
+    height: 52px !important;
+  }
+  .loader-title {
+    font-size: 1.1rem !important;
+  }
+  .loader-subtitle {
+    font-size: 0.72rem !important;
+  }
+  .loader-heartbeat svg {
+    width: 80px !important;
+    height: 28px !important;
+  }
+  .loader-dots {
+    gap: 6px;
+  }
+  .loader-dot {
+    width: 6px;
+    height: 6px;
+  }
+}
+
+/* --- Login Overlay Mobile --- */
+@media (max-width: 480px) {
+  #loginOverlay > div {
+    margin: 0 12px !important;
+    width: auto !important;
+    border-radius: 20px !important;
+  }
+  #loginOverlay > div > div:first-child {
+    padding: 20px 20px 18px !important;
+  }
+  #loginOverlay > div > div:first-child > div:first-of-type {
+    width: 60px !important;
+    height: 60px !important;
+    margin-bottom: 10px !important;
+  }
+  #loginOverlay > div > div:first-child > div:first-of-type img {
+    width: 46px !important;
+    height: 46px !important;
+  }
+  #loginOverlay > div > div:first-child h2 {
+    font-size: 1.05rem !important;
+  }
+  #loginOverlay > div > div:first-child p {
+    font-size: 0.72rem !important;
+  }
+  #loginOverlay > div > div:last-child {
+    padding: 20px 20px 24px !important;
+  }
+  #loginOverlay > div > div:last-child > p:first-child {
+    font-size: 0.75rem !important;
+    margin-bottom: 14px !important;
+  }
+  #loginOverlay input[type="password"] {
+    font-size: 1rem !important;
+    padding: 12px 12px 12px 40px !important;
+  }
+  #loginOverlay button[type="submit"] {
+    padding: 12px 16px !important;
+    font-size: 0.88rem !important;
+    margin-top: 14px !important;
+  }
+}
+
+/* --- Login Success Overlay Mobile --- */
+@media (max-width: 480px) {
+  #loginSuccessOverlay > div {
+    margin: 0 16px !important;
+    padding: 32px 20px 28px !important;
+  }
+  #loginSuccessOverlay > div > div:first-of-type {
+    width: 56px !important;
+    height: 56px !important;
+    margin-bottom: 14px !important;
+  }
+  #loginSuccessOverlay > div > div:first-of-type .material-icons-round {
+    font-size: 30px !important;
+  }
+  #loginSuccessOverlay > div h2 {
+    font-size: 1.1rem !important;
+  }
+  #loginSuccessOverlay > div p {
+    font-size: 0.82rem !important;
+  }
+}
+
 @media (max-width: 768px) {
   .admin-tab-bar {
     overflow-x: auto;
@@ -461,6 +580,80 @@
   .login-stats {
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   }
+  /* Chart canvas smaller on tablet */
+  .chart-body {
+    min-height: 200px !important;
+    max-height: 260px !important;
+  }
+  .chart-card {
+    padding: 16px;
+  }
+  .chart-header h3 {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 600px) {
+  /* Login History toolbar extra compact */
+  .admin-table-toolbar .filter-select,
+  .admin-table-toolbar .btn-primary {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .admin-table-toolbar .btn-primary .material-icons-round {
+    font-size: 16px;
+  }
+  /* Stats cards compact */
+  .admin-stat-card {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+  .admin-stat-value {
+    font-size: 1.4rem;
+  }
+  .admin-stat-icon-wrap {
+    width: 40px;
+    height: 40px;
+  }
+  .admin-stat-icon-wrap .material-icons-round {
+    font-size: 20px;
+  }
+  .admin-stat-label {
+    font-size: 0.68rem;
+  }
+  .admin-stat-desc {
+    font-size: 0.65rem;
+  }
+  /* Chart cards compact */
+  .dashboard-grid {
+    gap: 12px;
+  }
+  .chart-body {
+    min-height: 180px !important;
+    max-height: 220px !important;
+  }
+  /* Doctor/Dept table card layout tweaks */
+  .data-table tbody td {
+    font-size: 0.8rem;
+    padding: 6px 0;
+    min-height: 30px;
+  }
+  .data-table tbody td::before {
+    font-size: 0.68rem;
+  }
+  .data-table tbody tr {
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  /* Login history card layout */
+  .badge-status {
+    font-size: 0.65rem;
+    padding: 3px 8px;
+  }
+  .badge-role {
+    font-size: 0.65rem;
+    padding: 2px 8px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -471,20 +664,130 @@
     grid-template-columns: 1fr;
   }
   .admin-stat-card {
-    padding: 16px;
+    padding: 12px 14px;
   }
   .admin-stat-value {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
   }
   .admin-stat-icon-wrap {
-    width: 44px;
-    height: 44px;
+    width: 36px;
+    height: 36px;
   }
   .admin-stat-icon-wrap .material-icons-round {
-    font-size: 22px;
+    font-size: 18px;
   }
-  #loginOverlay > div {
-    margin: 0 12px !important;
-    width: auto !important;
+  .admin-stat-desc {
+    display: none;
+  }
+  /* Charts */
+  .chart-card {
+    padding: 12px;
+    border-radius: var(--radius-md);
+  }
+  .chart-body {
+    min-height: 160px !important;
+    max-height: 200px !important;
+  }
+  .chart-header {
+    margin-bottom: 12px;
+  }
+  .chart-header h3 {
+    font-size: 0.82rem;
+  }
+  .chart-header h3::before {
+    height: 14px;
+  }
+  /* Table cards more compact */
+  .data-table tbody tr {
+    padding: 10px;
+    margin-bottom: 8px;
+  }
+  .data-table tbody td {
+    padding: 5px 0;
+    font-size: 0.75rem;
+    min-height: 28px;
+  }
+  .data-table tbody td::before {
+    font-size: 0.65rem;
+    min-width: 70px;
+  }
+  .data-table tbody td:last-child {
+    gap: 4px;
+  }
+  /* Filter selects & toolbar buttons */
+  .admin-table-toolbar {
+    gap: 10px;
+  }
+  .admin-search {
+    padding: 5px 10px;
+  }
+  .admin-search input {
+    font-size: 0.82rem;
+  }
+  .admin-table-toolbar .filter-select {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+  .admin-table-toolbar .btn-primary.btn-sm {
+    padding: 10px 14px;
+    font-size: 0.82rem;
+  }
+  /* Login history toolbar */
+  #loginSearch {
+    font-size: 0.82rem;
+  }
+  /* Doctor/Dept table action buttons */
+  .data-table tbody td .icon-btn {
+    width: 36px;
+    height: 36px;
+    padding: 6px;
+  }
+  .data-table tbody td .icon-btn .material-icons-round {
+    font-size: 18px;
+  }
+  /* Tab bar */
+  .admin-tab {
+    font-size: 0.75rem;
+    padding: 8px 0;
+    gap: 4px;
+  }
+  .admin-tab .material-icons-round {
+    font-size: 16px;
+  }
+  /* Page header */
+  .page-title {
+    font-size: 1.2rem;
+  }
+  .page-sub {
+    font-size: 0.78rem;
+  }
+  .date-badge {
+    font-size: 0.68rem;
+    padding: 4px 8px;
+  }
+  /* Login history table cells */
+  .data-table tbody td[data-label="Device"] {
+    max-width: 100px !important;
+  }
+  .data-table tbody td[data-label="Duration"] {
+    font-size: 0.7rem;
+  }
+  /* Doctor avatar */
+  .doctor-cell {
+    gap: 8px;
+  }
+  .doctor-avatar-sm {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 0.65rem !important;
+  }
+  /* Badges */
+  .badge-status {
+    font-size: 0.6rem;
+    padding: 2px 8px;
+  }
+  .badge-role {
+    font-size: 0.6rem;
+    padding: 2px 6px;
   }
 }
