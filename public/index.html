@@ -726,8 +726,11 @@
           <table class="data-table" id="skinTable">
             <thead>
               <tr>
+                <th><input type="checkbox" id="skinSelectAll" onchange="toggleSelectAllSkin(this)" /></th>
                 <th class="sortable" onclick="skinSortCol='skin_id';skinSortDir=skinSortDir===1?-1:1;applySkinFilters()">Skin ID <span class="material-icons-round">unfold_more</span></th>
                 <th class="sortable" onclick="skinSortCol='patient_name';skinSortDir=skinSortDir===1?-1:1;applySkinFilters()">Name <span class="material-icons-round">unfold_more</span></th>
+                <th>Contact</th>
+                <th>Last Visit</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -1077,7 +1080,7 @@
           </div>
           <div class="form-group"><label>Contact</label><input type="tel" id="addSkinContact" /></div>
         </div>
-
+        <div class="form-group"><label>Last Visit</label><input type="date" id="addSkinLastVisit" /></div>
         <div class="modal-footer">
           <button type="button" class="btn-secondary" onclick="closeModal(null,'addSkinModal')">Cancel</button>
           <button type="submit" class="btn-primary">Register Skin Patient</button>
@@ -1105,7 +1108,7 @@
           </div>
           <div class="form-group"><label>Contact</label><input type="tel" id="editSkinContact" /></div>
         </div>
-
+        <div class="form-group"><label>Last Visit</label><input type="date" id="editSkinLastVisit" /></div>
         <div class="modal-footer">
           <button type="button" class="btn-secondary" onclick="closeModal(null,'editSkinModal')">Cancel</button>
           <button type="submit" class="btn-primary">Save Changes</button>

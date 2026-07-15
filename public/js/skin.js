@@ -36,13 +36,21 @@ const SKIN_ROWS_PER_PAGE = 10;
 let skinSortCol = null, skinSortDir = 1;
 var _skinInitialized = false;
 
+function skinFormatDate(d) {
+  return d ? new Date(d).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '';
+}
+
+function toggleSelectAllSkin(cb) {
+  document.querySelectorAll('#skinTableBody input[type="checkbox"]').forEach(c => c.checked = cb.checked);
+}
+
 function renderSkinTable() {
   const tbody = document.getElementById('skinTableBody');
   if (!tbody) return;
   const start = (skinCurrentPage - 1) * SKIN_ROWS_PER_PAGE;
   const pageItems = filteredSkinPatients.slice(start, start + SKIN_ROWS_PER_PAGE);
   if (pageItems.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--on-surface-var)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px;color:var(--outline-var)">search_off</span>No skin patients found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--on-surface-var)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px;color:var(--outline-var)">search_off</span>No skin patients found</td></tr>';
     return;
   }
   tbody.innerHTML = pageItems.map(p => {
@@ -50,17 +58,29 @@ function renderSkinTable() {
     var name = p.patient_name || '';
     var age = p.age || '';
     return '<tr>' +
+      '<td data-label=""><input type="checkbox" /></td>' +
       '<td data-label="Skin ID"><code style="font-size:.78rem;background:var(--surface-mid);padding:2px 6px;border-radius:4px;color:var(--primary-light)">' + esc(sid) + '</code></td>' +
       '<td data-label="Name"><strong>' + esc(name) + '</strong><br><span style="font-size:.72rem;color:var(--on-surface-var)">' + esc(age) + ' yrs</span></td>' +
+      '<td data-label="Contact" style="font-size:.82rem">' + esc(p.contact) + '</td>' +
+      '<td data-label="Last Visit" style="font-size:.82rem">' + skinFormatDate(p.last_visit) + '</td>' +
       '<td data-label="Actions">' +
         '<button class="icon-btn" title="View" onclick="viewSkinPatient(\'' + esc(sid) + '\')"><span class="material-icons-round">visibility</span></button>' +
         '<button class="icon-btn" title="Edit" onclick="editSkinPatient(\'' + esc(sid) + '\')"><span class="material-icons-round">edit</span></button>' +
+        '<button class="icon-btn" title="Add to OPD" onclick="addSkinToOpd(this)" data-id="' + esc(sid) + '" data-name="' + esc(name) + '" data-age="' + esc(age) + '" data-contact="' + esc(p.contact || '') + '"><span class="material-icons-round">how_to_reg</span></button>' +
         '<button class="icon-btn danger" title="Delete" onclick="deleteSkinPatient(\'' + esc(sid) + '\')"><span class="material-icons-round">delete</span></button>' +
       '</td>' +
     '</tr>';
   }).join('');
   updateSkinPagination();
 }
+
+window.addSkinToOpd = function(btn) {
+  if (typeof window.addToOpdRegister === 'function') {
+    window.addToOpdRegister(btn);
+  } else {
+    toast('OPD register not available on this page', 'warning');
+  }
+};
 
 function validateSkinInput(data) {
   const errors = [];
@@ -146,6 +166,7 @@ function viewSkinPatient(id) {
       '<div class="form-group"><label>Age</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">' + esc(p.age) + ' years</div></div>' +
       '<div class="form-group"><label>Gender</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">' + esc(p.gender) + '</div></div>' +
       '<div class="form-group"><label>Contact</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">' + esc(p.contact) + '</div></div>' +
+      '<div class="form-group"><label>Last Visit</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">' + skinFormatDate(p.last_visit) + '</div></div>' +
       '<div class="form-group"><label>Registered On</label><div style="padding:10px 14px;background:var(--surface-low);border-radius:var(--radius-md)">' + (p.created_on || '—') + '</div></div>' +
     '</div>' +
     '<div style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end">' +
@@ -164,6 +185,7 @@ function editSkinPatient(id) {
   document.getElementById('editSkinAge').value = p.age || '';
   document.getElementById('editSkinGender').value = p.gender || '';
   document.getElementById('editSkinContact').value = p.contact || '';
+  if (document.getElementById('editSkinLastVisit')) document.getElementById('editSkinLastVisit').value = p.last_visit || '';
   openModal('editSkinModal');
 }
 
@@ -175,6 +197,7 @@ async function submitEditSkinPatient(e) {
     age: document.getElementById('editSkinAge').value,
     gender: document.getElementById('editSkinGender').value,
     contact: document.getElementById('editSkinContact').value.replace(/<[^>]*>/g, '').trim(),
+    last_visit: document.getElementById('editSkinLastVisit')?.value || '',
   };
   const errors = validateSkinInput({ skin_id: id, ...raw });
   if (errors.length > 0) { toast(errors.join('. '), 'error'); return; }
@@ -237,9 +260,13 @@ async function loadSkinPatients(skipCache) {
     var skeletonHTML = '';
     for (var i = 0; i < 5; i++) {
       skeletonHTML += '<tr class="skeleton-row">' +
+        '<td><div class="skeleton-cell" style="width:20px;"></div></td>' +
         '<td><div class="skeleton-cell" style="width:60px;"></div></td>' +
         '<td><div class="skeleton-cell" style="width:120px;"></div></td>' +
+        '<td><div class="skeleton-cell" style="width:90px;"></div></td>' +
+        '<td><div class="skeleton-cell" style="width:100px;"></div></td>' +
         '<td><div style="display:flex;gap:6px;">' +
+          '<div class="skeleton-cell" style="width:30px;height:30px;border-radius:6px;"></div>' +
           '<div class="skeleton-cell" style="width:30px;height:30px;border-radius:6px;"></div>' +
           '<div class="skeleton-cell" style="width:30px;height:30px;border-radius:6px;"></div>' +
           '<div class="skeleton-cell" style="width:30px;height:30px;border-radius:6px;"></div>' +
@@ -259,7 +286,7 @@ async function loadSkinPatients(skipCache) {
     console.error('Failed to load skin patients:', e);
     if (!hasRenderedCache && _skinInitialized) {
       if (typeof toast === 'function') toast('Could not load skin patients: ' + (e.message || e), 'error');
-      if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--error,#ef4444)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px">error_outline</span>Failed to load<br><button class="btn-secondary" style="margin-top:12px" onclick="loadSkinPatients()">Retry</button></td></tr>';
+      if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--error,#ef4444)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px">error_outline</span>Failed to load<br><button class="btn-secondary" style="margin-top:12px" onclick="loadSkinPatients()">Retry</button></td></tr>';
       allSkinPatients = [];
       window.allSkinPatients = allSkinPatients;
     }
@@ -277,6 +304,7 @@ function initSkinPage() {
 
 function openAddSkinModal() {
   document.getElementById('addSkinForm').reset();
+  document.getElementById('addSkinLastVisit').value = new Date().toISOString().split('T')[0];
   openModal('addSkinModal');
 }
 window.openAddSkinModal = openAddSkinModal;
@@ -289,6 +317,7 @@ async function submitAddSkin(e) {
     age: document.getElementById('addSkinAge').value,
     gender: document.getElementById('addSkinGender').value,
     contact: document.getElementById('addSkinContact').value.replace(/<[^>]*>/g, '').trim(),
+    last_visit: document.getElementById('addSkinLastVisit').value,
   };
   const errors = validateSkinInput(raw);
   if (errors.length > 0) { toast(errors.join('. '), 'error'); return; }
@@ -303,6 +332,7 @@ async function submitAddSkin(e) {
       age: raw.age,
       gender: raw.gender,
       contact: raw.contact || '',
+      last_visit: raw.last_visit || new Date().toISOString().slice(0,10),
       created_on: new Date().toISOString().slice(0,10),
     };
     allSkinPatients.unshift(newP);

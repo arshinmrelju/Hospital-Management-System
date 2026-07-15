@@ -568,6 +568,7 @@ window.API = {
     p.age = p['Age'] || p.age || '';
     p.gender = p['Gender'] || p.gender || '';
     p.contact = p['Contact'] || p.contact || '';
+    p.last_visit = p['Last Visit'] || p.last_visit || '';
     p.created_on = p['Created On'] || p.created_on || '';
     return p;
   },
@@ -617,6 +618,7 @@ window.API = {
         'Age': data.age || '',
         'Gender': data.gender || '',
         'Contact': data.contact || '',
+        'Last Visit': data.last_visit || now.toISOString().split('T')[0],
         'Created On': now.toISOString().split('T')[0]
       });
       local.push(newPatient);

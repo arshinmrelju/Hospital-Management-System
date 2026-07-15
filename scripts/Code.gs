@@ -705,7 +705,7 @@ function handleDeleteMessage(e) {
 
 /* ─── SKIN PATIENTS ─── */
 
-var SKIN_PATIENT_HEADERS = ['Skin ID', 'Patient Name', 'Age', 'Gender', 'Contact', 'Created On'];
+var SKIN_PATIENT_HEADERS = ['Skin ID', 'Patient Name', 'Age', 'Gender', 'Contact', 'Last Visit', 'Created On'];
 
 function getSkinPatientsSheet(ss) {
   return getOrCreateSheet(ss, 'SkinPatients', SKIN_PATIENT_HEADERS);
@@ -748,6 +748,7 @@ function handleCreateSkinPatient(e) {
     'Age': e.parameter.age || '',
     'Gender': e.parameter.gender || '',
     'Contact': e.parameter.contact || '',
+    'Last Visit': e.parameter.last_visit || Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd'),
     'Created On': Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd')
   };
   appendRowToSheet(sheet, patient, headers);
@@ -771,7 +772,7 @@ function handleUpdateSkinPatient(e) {
   var row = allData[idx];
   var map = {
     'skin_id': 'Skin ID', 'patient_name': 'Patient Name', 'age': 'Age',
-    'gender': 'Gender', 'contact': 'Contact'
+    'gender': 'Gender', 'contact': 'Contact', 'last_visit': 'Last Visit'
   };
   for (var key in map) {
     if (e.parameter[key] !== undefined) {
