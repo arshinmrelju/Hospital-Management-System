@@ -162,6 +162,7 @@ function normalizePatient(p) {
   p.status = p.status || p['Status'] || p.Status || 'stable';
   p.assigned_doctor = p.assigned_doctor || p['Assigned Doctor'] || '';
   p.last_visit = p.last_visit || p['Last Visit'] || '';
+  p.created_on = p.created_on || p['Created On'] || p.Created_On || '';
   return p;
 }
 
