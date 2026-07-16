@@ -134,6 +134,9 @@
       <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
         <span class="material-icons-round">menu</span>
       </button>
+      <button class="mobile-search-toggle" id="mobileSearchToggle" aria-label="Toggle search">
+        <span class="material-icons-round">search</span>
+      </button>
       <div class="topbar-brand">
         <img src="assets/hms-logo.jpg" alt="Wellness Medicals" class="topbar-brand-icon" />
         <div class="topbar-brand-text">
@@ -141,14 +144,22 @@
           <span class="topbar-brand-sub">Admin</span>
         </div>
       </div>
-      <div class="topbar-search" style="visibility:hidden;">
+      <div class="topbar-search" id="topbarSearch">
         <span class="material-icons-round search-icon">search</span>
-        <input type="text" placeholder="Search..." />
+        <input type="text" id="adminGlobalSearch" placeholder="Search doctors, departments..." oninput="handleAdminSearch()" />
       </div>
       <div class="topbar-actions">
         <div class="topbar-avatar" id="topbarAvatar">AD</div>
       </div>
     </header>
+
+    <!-- Mobile Search Bar -->
+    <div class="mobile-search-bar" id="mobileSearchBar">
+      <div class="topbar-search" style="max-width:100%;flex:1;">
+        <span class="material-icons-round search-icon">search</span>
+        <input type="text" id="adminGlobalSearchMobile" placeholder="Search doctors, departments..." oninput="handleAdminSearch()" />
+      </div>
+    </div>
 
     <main class="page-body">
       <div class="page-header">
@@ -192,6 +203,26 @@
         <!-- Admin Stats -->
         <div class="admin-stats" id="adminStats">
           <div class="admin-stat-card">
+            <div class="admin-stat-icon-wrap bg-blue-soft">
+              <span class="material-icons-round text-blue">person_add</span>
+            </div>
+            <div class="admin-stat-info">
+              <div class="admin-stat-label">New Patients Today</div>
+              <div class="admin-stat-value" id="statNewPatients">0</div>
+              <div class="admin-stat-desc">Registered today</div>
+            </div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon-wrap bg-orange-soft">
+              <span class="material-icons-round text-orange">how_to_reg</span>
+            </div>
+            <div class="admin-stat-info">
+              <div class="admin-stat-label">OPD Today</div>
+              <div class="admin-stat-value" id="statOPDToday">0</div>
+              <div class="admin-stat-desc">Patients attended today</div>
+            </div>
+          </div>
+          <div class="admin-stat-card">
             <div class="admin-stat-icon-wrap bg-teal-soft">
               <span class="material-icons-round text-teal">local_hospital</span>
             </div>
@@ -223,25 +254,6 @@
           </div>
         </div>
 
-        <!-- Dashboard Charts Grid -->
-        <div class="dashboard-grid">
-          <div class="chart-card">
-            <div class="chart-header">
-              <h3>Staffing by Department</h3>
-            </div>
-            <div class="chart-body">
-              <canvas id="deptChart"></canvas>
-            </div>
-          </div>
-          <div class="chart-card">
-            <div class="chart-header">
-              <h3>Duty Status Distribution</h3>
-            </div>
-            <div class="chart-body">
-              <canvas id="statusChart"></canvas>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- Doctors Tab -->
@@ -385,6 +397,26 @@
 
     </main>
   </div>
+
+  <!-- Bottom Navigation (Mobile App Style) -->
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="bottom-nav-item active" onclick="switchAdminTab('tab-overview',this);return false" data-tab="tab-overview">
+      <span class="material-icons-round">dashboard</span>
+      <span class="bottom-nav-label">Overview</span>
+    </button>
+    <button class="bottom-nav-item" onclick="switchAdminTab('tab-doctors',this);return false" data-tab="tab-doctors">
+      <span class="material-icons-round">local_hospital</span>
+      <span class="bottom-nav-label">Doctors</span>
+    </button>
+    <button class="bottom-nav-item" onclick="switchAdminTab('tab-departments',this);return false" data-tab="tab-departments">
+      <span class="material-icons-round">business</span>
+      <span class="bottom-nav-label">Departments</span>
+    </button>
+    <button class="bottom-nav-item" onclick="switchAdminTab('tab-login-history',this);return false" data-tab="tab-login-history">
+      <span class="material-icons-round">history</span>
+      <span class="bottom-nav-label">History</span>
+    </button>
+  </nav>
 
   <div id="toastContainer"></div>
 

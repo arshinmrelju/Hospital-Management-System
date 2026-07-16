@@ -383,11 +383,38 @@
   /* ─── Tab Switching ─── */
   window.switchAdminTab = function(tabId, btn) {
     document.querySelectorAll('.admin-tab-pane').forEach(function(p) { p.classList.remove('active'); });
-    document.querySelectorAll('.admin-tab, .sidebar-nav .nav-item').forEach(function(i) { i.classList.remove('active'); });
+    document.querySelectorAll('.admin-tab').forEach(function(i) { i.classList.remove('active'); });
+    document.querySelectorAll('.sidebar-nav .nav-item').forEach(function(i) { i.classList.remove('active'); });
+    document.querySelectorAll('.bottom-nav-item').forEach(function(i) { i.classList.remove('active'); });
     document.getElementById(tabId).classList.add('active');
     if (btn) btn.classList.add('active');
+    // Sync sidebar nav
     var nav = document.getElementById('nav-' + tabId.replace('tab-', ''));
     if (nav) nav.classList.add('active');
+    // Sync bottom nav by data-tab attribute
+    var bottomBtn = document.querySelector('.bottom-nav-item[data-tab="' + tabId + '"]');
+    if (bottomBtn) bottomBtn.classList.add('active');
+    // Close mobile search bar
+    var mobileBar = document.getElementById('mobileSearchBar');
+    if (mobileBar) mobileBar.classList.remove('active');
+  };
+
+  /* ─── Mobile Search ─── */
+  window.handleAdminSearch = function() {
+    var q = (document.getElementById('adminGlobalSearch').value || document.getElementById('adminGlobalSearchMobile').value || '').toLowerCase();
+    // Sync both search fields
+    if (document.getElementById('adminGlobalSearch').value !== q) document.getElementById('adminGlobalSearch').value = q;
+    if (document.getElementById('adminGlobalSearchMobile').value !== q) document.getElementById('adminGlobalSearchMobile').value = q;
+    // Apply to visible tab
+    var activeTab = document.querySelector('.admin-tab-pane.active');
+    if (!activeTab) return;
+    if (activeTab.id === 'tab-doctors') {
+      window.filterDoctors();
+    } else if (activeTab.id === 'tab-departments') {
+      window.filterDepartments();
+    } else if (activeTab.id === 'tab-login-history') {
+      window.filterLoginHistory();
+    }
   };
 
   /* ─── Doctor CRUD ─── */
@@ -809,6 +836,45 @@
     icon.classList.toggle('collapsed', !hidden);
   };
 
+  /* ─── Today's Patients & OPD ─── */
+  function loadTodayPatients() {
+    return window.API.getPatients().then(function(resp) {
+      var list = (resp && resp.data) || [];
+      var today = new Date();
+      var todayStr = today.toISOString().slice(0, 10);
+      var count = list.filter(function(p) {
+        var d = p.created_on || p['Created On'] || '';
+        if (!d) return false;
+        d = String(d).trim();
+        if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.slice(0, 10) === todayStr;
+        var dt = new Date(d);
+        if (!isNaN(dt.getTime())) return dt.toISOString().slice(0, 10) === todayStr;
+        return false;
+      }).length;
+      var el = document.getElementById('statNewPatients');
+      if (el) el.textContent = count;
+    }).catch(function(err) {
+      console.warn('[Admin] Failed to load patients:', err);
+    });
+  }
+
+  function loadTodayOPD() {
+    return window.API.getAppointments().then(function(resp) {
+      var list = (resp && resp.data) || [];
+      var today = new Date();
+      var todayStr = today.toISOString().slice(0, 10);
+      var count = list.filter(function(a) {
+        var date = a.appointment_date || a['Appointment Date'] || a.createdAt || a['Created At'] || '';
+        date = String(date);
+        return date.slice(0, 10) === todayStr;
+      }).length;
+      var el = document.getElementById('statOPDToday');
+      if (el) el.textContent = count;
+    }).catch(function(err) {
+      console.warn('[Admin] Failed to load OPD:', err);
+    });
+  }
+
   /* ─── Init ─── */
   function initAdmin() {
     if (typeof window.hideLoader === 'function') window.hideLoader();
@@ -890,8 +956,10 @@
       });
     }
 
+
+
     // Load data in parallel
-    Promise.all([loadDoctors(), loadDepartments()]).then(function() {
+    Promise.all([loadDoctors(), loadDepartments(), loadTodayPatients(), loadTodayOPD()]).then(function() {
       populateDeptSelects();
       if (typeof window.populateAllDropdowns === 'function') window.populateAllDropdowns();
       console.info('[Admin] Data loaded successfully.');
