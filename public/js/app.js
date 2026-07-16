@@ -605,6 +605,23 @@ window.switchPage = function(page) {
   if (page === 'ortho' && typeof initOrthoPage === 'function') {
     initOrthoPage();
   }
+  if (page === 'help') {
+    closeHelpGuide();
+  }
+};
+
+/* --- Help Guide Viewer --- */
+window.openHelpGuide = function(guideId) {
+  document.getElementById('helpGuides').style.display = 'none';
+  var viewer = document.getElementById('helpViewer');
+  viewer.style.display = 'block';
+  document.getElementById('helpIframe').src = 'https://scribehow.com/embed/' + guideId + '?as=video';
+};
+
+window.closeHelpGuide = function() {
+  document.getElementById('helpViewer').style.display = 'none';
+  document.getElementById('helpGuides').style.display = 'flex';
+  document.getElementById('helpIframe').src = '';
 };
 
 document.addEventListener('DOMContentLoaded', function() {

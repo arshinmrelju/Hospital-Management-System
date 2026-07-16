@@ -51,6 +51,91 @@
 
 
     /* --- Mobile Responsive --- */
+    /* --- Help Guides --- */
+    .help-guides {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 720px;
+    }
+    .help-guide-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: var(--glass-border);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: var(--shadow-sm);
+    }
+    .help-guide-card:hover {
+      border-color: var(--primary-light);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+    .help-guide-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: rgba(13,148,136,0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .help-guide-icon .material-icons-round {
+      font-size: 24px;
+      color: var(--primary-light);
+    }
+    .help-guide-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .help-guide-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--on-surface);
+      margin: 0 0 3px;
+    }
+    .help-guide-desc {
+      font-size: 0.82rem;
+      color: var(--on-surface-var);
+      margin: 0;
+      line-height: 1.4;
+    }
+    .help-guide-arrow {
+      color: var(--on-surface-var);
+      opacity: 0.5;
+      flex-shrink: 0;
+    }
+    .help-viewer-top {
+      margin-bottom: 14px;
+    }
+    .help-viewer-top .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: none;
+      color: var(--primary-light);
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      transition: background 0.2s;
+    }
+    .help-viewer-top .btn-back:hover {
+      background: rgba(13,148,136,0.08);
+    }
+    .help-viewer-top .btn-back .material-icons-round {
+      font-size: 20px;
+    }
     @media (max-width: 600px) {
       .appt-form-row {
         grid-template-columns: 1fr;
@@ -892,8 +977,42 @@
           <p class="page-sub">Step-by-step tutorials for common tasks</p>
         </div>
       </div>
-      <div class="widget glass-card" style="padding:0;overflow:hidden;">
-        <iframe src="https://scribehow.com/embed/How_to_Register_a_New_Patient_to_OPD__YJbgFu2tQa-2VeTqWviMzA?as=scrollable" width="100%" height="800" allow="fullscreen" style="border: 0; min-height: 640px; display: block;"></iframe>
+
+      <!-- Guide cards grid -->
+      <div class="help-guides" id="helpGuides">
+        <div class="help-guide-card" onclick="openHelpGuide('Hh-I2oA_RUmno-F9rd6YSw')">
+          <div class="help-guide-icon">
+            <span class="material-icons-round">person_add</span>
+          </div>
+          <div class="help-guide-info">
+            <h3 class="help-guide-title">Register a New Patient</h3>
+            <p class="help-guide-desc">Walk through adding a new patient to the system and assigning them to OPD</p>
+          </div>
+          <span class="material-icons-round help-guide-arrow">chevron_right</span>
+        </div>
+        <div class="help-guide-card" onclick="openHelpGuide('b2n4ujGiTpe4AA4_Awea5A')">
+          <div class="help-guide-icon">
+            <span class="material-icons-round">local_hospital</span>
+          </div>
+          <div class="help-guide-info">
+            <h3 class="help-guide-title">Register Patients for OPD</h3>
+            <p class="help-guide-desc">Step-by-step guide to registering patients specifically for OPD in WellnessPLPY</p>
+          </div>
+          <span class="material-icons-round help-guide-arrow">chevron_right</span>
+        </div>
+      </div>
+
+      <!-- Guide viewer (hidden until a guide is selected) -->
+      <div class="help-viewer" id="helpViewer" style="display:none;">
+        <div class="help-viewer-top">
+          <button class="btn-back" onclick="closeHelpGuide()">
+            <span class="material-icons-round">arrow_back</span>
+            <span>Back to guides</span>
+          </button>
+        </div>
+        <div class="widget glass-card" style="padding:0;overflow:hidden;">
+          <iframe id="helpIframe" src="" width="100%" height="800" allow="fullscreen" style="border: 0; min-height: 640px; display: block;"></iframe>
+        </div>
       </div>
     </div>
 
