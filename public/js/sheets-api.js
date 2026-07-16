@@ -1,6 +1,6 @@
 'use strict';
 
-var SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbxJISKokZ3KzPXU7MG5Gr4flzM5D_d_NBGdr-ZOaYly_KW6NDWXThZQXKXFAsMGP1zgzg/exec';
+var SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbzTBsgr2LsVHEvQPKJRHnX0u7lwMUnUyozs8xzoUsegtehxoRTDy4LSeBK3TV9TAhAPIg/exec';
 
 var _patientsCache = null;
 var _appointmentsCache = null;
@@ -289,19 +289,18 @@ window.API = {
         return resp;
       } else {
         var local = getLocalData('patients') || seedLocalPatients();
-        var nextOp = 1001;
-        var providedOp = data.op_no ? parseInt(data.op_no, 10) : 0;
-        if (!isNaN(providedOp) && providedOp > 0 && providedOp < 1000000) {
-          var taken = local.some(function(p) {
-            return parseInt(p.op_no || p.id, 10) === providedOp;
-          });
-          if (!taken) nextOp = providedOp;
-        }
+        var existing = {};
         local.forEach(function(p) {
           var val = p.op_no || p.id || '';
           var num = parseInt(val, 10);
-          if (!isNaN(num) && num > 0 && num < 1000000 && num >= nextOp) nextOp = num + 1;
+          if (!isNaN(num) && num > 0 && num < 1000000) existing[num] = true;
         });
+        var nextOp = 141587;
+        var providedOp = data.op_no ? parseInt(data.op_no, 10) : 0;
+        if (!isNaN(providedOp) && providedOp > 0 && providedOp < 1000000 && !existing[providedOp]) {
+          nextOp = providedOp;
+        }
+        while (existing[nextOp]) nextOp++;
         var now = new Date();
         var notes = data.notes || '';
         notes = notes ? notes + '\nOP No: ' + nextOp : 'OP No: ' + nextOp;

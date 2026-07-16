@@ -59,24 +59,20 @@ function isValidOpNo(val) {
 function generateNextOpNo(rows, headers) {
   var idCol = headers.indexOf('ID');
   var notesCol = headers.indexOf('Notes');
-  var maxOp = 0;
+  var existing = {};
   for (var i = 1; i < rows.length; i++) {
     if (idCol >= 0) {
       var idVal = rows[i][idCol];
-      if (isValidOpNo(idVal)) {
-        var num = Number(idVal);
-        if (num > maxOp) maxOp = num;
-      }
+      if (isValidOpNo(idVal)) existing[Number(idVal)] = true;
     }
     if (notesCol >= 0) {
       var op = extractOpFromNotes(String(rows[i][notesCol] || ''));
-      if (isValidOpNo(op)) {
-        var num = Number(op);
-        if (num > maxOp) maxOp = num;
-      }
+      if (isValidOpNo(op)) existing[Number(op)] = true;
     }
   }
-  return String(maxOp + 1);
+  var next = 141587;
+  while (existing[next]) next++;
+  return String(next);
 }
 
 function findPatientRow(id, rows, headers) {

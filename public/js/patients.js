@@ -605,13 +605,15 @@ function initPatientsPage() {
 
 
 function getNextOpNo() {
-  var maxOp = 0;
+  var existing = {};
   (window.allPatients || []).forEach(function(p) {
     var val = p.op_no || p.id || '';
     var num = parseInt(val, 10);
-    if (!isNaN(num) && num > 0 && num < 1000000 && num > maxOp) maxOp = num;
+    if (!isNaN(num) && num > 0 && num < 1000000) existing[num] = true;
   });
-  return String(maxOp + 1);
+  var next = 141587;
+  while (existing[next]) next++;
+  return String(next);
 }
 
 function openAddPatientModal() {
