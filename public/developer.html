@@ -252,6 +252,11 @@
         <span class="material-icons-round">campaign</span>
         <span class="nav-label">Broadcast</span>
       </a>
+      <a href="#" class="nav-item" id="nav-maintenance" onclick="switchDevTab('tab-maintenance', this);return false">
+        <span class="material-icons-round">construction</span>
+        <span class="nav-label">Maintenance</span>
+        <span class="badge" id="navCacheBadge" style="display:none;position:static;margin-left:auto;width:20px;height:20px;font-size:9px;">0</span>
+      </a>
       <div class="nav-divider"></div>
     </nav>
     <div class="sidebar-user">
@@ -443,7 +448,109 @@
         </div>
       </div>
 
+      <!-- Maintenance Tab -->
+      <div class="dev-tab-pane" id="tab-maintenance">
+        <div class="dev-page-header">
+          <h1><span class="material-icons-round">construction</span> System Maintenance</h1>
+        </div>
+
+        <div class="dev-stats">
+          <div class="dev-stat-card">
+            <div class="dev-stat-icon-wrap bg-orange-soft">
+              <span class="material-icons-round text-orange">storage</span>
+            </div>
+            <div class="dev-stat-info">
+              <div class="dev-stat-label">Cached Items</div>
+              <div class="dev-stat-value" id="mntCacheCount">0</div>
+              <div class="dev-stat-desc">Entries in local storage</div>
+            </div>
+          </div>
+          <div class="dev-stat-card">
+            <div class="dev-stat-icon-wrap bg-blue-soft">
+              <span class="material-icons-round text-blue">history</span>
+            </div>
+            <div class="dev-stat-info">
+              <div class="dev-stat-label">Last Refresh</div>
+              <div class="dev-stat-value" id="mntLastRefresh" style="font-size:1rem">Never</div>
+              <div class="dev-stat-desc">Previous hard refresh</div>
+            </div>
+          </div>
+          <div class="dev-stat-card">
+            <div class="dev-stat-icon-wrap bg-teal-soft">
+              <span class="material-icons-round text-teal">clear_all</span>
+            </div>
+            <div class="dev-stat-info">
+              <div class="dev-stat-label">Total Cleared</div>
+              <div class="dev-stat-value" id="mntTotalCleared">0</div>
+              <div class="dev-stat-desc">Items cleared across all refreshes</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="widget glass-card" style="margin-bottom:24px;text-align:center;padding:32px">
+          <div style="margin-bottom:16px">
+            <span class="material-icons-round" style="font-size:48px;color:var(--portal-accent);opacity:0.8">cached</span>
+          </div>
+          <h2 style="font-family:var(--font-head);font-size:1.2rem;font-weight:800;color:var(--on-surface);margin:0 0 8px">Hard Refresh Reception Portal</h2>
+          <p style="color:var(--on-surface-var);font-size:0.85rem;margin:0 auto 20px;max-width:460px;line-height:1.6">
+            Clears all cached patient, skin, ortho, doctor, and export data from local storage,
+            then reloads the Reception portal with fresh data from the server.
+          </p>
+          <button class="btn-primary" id="mntHardRefreshBtn" onclick="hardRefresh()" style="padding:14px 40px;font-size:1rem">
+            <span class="material-icons-round" style="font-size:20px">cached</span>
+            Execute Hard Refresh
+          </button>
+        </div>
+
+        <div class="widget glass-card">
+          <div class="dev-section-header">
+            <h3><span class="material-icons-round">list_alt</span> Refresh History</h3>
+            <button class="btn-secondary" onclick="clearRefreshHistory()" style="padding:6px 14px;font-size:0.78rem">
+              <span class="material-icons-round" style="font-size:14px">delete_sweep</span> Clear All
+            </button>
+          </div>
+          <div class="table-scroll">
+            <table class="data-table" id="refreshHistoryTable">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Items Cleared</th>
+                  <th>Size</th>
+                  <th>Caches</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="refreshHistoryBody">
+                <tr class="skeleton-row"><td colspan="5" style="padding:16px;text-align:center;color:var(--on-surface-var);font-size:0.85rem">No refresh history yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
     </main>
+  </div>
+
+  <!-- Hard Refresh Confirm Modal -->
+  <div class="modal-overlay" id="hardRefreshModal" onclick="closeModal(event,'hardRefreshModal')">
+    <div class="modal glass-card" style="max-width:480px">
+      <div class="modal-header">
+        <h2><span class="material-icons-round" style="font-size:22px;color:var(--portal-accent)">cached</span> Hard Refresh</h2>
+        <button class="modal-close" onclick="closeModal(null,'hardRefreshModal')"><span class="material-icons-round">close</span></button>
+      </div>
+      <div class="modal-body" id="hardRefreshModalBody">
+        <div style="text-align:center;padding:20px 0" id="hardRefreshModalLoading">
+          <div class="loading-pulse" style="margin:0 auto 12px;width:40px;height:40px;border-radius:50%"></div>
+          <p style="color:var(--on-surface-var);font-size:0.88rem">Checking caches...</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal(null,'hardRefreshModal')">Cancel</button>
+        <button class="btn-primary" id="hardRefreshExecuteBtn" onclick="executeHardRefresh()" style="display:none">
+          <span class="material-icons-round" style="font-size:18px">cached</span> Execute Refresh
+        </button>
+      </div>
+    </div>
   </div>
 
   <div id="toastContainer"></div>

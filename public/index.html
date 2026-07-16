@@ -1368,6 +1368,13 @@
   <script src="js/patients.js?v=3"></script>
   <script src="js/skin.js?v=10"></script>
   <script src="js/ortho.js?v=1"></script>
+  <script>
+    window.name = 'wellness_reception';
+    try {
+      var bc = new BroadcastChannel('hms_reload');
+      bc.onmessage = function() { location.reload(); };
+    } catch(e) {}
+  </script>
 </body>
 
 </html>

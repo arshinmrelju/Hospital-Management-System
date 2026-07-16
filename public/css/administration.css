@@ -50,6 +50,8 @@
 .text-green { color: #10B981; }
 .bg-purple-soft { background: rgba(139, 92, 246, 0.12); }
 .text-purple { color: #8B5CF6; }
+.bg-orange-soft { background: rgba(251, 146, 60, 0.12); }
+.text-orange { color: #FB923C; }
 
 .admin-stat-info {
   flex: 1;
