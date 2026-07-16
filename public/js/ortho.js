@@ -47,35 +47,37 @@ function getConditionTypeLabel(val) {
   return labels[val] || val;
 }
 
+function orthoFormatDate(d) {
+  return d ? new Date(d).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '';
+}
+
+function toggleSelectAllOrtho(cb) {
+  document.querySelectorAll('#orthoTableBody input[type="checkbox"]').forEach(c => c.checked = cb.checked);
+}
+
 function renderOrthoTable() {
   const tbody = document.getElementById('orthoTableBody');
   if (!tbody) return;
   const start = (orthoCurrentPage - 1) * ORTHO_ROWS_PER_PAGE;
   const pageItems = filteredOrthoPatients.slice(start, start + ORTHO_ROWS_PER_PAGE);
   if (pageItems.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--on-surface-var)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px;color:var(--outline-var)">search_off</span>No orthopedic patients found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--on-surface-var)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px;color:var(--outline-var)">search_off</span>No orthopedic patients found</td></tr>';
     return;
   }
   tbody.innerHTML = pageItems.map(p => {
     var oid = p.ortho_id || p.id || '';
     var name = p.patient_name || '';
     var age = p.age || '';
-    var diagnosis = p.diagnosis || '';
-    var bodyPart = p.body_part || '';
-    var side = p.side || '';
-    var ctype = getConditionTypeLabel(p.condition_type) || p.condition_type || '';
-    var sev = p.severity || '';
-    var sevClass = (sev || '').toLowerCase();
     return '<tr>' +
+      '<td data-label=""><input type="checkbox" /></td>' +
       '<td data-label="Ortho ID"><code style="font-size:.78rem;background:var(--surface-mid);padding:2px 6px;border-radius:4px;color:var(--primary-light)">' + esc(oid) + '</code></td>' +
       '<td data-label="Name"><strong>' + esc(name) + '</strong><br><span style="font-size:.72rem;color:var(--on-surface-var)">' + esc(age) + ' yrs</span></td>' +
-      '<td data-label="Diagnosis">' + esc(diagnosis) + '</td>' +
-      '<td data-label="Body Part">' + esc(bodyPart) + (side ? ' <span style="font-size:.72rem;color:var(--on-surface-var)">(' + esc(side) + ')</span>' : '') + '</td>' +
-      '<td data-label="Condition">' + esc(ctype) + '</td>' +
-      '<td data-label="Severity"><span class="badge-status ' + sevClass + '">' + esc(sev) + '</span></td>' +
+      '<td data-label="Contact" style="font-size:.82rem">' + esc(p.contact) + '</td>' +
+      '<td data-label="Last Visit" style="font-size:.82rem">' + orthoFormatDate(p.last_visit) + '</td>' +
       '<td data-label="Actions">' +
         '<button class="icon-btn" title="View" onclick="viewOrthoPatient(\'' + esc(oid) + '\')"><span class="material-icons-round">visibility</span></button>' +
         '<button class="icon-btn" title="Edit" onclick="editOrthoPatient(\'' + esc(oid) + '\')"><span class="material-icons-round">edit</span></button>' +
+        '<button class="icon-btn" title="Add to Ortho OPD" onclick="addOrthoToOpd(this)" data-id="' + esc(oid) + '" data-name="' + esc(name) + '" data-age="' + esc(age) + '" data-gender="' + esc(p.gender || '') + '" data-contact="' + esc(p.contact || '') + '" data-source="ortho"><span class="material-icons-round" style="color:var(--accent-teal, #0891b2)">how_to_reg</span></button>' +
         '<button class="icon-btn danger" title="Delete" onclick="deleteOrthoPatient(\'' + esc(oid) + '\')"><span class="material-icons-round">delete</span></button>' +
       '</td>' +
     '</tr>';
@@ -83,9 +85,16 @@ function renderOrthoTable() {
   updateOrthoPagination();
 }
 
+window.addOrthoToOpd = function(btn) {
+  if (typeof window.addToOpdRegister === 'function') {
+    window.addToOpdRegister(btn);
+  } else {
+    toast('OPD register not available on this page', 'warning');
+  }
+};
+
 function validateOrthoInput(data) {
   const errors = [];
-  if (!data.ortho_id || data.ortho_id.trim().length < 1) errors.push('Ortho ID is required');
   if (!data.patient_name || data.patient_name.trim().length < 1) errors.push('Patient name is required');
   if (data.age && (isNaN(data.age) || data.age < 0 || data.age > 150)) errors.push('Invalid age');
   if (data.contact && data.contact.length > 50) errors.push('Contact too long');
@@ -94,18 +103,12 @@ function validateOrthoInput(data) {
 
 function applyOrthoFilters() {
   const search = (document.getElementById('orthoSearch')?.value || '').toLowerCase();
-  const typeFilter = document.getElementById('orthoTypeFilter')?.value || '';
-  const partFilter = document.getElementById('orthoPartFilter')?.value || '';
-  const severityFilter = document.getElementById('orthoSeverityFilter')?.value || '';
 
   filteredOrthoPatients = allOrthoPatients.filter(p => {
     const pid = p.ortho_id || p.id || '';
     const name = p.patient_name || '';
     const haystack = (pid + ' ' + name + ' ' + (p.contact || '')).toLowerCase();
     if (search && !haystack.includes(search)) return false;
-    if (typeFilter && (p.condition_type || '') !== typeFilter) return false;
-    if (partFilter && (p.body_part || '') !== partFilter) return false;
-    if (severityFilter && (p.severity || '') !== severityFilter) return false;
     return true;
   });
 
@@ -284,13 +287,13 @@ async function loadOrthoPatients(skipCache) {
     var skeletonHTML = '';
     for (var i = 0; i < 5; i++) {
       skeletonHTML += '<tr class="skeleton-row">' +
+        '<td><div class="skeleton-cell" style="width:20px;"></div></td>' +
         '<td><div class="skeleton-cell" style="width:60px;"></div></td>' +
         '<td><div class="skeleton-cell" style="width:120px;"></div></td>' +
         '<td><div class="skeleton-cell" style="width:90px;"></div></td>' +
         '<td><div class="skeleton-cell" style="width:100px;"></div></td>' +
-        '<td><div class="skeleton-cell" style="width:80px;"></div></td>' +
-        '<td><div class="skeleton-cell" style="width:60px;height:22px;border-radius:12px;"></div></td>' +
         '<td><div style="display:flex;gap:6px;">' +
+          '<div class="skeleton-cell" style="width:30px;height:30px;border-radius:6px;"></div>' +
           '<div class="skeleton-cell" style="width:30px;height:30px;border-radius:6px;"></div>' +
           '<div class="skeleton-cell" style="width:30px;height:30px;border-radius:6px;"></div>' +
           '<div class="skeleton-cell" style="width:30px;height:30px;border-radius:6px;"></div>' +
@@ -310,7 +313,7 @@ async function loadOrthoPatients(skipCache) {
     console.error('Failed to load orthopedic patients:', e);
     if (!hasRenderedCache && _orthoInitialized) {
       if (typeof toast === 'function') toast('Could not load orthopedic patients: ' + (e.message || e), 'error');
-      if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--error,#ef4444)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px">error_outline</span>Failed to load<br><button class="btn-secondary" style="margin-top:12px" onclick="loadOrthoPatients()">Retry</button></td></tr>';
+      if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--error,#ef4444)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px">error_outline</span>Failed to load<br><button class="btn-secondary" style="margin-top:12px" onclick="loadOrthoPatients()">Retry</button></td></tr>';
       allOrthoPatients = [];
       window.allOrthoPatients = allOrthoPatients;
     }
@@ -326,16 +329,34 @@ function initOrthoPage() {
   }
 }
 
+function generateNextOrthoId() {
+  var existing = {};
+  (allOrthoPatients || []).forEach(function(p) {
+    existing[String(p.ortho_id || p.id || '')] = true;
+  });
+  var next = parseInt(localStorage.getItem('hms_ortho_next_id') || '4801', 10);
+  if (isNaN(next) || next < 4801) next = 4801;
+  while (existing[String(next)]) next++;
+  localStorage.setItem('hms_ortho_next_id', String(next + 1));
+  return String(next);
+}
+
 function openAddOrthoModal() {
   document.getElementById('addOrthoForm').reset();
+  try {
+    document.getElementById('addOrthoIdDisplay').textContent = generateNextOrthoId();
+  } catch(e) {
+    if (typeof toast === 'function') toast('Error: ' + e.message, 'error');
+  }
   openModal('addOrthoModal');
 }
 window.openAddOrthoModal = openAddOrthoModal;
 
 async function submitAddOrtho(e) {
   e.preventDefault();
+  var orthoId = (document.getElementById('addOrthoIdDisplay').textContent || '').trim();
   const raw = {
-    ortho_id: document.getElementById('addOrthoId').value.replace(/<[^>]*>/g, '').trim(),
+    ortho_id: orthoId,
     patient_name: document.getElementById('addOrthoPatientName').value.replace(/<[^>]*>/g, '').trim(),
     age: document.getElementById('addOrthoAge').value,
     gender: document.getElementById('addOrthoGender').value,
@@ -368,6 +389,7 @@ async function submitAddOrtho(e) {
       severity: raw.severity || 'Mild',
       treatment: raw.treatment || '',
       notes: raw.notes || '',
+      last_visit: new Date().toISOString().slice(0,10),
       created_on: new Date().toISOString().slice(0,10),
     };
     allOrthoPatients.unshift(newP);

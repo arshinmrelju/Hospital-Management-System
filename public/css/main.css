@@ -1670,6 +1670,8 @@ select.loading option {
   -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 2px 12px rgba(13,148,136,0.06);
   transition: border-color 0.2s;
+  /* Prevent chips from overflowing the card boundary */
+  overflow: hidden;
 }
 
 .smart-filter:focus-within {
@@ -1684,7 +1686,11 @@ select.loading option {
   gap: 10px;
   flex-wrap: nowrap;
   overflow-x: auto;
+  overflow-y: visible;
   -webkit-overflow-scrolling: touch;
+  /* Extra vertical padding so active chip box-shadow is not clipped */
+  padding: 4px 2px;
+  margin: -4px -2px;
 }
 
 /* Vertical divider between chip groups */
@@ -1749,7 +1755,8 @@ select.loading option {
   border-color: var(--primary-light);
   color: var(--primary-light);
   background: var(--primary-soft);
-  transform: translateY(-1px);
+  /* Removed translateY(-1px) — it caused chips to escape the card safe area on hover */
+  box-shadow: 0 2px 8px rgba(13,148,136,0.18);
 }
 
 .sf-chip.active {

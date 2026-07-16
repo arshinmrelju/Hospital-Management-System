@@ -176,7 +176,7 @@ function renderOpdRecords() {
   var data = filteredOpdRecords || OPD_RECORDS;
 
   if (opdDimension !== 'all') {
-    var dimLabel = opdDimension === 'skin' ? 'Skin' : 'General';
+    var dimLabel = opdDimension === 'skin' ? 'Skin' : opdDimension === 'ortho' ? 'Ortho' : 'General';
     data = data.filter(function (r) { return (r.department || 'General') === dimLabel; });
   }
 
@@ -199,6 +199,8 @@ function renderOpdRecords() {
       var deptBadge = '';
       if (p.department === 'Skin') {
         deptBadge = '<span class="badge-status mild" style="background:var(--accent-teal-bg,rgba(8,145,178,0.15));color:var(--accent-teal,#0891b2);font-size:.7rem">Skin</span>';
+      } else if (p.department === 'Ortho') {
+        deptBadge = '<span class="badge-status mild" style="background:rgba(147,51,234,0.15);color:#9333ea;font-size:.7rem">Ortho</span>';
       } else if (p.department === 'Consultation') {
         deptBadge = '<span class="badge-status" style="background:var(--surface-mid);font-size:.7rem">Consultation</span>';
       } else {
@@ -315,7 +317,11 @@ window.addToOpdRegister = function(btn) {
 function populateAssignDoctor() {
   var sel = document.getElementById('opdAssignDoctor');
   if (!sel) return;
-  var defaultDoctor = (_opdAssignPatient && _opdAssignPatient.source === 'skin') ? 'Dr. Ashok' : 'Dr. Sofiya';
+  var defaultDoctor = 'Dr. Sofiya';
+  if (_opdAssignPatient) {
+    if (_opdAssignPatient.source === 'skin') defaultDoctor = 'Dr. Ashok';
+    else if (_opdAssignPatient.source === 'ortho') defaultDoctor = 'Dr. Sathish';
+  }
   var docs = getCachedDoctors();
   if (docs) {
     renderDoctorOptions(sel, docs, defaultDoctor);
@@ -360,8 +366,9 @@ function submitOpdAssign() {
   var now = new Date();
   var timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
   var isSkin = patient.source === 'skin';
+  var isOrtho = patient.source === 'ortho';
   var record = {
-    id: isSkin ? 'SKIN-OPD-' + Date.now() : 'OPD-' + Date.now(),
+    id: isSkin ? 'SKIN-OPD-' + Date.now() : isOrtho ? 'ORTHO-OPD-' + Date.now() : 'OPD-' + Date.now(),
     patient_id: patient.id || patient.op || '',
     name: patient.name || '',
     age: patient.age || 'N/A',
@@ -369,7 +376,7 @@ function submitOpdAssign() {
     contact: patient.contact || '',
     op_no: patient.op || '',
     doctor: doctor,
-    department: isSkin ? 'Skin' : 'General',
+    department: isSkin ? 'Skin' : isOrtho ? 'Ortho' : 'General',
     complaint: '—',
     time: timeStr,
     timestamp: now.toISOString()
@@ -386,7 +393,7 @@ function submitOpdAssign() {
     doctor_name: doctor,
     appointment_date: now.toISOString().split('T')[0],
     appointment_time: timeStr,
-    type: isSkin ? 'Skin OPD' : 'OPD',
+    type: isSkin ? 'Skin OPD' : isOrtho ? 'Ortho OPD' : 'OPD',
     status: 'waiting',
     reason: ''
   }).catch(function (e) {
