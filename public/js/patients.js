@@ -695,7 +695,8 @@ async function submitAddPatient(e) {
             doctor: raw.doctor || 'Unassigned',
             complaint: raw.notes || '—',
             time: timeStr,
-            timestamp: now.toISOString()
+            timestamp: now.toISOString(),
+            _isNew: true
           });
           if (typeof renderOpdRecords === 'function') renderOpdRecords();
           if (typeof updateStats === 'function') updateStats();

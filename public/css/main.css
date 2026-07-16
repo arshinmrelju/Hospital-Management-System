@@ -528,6 +528,44 @@ select.loading option {
   color: #DC2626;
 }
 
+/* --- OPD New Registration Tag --- */
+.opd-new-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #0D9488, #059669);
+  color: #ffffff;
+  box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.5);
+  animation: opd-new-pulse 2s infinite;
+  vertical-align: middle;
+  margin-left: 4px;
+  position: relative;
+  top: -1px;
+  cursor: default;
+  user-select: none;
+}
+
+@keyframes opd-new-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.55); }
+  60%  { box-shadow: 0 0 0 6px rgba(13, 148, 136, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0); }
+}
+
+.opd-new-row {
+  background: rgba(13, 148, 136, 0.04) !important;
+  border-left: 3px solid #0D9488 !important;
+  transition: background 0.3s;
+}
+
+.opd-new-row:hover {
+  background: rgba(13, 148, 136, 0.09) !important;
+}
+
 .status-dot {
   width: 8px;
   height: 8px;

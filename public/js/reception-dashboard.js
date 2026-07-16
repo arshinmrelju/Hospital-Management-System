@@ -206,10 +206,45 @@ function renderOpdRecords() {
       } else {
         deptBadge = '<span class="badge-status" style="font-size:.7rem">General</span>';
       }
-      return '<tr>' +
+
+      /* --- "NEW" tag: shown if the patient was registered today --- */
+      var todayStr = new Date().toISOString().slice(0, 10);
+      var isNew = false;
+
+      // 1. Explicit flag set at registration time (most reliable — covers skin/ortho/general new patients)
+      if (p._isNew === true) {
+        isNew = true;
+      }
+
+      // 2. Cross-check allPatients.created_on — works for general OPD patients already in the list
+      if (!isNew) {
+        var patientLookup = window.allPatients || [];
+        var matchedPatient = patientLookup.find(function(pt) {
+          var ptId = String(pt.op_no || pt.id || '');
+          var recId = String(p.op_no || p.patient_id || p.id || '');
+          return ptId && ptId !== '' && recId && recId !== '' && ptId === recId;
+        });
+        if (matchedPatient) {
+          var createdOn = String(matchedPatient.created_on || matchedPatient['Created On'] || '').trim();
+          if (createdOn) {
+            if (/^\d{4}-\d{2}-\d{2}/.test(createdOn)) {
+              isNew = createdOn.slice(0, 10) === todayStr;
+            } else {
+              var dt = new Date(createdOn);
+              if (!isNaN(dt.getTime())) isNew = dt.toISOString().slice(0, 10) === todayStr;
+            }
+          }
+        }
+      }
+
+      var newTag = isNew
+        ? '<span class="opd-new-tag" title="Newly registered today">NEW</span>'
+        : '';
+
+      return '<tr' + (isNew ? ' class="opd-new-row"' : '') + '>' +
         '<td>' + (i + 1) + '</td>' +
         '<td>' + (p.op_no || p.patient_id || p.id || '—') + '</td>' +
-        '<td><strong>' + (p.name || '') + '</strong></td>' +
+        '<td><strong>' + (p.name || '') + '</strong>' + (newTag ? ' ' + newTag : '') + '</td>' +
         '<td>' + (p.age || '') + '</td>' +
         '<td>' + (p.gender || '—') + '</td>' +
         '<td>' + (p.contact || '—') + '</td>' +

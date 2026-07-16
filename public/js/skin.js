@@ -381,7 +381,8 @@ async function submitAddSkin(e) {
       department: 'Skin',
       complaint: '—',
       time: timeStr,
-      timestamp: now.toISOString()
+      timestamp: now.toISOString(),
+      _isNew: true
     };
     if (window.OPD_RECORDS) {
       window.OPD_RECORDS.push(opdRecord);
