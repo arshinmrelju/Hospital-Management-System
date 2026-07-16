@@ -316,6 +316,42 @@
   cursor: pointer;
 }
 
+/* ================== TOPBAR BRAND ================== */
+/* Hidden on desktop — sidebar already shows the logo */
+.topbar-brand {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+.topbar-brand-icon {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 8px;
+  flex-shrink: 0;
+  mix-blend-mode: multiply;
+}
+.topbar-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.topbar-brand-title {
+  font-family: var(--font-head);
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--on-surface);
+  white-space: nowrap;
+}
+.topbar-brand-sub {
+  font-size: 0.68rem;
+  color: var(--on-surface-var);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 /* Mobile-only topbar title: hidden on desktop, shown on mobile */
 .topbar-mobile-title {
   display: none;
@@ -463,6 +499,8 @@
     right: 12px;
     width: 320px;
   }
+  /* Sidebar is hidden on mobile — show the topbar brand logo */
+  .topbar-brand { display: flex; }
 }
 @media (max-width: 768px) {
   .notif-panel {
@@ -471,11 +509,11 @@
     width: auto;
     top: calc(var(--topbar-h) + 4px);
   }
-  /* Hide the topbar brand on mobile — sidebar/hamburger handles nav */
+  /* Hide brand on small screens — mobile title takes over */
   .topbar-brand {
     display: none;
   }
-  /* Show the mobile-only centred title instead */
+  /* Show the mobile-only centred title instead of full brand text */
   .topbar-mobile-title {
     display: flex;
   }
