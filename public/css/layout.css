@@ -9,6 +9,9 @@
   display: flex;
   min-height: 100vh;
   background: var(--bg);
+  overflow-x: clip;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* ================== SIDEBAR ================== */
@@ -187,6 +190,9 @@
   flex-direction: column;
   min-height: 100vh;
   transition: margin-left 0.3s;
+  min-width: 0;
+  width: 0; /* combined with flex:1 this prevents content from setting the width */
+  overflow-x: clip;
 }
 
 /* ================== TOPBAR ================== */
@@ -310,12 +316,31 @@
   cursor: pointer;
 }
 
+/* Mobile-only topbar title: hidden on desktop, shown on mobile */
+.topbar-mobile-title {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-head);
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--on-surface);
+  letter-spacing: -0.01em;
+  pointer-events: none;
+  user-select: none;
+}
+
 /* ================== PAGE BODY ================== */
 .page-body {
   flex: 1;
   padding: 28px 28px 48px;
   max-width: 1400px;
   width: 100%;
+  box-sizing: border-box;
+  overflow-x: clip;
 }
 .page-header {
   display: flex;
@@ -427,7 +452,11 @@
     transform: translateX(0);
     box-shadow: var(--shadow-lg);
   }
-  .main-content { margin-left: 0; }
+  .main-content {
+    margin-left: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
   .menu-toggle { display: flex; }
   .page-body { padding: 20px 10px 40px; }
   .notif-panel {
@@ -442,6 +471,14 @@
     width: auto;
     top: calc(var(--topbar-h) + 4px);
   }
+  /* Hide the topbar brand on mobile — sidebar/hamburger handles nav */
+  .topbar-brand {
+    display: none;
+  }
+  /* Show the mobile-only centred title instead */
+  .topbar-mobile-title {
+    display: flex;
+  }
 }
 @media (max-width: 600px) {
   .topbar { padding: 0 10px; gap: 6px; }
@@ -449,7 +486,7 @@
   .mobile-search-toggle { display: flex; }
   .page-header { flex-direction: column; }
   .page-title { font-size: 1.4rem; }
-  .page-body { padding: 14px 6px 32px; }
+  .page-body { padding: 14px 10px 32px; }
   .topbar-btn { padding: 10px; }
   .date-badge { font-size: 0.72rem; padding: 4px 10px; }
   .sidebar-nav { padding: 12px 8px; }
@@ -460,8 +497,8 @@
   .view-btn { padding: 8px 10px; }
 }
 @media (max-width: 400px) {
-  .page-body { padding: 10px 2px 24px; }
-  .topbar { padding: 0 4px; gap: 4px; }
+  .page-body { padding: 10px 8px 24px; }
+  .topbar { padding: 0 8px; gap: 4px; }
 }
 
 /* ================== TECHSIAH BRANDING ================== */

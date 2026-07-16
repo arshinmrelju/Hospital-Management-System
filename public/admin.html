@@ -3,14 +3,17 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Admin Portal – Wellness Medicals HMS</title>
   <link rel="icon" type="image/jpeg" href="assets/hms-logo.jpg">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0D9488">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Wellness Admin">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="description" content="Admin portal: manage doctors, departments, and system settings." />
+  <link rel="apple-touch-icon" href="assets/hms-logo.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null" />
@@ -18,10 +21,7 @@
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/portals.css" />
-  <link rel="stylesheet" href="css/staff-theme.css" />
-  <link rel="stylesheet" href="css/patients.css" />
   <link rel="stylesheet" href="css/administration.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body class="app-body portal-reception">
@@ -113,7 +113,6 @@
         <span class="nav-label">Login History</span>
       </a>
       <div class="nav-divider"></div>
-      
     </nav>
     <div class="sidebar-user">
       <div class="user-avatar" id="userAvatar">AD</div>
@@ -144,6 +143,11 @@
           <span class="topbar-brand-sub">Admin</span>
         </div>
       </div>
+      <!-- Mobile-only centred title (shown when topbar-brand is hidden) -->
+      <div class="topbar-mobile-title">
+        <span class="material-icons-round" style="font-size:16px;color:var(--primary-light);">admin_panel_settings</span>
+        <span>Admin Portal</span>
+      </div>
       <div class="topbar-search" id="topbarSearch">
         <span class="material-icons-round search-icon">search</span>
         <input type="text" id="adminGlobalSearch" placeholder="Search doctors, departments..." oninput="handleAdminSearch()" />
@@ -162,13 +166,20 @@
     </div>
 
     <main class="page-body">
-      <div class="page-header">
-        <div>
-          <h1 class="page-title">Admin Management</h1>
-          <p class="page-sub" id="adminGreeting">Manage doctors, departments, and system settings.</p>
-        </div>
-        <div class="header-actions">
-          <span class="date-badge" id="todayDate"></span>
+
+      <!-- Welcome Hero -->
+      <div class="welcome-hero" id="welcomeHero">
+        <div class="welcome-hero-bg"></div>
+        <div class="welcome-hero-content">
+          <div class="welcome-hero-text">
+            <h1 class="welcome-hero-title" id="adminGreeting">Good morning</h1>
+            <p class="welcome-hero-sub" id="todayDate"></p>
+          </div>
+          <div class="welcome-hero-avatar">
+            <div class="hero-avatar-ring">
+              <span id="heroAvatar">AD</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -185,175 +196,219 @@
       <!-- Tab Bar -->
       <div class="admin-tab-bar">
         <button class="admin-tab active" onclick="switchAdminTab('tab-overview',this)">
-          <span class="material-icons-round">dashboard</span> Overview
+          <span class="material-icons-round">dashboard</span>
+          <span class="admin-tab-label">Overview</span>
         </button>
         <button class="admin-tab" onclick="switchAdminTab('tab-doctors',this)">
-          <span class="material-icons-round">local_hospital</span> Doctors
+          <span class="material-icons-round">local_hospital</span>
+          <span class="admin-tab-label">Doctors</span>
         </button>
         <button class="admin-tab" onclick="switchAdminTab('tab-departments',this)">
-          <span class="material-icons-round">business</span> Departments
+          <span class="material-icons-round">business</span>
+          <span class="admin-tab-label">Departments</span>
         </button>
         <button class="admin-tab" onclick="switchAdminTab('tab-login-history',this)">
-          <span class="material-icons-round">history</span> Login History
+          <span class="material-icons-round">history</span>
+          <span class="admin-tab-label">History</span>
         </button>
       </div>
 
-      <!-- Overview Tab -->
+      <!-- ═══ OVERVIEW TAB ═══ -->
       <div class="admin-tab-pane active" id="tab-overview">
-        <!-- Admin Stats -->
-        <div class="admin-stats" id="adminStats">
-          <div class="admin-stat-card">
-            <div class="admin-stat-icon-wrap bg-blue-soft">
-              <span class="material-icons-round text-blue">person_add</span>
-            </div>
-            <div class="admin-stat-info">
-              <div class="admin-stat-label">New Patients Today</div>
-              <div class="admin-stat-value" id="statNewPatients">0</div>
-              <div class="admin-stat-desc">Registered today</div>
-            </div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-icon-wrap bg-orange-soft">
-              <span class="material-icons-round text-orange">how_to_reg</span>
-            </div>
-            <div class="admin-stat-info">
-              <div class="admin-stat-label">OPD Today</div>
-              <div class="admin-stat-value" id="statOPDToday">0</div>
-              <div class="admin-stat-desc">Patients attended today</div>
+
+        <!-- Premium Stats Grid -->
+        <div class="stats-elevated" id="adminStats">
+          <div class="stat-elevated-card" style="--stat-accent:#3B82F6">
+            <div class="stat-elevated-icon"><span class="material-icons-round">person_add</span></div>
+            <div class="stat-elevated-body">
+              <span class="stat-elevated-label">New Patients Today</span>
+              <span class="stat-elevated-value" id="statNewPatients">0</span>
+              <span class="stat-elevated-trend up">
+                <span class="material-icons-round">trending_up</span> Registered today
+              </span>
             </div>
           </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-icon-wrap bg-teal-soft">
-              <span class="material-icons-round text-teal">local_hospital</span>
-            </div>
-            <div class="admin-stat-info">
-              <div class="admin-stat-label">Total Doctors</div>
-              <div class="admin-stat-value" id="statDoctors">0</div>
-              <div class="admin-stat-desc">Personnel profiles</div>
-            </div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-icon-wrap bg-green-soft">
-              <span class="material-icons-round text-green">check_circle</span>
-            </div>
-            <div class="admin-stat-info">
-              <div class="admin-stat-label">Available Doctors</div>
-              <div class="admin-stat-value" id="statAvailable">0</div>
-              <div class="admin-stat-desc">Active / on-duty status</div>
+          <div class="stat-elevated-card" style="--stat-accent:#FB923C">
+            <div class="stat-elevated-icon"><span class="material-icons-round">how_to_reg</span></div>
+            <div class="stat-elevated-body">
+              <span class="stat-elevated-label">OPD Today</span>
+              <span class="stat-elevated-value" id="statOPDToday">0</span>
+              <span class="stat-elevated-trend up">
+                <span class="material-icons-round">trending_up</span> Patients attended
+              </span>
             </div>
           </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-icon-wrap bg-purple-soft">
-              <span class="material-icons-round text-purple">business</span>
+          <div class="stat-elevated-card" style="--stat-accent:#0D9488">
+            <div class="stat-elevated-icon"><span class="material-icons-round">local_hospital</span></div>
+            <div class="stat-elevated-body">
+              <span class="stat-elevated-label">Total Doctors</span>
+              <span class="stat-elevated-value" id="statDoctors">0</span>
+              <span class="stat-elevated-trend"><span class="material-icons-round">people</span> Personnel profiles</span>
             </div>
-            <div class="admin-stat-info">
-              <div class="admin-stat-label">Departments</div>
-              <div class="admin-stat-value" id="statDepartments">0</div>
-              <div class="admin-stat-desc">Clinical service divisions</div>
+          </div>
+          <div class="stat-elevated-card" style="--stat-accent:#10B981">
+            <div class="stat-elevated-icon"><span class="material-icons-round">check_circle</span></div>
+            <div class="stat-elevated-body">
+              <span class="stat-elevated-label">Available Doctors</span>
+              <span class="stat-elevated-value" id="statAvailable">0</span>
+              <span class="stat-elevated-trend up">
+                <span class="material-icons-round">check</span> Active / on-duty
+              </span>
+            </div>
+          </div>
+          <div class="stat-elevated-card" style="--stat-accent:#8B5CF6">
+            <div class="stat-elevated-icon"><span class="material-icons-round">business</span></div>
+            <div class="stat-elevated-body">
+              <span class="stat-elevated-label">Departments</span>
+              <span class="stat-elevated-value" id="statDepartments">0</span>
+              <span class="stat-elevated-trend"><span class="material-icons-round">category</span> Clinical divisions</span>
             </div>
           </div>
         </div>
 
+        <!-- Quick Actions + System Status -->
+        <div class="dashboard-split-actions">
+          <div class="quick-actions-card glass-card">
+            <div class="quick-actions-header">
+              <span class="material-icons-round">bolt</span>
+              <span>Quick Actions</span>
+            </div>
+            <div class="quick-actions-grid">
+              <button class="quick-action-btn" onclick="openAddDoctorModal()">
+                <span class="qa-icon" style="background:rgba(13,148,136,0.12);color:#0D9488">
+                  <span class="material-icons-round">person_add</span>
+                </span>
+                <span class="qa-label">Add Doctor</span>
+              </button>
+              <button class="quick-action-btn" onclick="openAddDeptModal()">
+                <span class="qa-icon" style="background:rgba(139,92,246,0.12);color:#8B5CF6">
+                  <span class="material-icons-round">add_business</span>
+                </span>
+                <span class="qa-label">Add Dept</span>
+              </button>
+              <button class="quick-action-btn" onclick="switchAdminTab('tab-doctors', document.getElementById('nav-doctors'))">
+                <span class="qa-icon" style="background:rgba(59,130,246,0.12);color:#3B82F6">
+                  <span class="material-icons-round">manage_accounts</span>
+                </span>
+                <span class="qa-label">Doctors</span>
+              </button>
+              <button class="quick-action-btn" onclick="switchAdminTab('tab-login-history', document.getElementById('nav-login-history'))">
+                <span class="qa-icon" style="background:rgba(245,158,11,0.12);color:#F59E0B">
+                  <span class="material-icons-round">monitor_heart</span>
+                </span>
+                <span class="qa-label">Activity</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Mini system status -->
+          <div class="system-status glass-card">
+            <div class="system-status-header">
+              <span class="material-icons-round">info</span>
+              <span>System Status</span>
+            </div>
+            <div class="system-status-items">
+              <div class="ss-item">
+                <span class="ss-dot green"></span>
+                <span>Database</span>
+                <span class="ss-badge">Connected</span>
+              </div>
+              <div class="ss-item">
+                <span class="ss-dot green"></span>
+                <span>Firebase Sync</span>
+                <span class="ss-badge">Active</span>
+              </div>
+              <div class="ss-item">
+                <span class="ss-dot" id="ssNetworkDot"></span>
+                <span>Network</span>
+                <span class="ss-badge" id="ssNetworkStatus">Online</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Doctors Tab -->
+      <!-- ═══ DOCTORS TAB ═══ -->
       <div class="admin-tab-pane" id="tab-doctors">
-        <div class="admin-table-toolbar">
-          <div class="admin-search">
-            <span class="material-icons-round" style="font-size:18px;color:var(--outline)">search</span>
+        <div class="list-toolbar">
+          <div class="list-search">
+            <span class="material-icons-round">search</span>
             <input type="text" id="doctorSearch" placeholder="Search doctors..." oninput="filterDoctors()" />
+            <button class="list-search-clear" id="doctorSearchClear" onclick="clearDoctorSearch()" style="display:none">
+              <span class="material-icons-round">close</span>
+            </button>
           </div>
-          <button class="btn-primary btn-sm" onclick="openAddDoctorModal()">
-            <span class="material-icons-round">person_add</span> Add Doctor
-          </button>
+          <div class="list-toolbar-actions">
+            <button class="btn-primary" onclick="openAddDoctorModal()">
+              <span class="material-icons-round">person_add</span>
+              <span class="btn-label">Add Doctor</span>
+            </button>
+          </div>
         </div>
-        <div class="widget glass-card table-widget">
-          <div class="table-scroll">
-            <table class="data-table" id="doctorTable">
-              <thead>
-                <tr>
-                  <th>Doctor</th>
-                  <th>Department</th>
-                  <th>Qualification</th>
-                  <th>Contact</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="doctorTableBody">
-                <tr class="skeleton-row skeleton-doctors"><td colspan="6" style="padding:16px"><div class="loading-pulse"></div><span style="color:var(--on-surface-var);font-size:0.85rem;">Loading doctors<span class="loading-dots"></span></span></td></tr>
-              </tbody>
-            </table>
+        <div class="list-grid" id="doctorList">
+          <div class="list-skeleton" id="doctorSkeleton">
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
           </div>
         </div>
       </div>
 
-      <!-- Departments Tab -->
+      <!-- ═══ DEPARTMENTS TAB ═══ -->
       <div class="admin-tab-pane" id="tab-departments">
-        <div class="admin-table-toolbar">
-          <div class="admin-search">
-            <span class="material-icons-round" style="font-size:18px;color:var(--outline)">search</span>
+        <div class="list-toolbar">
+          <div class="list-search">
+            <span class="material-icons-round">search</span>
             <input type="text" id="deptSearch" placeholder="Search departments..." oninput="filterDepartments()" />
+            <button class="list-search-clear" id="deptSearchClear" onclick="clearDeptSearch()" style="display:none">
+              <span class="material-icons-round">close</span>
+            </button>
           </div>
-          <button class="btn-primary btn-sm" onclick="openAddDeptModal()">
-            <span class="material-icons-round">add_business</span> Add Department
-          </button>
+          <div class="list-toolbar-actions">
+            <button class="btn-primary" onclick="openAddDeptModal()">
+              <span class="material-icons-round">add_business</span>
+              <span class="btn-label">Add Department</span>
+            </button>
+          </div>
         </div>
-        <div class="widget glass-card table-widget">
-          <div class="table-scroll">
-            <table class="data-table" id="deptTable">
-              <thead>
-                <tr>
-                  <th>Department</th>
-                  <th>Description</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="deptTableBody">
-                <tr class="skeleton-row skeleton-depts"><td colspan="4" style="padding:16px"><div class="loading-pulse"></div><span style="color:var(--on-surface-var);font-size:0.85rem;">Loading departments<span class="loading-dots"></span></span></td></tr>
-              </tbody>
-            </table>
+        <div class="list-grid dept-grid" id="deptList">
+          <div class="list-skeleton" id="deptSkeleton">
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
           </div>
         </div>
       </div>
 
-      <!-- Login History Tab -->
+      <!-- ═══ LOGIN HISTORY TAB ═══ -->
       <div class="admin-tab-pane" id="tab-login-history">
-        <div class="login-stats">
-          <div class="admin-stat-card">
-            <div class="admin-stat-icon-wrap bg-blue-soft">
-              <span class="material-icons-round text-blue">login</span>
-            </div>
-            <div class="admin-stat-info">
-              <div class="admin-stat-label">Total Logins (30d)</div>
-              <div class="admin-stat-value" id="statTotalLogins">0</div>
+        <div class="login-stats-modern">
+          <div class="lsm-card" style="--lsm-accent:#3B82F6">
+            <span class="lsm-icon material-icons-round">login</span>
+            <div class="lsm-body">
+              <span class="lsm-value" id="statTotalLogins">0</span>
+              <span class="lsm-label">Total Logins (30d)</span>
             </div>
           </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-icon-wrap bg-green-soft">
-              <span class="material-icons-round text-green">check_circle</span>
-            </div>
-            <div class="admin-stat-info">
-              <div class="admin-stat-label">Active Sessions</div>
-              <div class="admin-stat-value" id="statActiveSessions">0</div>
-              <div class="admin-stat-desc">Currently logged in</div>
+          <div class="lsm-card" style="--lsm-accent:#10B981">
+            <span class="lsm-icon material-icons-round">check_circle</span>
+            <div class="lsm-body">
+              <span class="lsm-value" id="statActiveSessions">0</span>
+              <span class="lsm-label">Active Sessions</span>
             </div>
           </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-icon-wrap bg-amber-soft">
-              <span class="material-icons-round text-amber">schedule</span>
-            </div>
-            <div class="admin-stat-info">
-              <div class="admin-stat-label">Today's Logins</div>
-              <div class="admin-stat-value" id="statTodayLogins">0</div>
+          <div class="lsm-card" style="--lsm-accent:#F59E0B">
+            <span class="lsm-icon material-icons-round">today</span>
+            <div class="lsm-body">
+              <span class="lsm-value" id="statTodayLogins">0</span>
+              <span class="lsm-label">Today's Logins</span>
             </div>
           </div>
         </div>
 
-        <div class="admin-table-toolbar">
-          <div class="admin-search">
-            <span class="material-icons-round" style="font-size:18px;color:var(--outline)">search</span>
+        <div class="list-toolbar">
+          <div class="list-search">
+            <span class="material-icons-round">search</span>
             <input type="text" id="loginSearch" placeholder="Search by user or device..." oninput="filterLoginHistory()" />
           </div>
           <select id="loginRoleFilter" onchange="filterLoginHistory()" class="filter-select">
@@ -372,25 +427,10 @@
           </button>
         </div>
 
-        <div class="widget glass-card table-widget">
-          <div class="table-scroll">
-            <table class="data-table" id="loginHistoryTable">
-              <thead>
-                <tr>
-                  <th>User</th>
-                  <th>Role</th>
-                  <th>Login Time</th>
-                  <th>Last Activity</th>
-                  <th>Duration</th>
-                  <th>Device</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="loginHistoryBody">
-                <tr class="skeleton-row skeleton-login-history"><td colspan="8" style="padding:16px"><div class="loading-pulse"></div><span style="color:var(--on-surface-var);font-size:0.85rem;">Loading login history<span class="loading-dots"></span></span></td></tr>
-              </tbody>
-            </table>
+        <div class="login-timeline" id="loginTimeline">
+          <div class="list-skeleton" id="loginSkeleton">
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
           </div>
         </div>
       </div>
@@ -398,7 +438,7 @@
     </main>
   </div>
 
-  <!-- Bottom Navigation (Mobile App Style) -->
+  <!-- Bottom Navigation -->
   <nav class="bottom-nav" id="bottomNav">
     <button class="bottom-nav-item active" onclick="switchAdminTab('tab-overview',this);return false" data-tab="tab-overview">
       <span class="material-icons-round">dashboard</span>
@@ -418,7 +458,44 @@
     </button>
   </nav>
 
+  <!-- FAB for mobile -->
+  <button class="fab" id="fabBtn" onclick="handleFabAction()" aria-label="Quick actions">
+    <span class="material-icons-round">add</span>
+  </button>
+
+  <div class="fab-menu" id="fabMenu">
+    <button class="fab-menu-item" onclick="openAddDoctorModal();closeFabMenu()">
+      <span class="material-icons-round">person_add</span>
+      <span>Add Doctor</span>
+    </button>
+    <button class="fab-menu-item" onclick="openAddDeptModal();closeFabMenu()">
+      <span class="material-icons-round">add_business</span>
+      <span>Add Department</span>
+    </button>
+  </div>
+
   <div id="toastContainer"></div>
+
+  <!-- PWA Install Banner -->
+  <div class="pwa-install-banner" id="pwaInstallBanner">
+    <div class="pwa-install-content">
+      <img src="assets/hms-logo.jpg" alt="Wellness Admin" class="pwa-install-icon" />
+      <div class="pwa-install-text">
+        <strong>Wellness Admin</strong>
+        <span>Install for quick access</span>
+      </div>
+    </div>
+    <div class="pwa-install-actions">
+      <button class="pwa-install-btn" id="pwaInstallBtn">Install</button>
+      <button class="pwa-install-dismiss" id="pwaInstallDismiss">&times;</button>
+    </div>
+  </div>
+
+  <!-- Offline Indicator -->
+  <div class="offline-indicator" id="offlineIndicator">
+    <span class="material-icons-round">wifi_off</span>
+    <span>You are offline. Some features may be limited.</span>
+  </div>
 
   <!-- Add Doctor Modal -->
   <div class="modal-overlay" id="addDoctorModal" onclick="closeModal(event,'addDoctorModal')">
@@ -560,6 +637,7 @@
   <script src="js/sheets-api.js"></script>
   <script src="js/firebase-init.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/pwa.js"></script>
   <script src="js/admin.js"></script>
 </body>
 

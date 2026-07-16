@@ -10,6 +10,7 @@
   var deptChartInstance = null;
   var statusChartInstance = null;
   var chartsInitialized = false;
+  var animatedStats = {};
 
   /* ─── Auth ─── */
   function adminLogin(code) {
@@ -60,6 +61,28 @@
     input.focus();
   }
 
+  /* ─── Animated Number Counter ─── */
+  function animateValue(el, target, suffix) {
+    if (!el) return;
+    suffix = suffix || '';
+    var start = 0;
+    var duration = 600;
+    var startTime = null;
+    function step(timestamp) {
+      if (!startTime) startTime = timestamp;
+      var progress = Math.min((timestamp - startTime) / duration, 1);
+      var eased = 1 - Math.pow(1 - progress, 3);
+      var current = Math.floor(eased * target);
+      el.textContent = current + suffix;
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        el.textContent = target + suffix;
+      }
+    }
+    requestAnimationFrame(step);
+  }
+
   /* ─── Data Loading ─── */
   function loadDoctors() {
     return window.API.getDoctors().then(function(resp) {
@@ -72,7 +95,7 @@
     }).catch(function(err) {
       console.error('Failed to load doctors:', err);
       allDoctorsLoaded = true;
-      document.getElementById('doctorTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--accent-red)">Failed to load doctors</td></tr>';
+      document.getElementById('doctorList').innerHTML = '<div class="empty-state"><span class="material-icons-round empty-state-icon">error_outline</span><div class="empty-state-title">Failed to load</div><div class="empty-state-desc">Could not load doctors. Check your connection.</div></div>';
     });
   }
 
@@ -87,7 +110,7 @@
     }).catch(function(err) {
       console.error('Failed to load departments:', err);
       allDeptsLoaded = true;
-      document.getElementById('deptTableBody').innerHTML = '<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--error)">Failed to load departments</td></tr>';
+      document.getElementById('deptList').innerHTML = '<div class="empty-state"><span class="material-icons-round empty-state-icon">error_outline</span><div class="empty-state-title">Failed to load</div><div class="empty-state-desc">Could not load departments.</div></div>';
     });
   }
 
@@ -103,7 +126,6 @@
         sel.innerHTML += '<option' + (n === currentVal ? ' selected' : '') + '>' + esc(n) + '</option>';
       });
     });
-    // Also update the appointment form doctor dropdown if it exists
     var apptDoctor = document.getElementById('apptDoctor');
     if (apptDoctor) {
       apptDoctor.innerHTML = doctors.map(function(d) {
@@ -112,68 +134,109 @@
     }
   }
 
-  /* ─── Render Doctors ─── */
+  /* ─── Render Doctors (Card List) ─── */
   function renderDoctors() {
-    var tbody = document.getElementById('doctorTableBody');
-    if (!tbody) return;
+    var container = document.getElementById('doctorList');
+    if (!container) return;
+
+    var skeleton = document.getElementById('doctorSkeleton');
+    if (skeleton) skeleton.style.display = 'none';
+
     if (filteredDoctors.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--on-surface-var)">' +
-        '<span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px;color:var(--outline-var)">local_hospital</span>No doctors found</td></tr>';
+      container.innerHTML = '<div class="empty-state"><span class="material-icons-round empty-state-icon">local_hospital</span><div class="empty-state-title">No doctors found</div><div class="empty-state-desc">Add a doctor to get started.</div></div>';
       return;
     }
-    tbody.innerHTML = filteredDoctors.map(function(d) {
+
+    container.innerHTML = filteredDoctors.map(function(d, i) {
       var initials = d.initials || (d.name ? d.name.split(' ').map(function(n){return n[0]}).join('').slice(0,2) : 'DR');
       var statusClass = d.status || 'available';
-      return '<tr>' +
-        '<td data-label="Doctor"><div class="doctor-cell"><div class="doctor-avatar-sm">' + esc(initials) + '</div><div><div style="font-weight:700">' + esc(d.name) + '</div><div style="font-size:0.72rem;color:var(--on-surface-var)">' + esc(d.id) + '</div></div></div></td>' +
-        '<td data-label="Department" style="font-size:0.82rem">' + esc(d.dept) + '</td>' +
-        '<td data-label="Qualification" style="font-size:0.82rem">' + esc(d.qualification || '—') + '</td>' +
-        '<td data-label="Contact" style="font-size:0.82rem">' + esc(d.phone || d.email || '—') + '</td>' +
-        '<td data-label="Status"><span class="badge-status ' + statusClass + '">' + esc(statusClass) + '</span></td>' +
-        '<td data-label="Actions">' +
-        '<button class="icon-btn" onclick="editDoctor(\'' + d.id + '\')" title="Edit"><span class="material-icons-round">edit</span></button> ' +
-        '<button class="icon-btn danger" onclick="deleteDoctor(\'' + d.id + '\')" title="Delete"><span class="material-icons-round">delete</span></button>' +
-        '</td></tr>';
+      var qual = d.qualification || '';
+      var contact = d.phone || d.email || '';
+      return '<div class="doctor-card" style="animation-delay:' + (i * 0.04) + 's">' +
+        '<div class="doctor-card-avatar">' + esc(initials) + '</div>' +
+        '<div class="doctor-card-body">' +
+          '<div class="doctor-card-name">' + esc(d.name) + ' <span class="doctor-card-id">' + esc(d.id) + '</span></div>' +
+          '<div class="doctor-card-meta">' +
+            (d.dept ? '<span class="doctor-card-meta-item"><span class="material-icons-round">business</span>' + esc(d.dept) + '</span>' : '') +
+            (qual ? '<span class="doctor-card-meta-item"><span class="material-icons-round">school</span>' + esc(qual) + '</span>' : '') +
+            (contact ? '<span class="doctor-card-meta-item"><span class="material-icons-round">contact_phone</span>' + esc(contact) + '</span>' : '') +
+            '<span class="doctor-card-meta-item"><span class="badge-status ' + statusClass + '">' + esc(statusClass) + '</span></span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="doctor-card-actions">' +
+          '<button class="card-action-btn" onclick="editDoctor(\'' + d.id + '\')" title="Edit"><span class="material-icons-round">edit</span></button>' +
+          '<button class="card-action-btn danger" onclick="deleteDoctor(\'' + d.id + '\')" title="Delete"><span class="material-icons-round">delete</span></button>' +
+        '</div>' +
+      '</div>';
     }).join('');
   }
 
-  /* ─── Render Departments ─── */
+  /* ─── Render Departments (Card List) ─── */
   function renderDepartments() {
-    var tbody = document.getElementById('deptTableBody');
-    if (!tbody) return;
+    var container = document.getElementById('deptList');
+    if (!container) return;
+
+    var skeleton = document.getElementById('deptSkeleton');
+    if (skeleton) skeleton.style.display = 'none';
+
     if (filteredDepts.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--on-surface-var)">' +
-        '<span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px;color:var(--outline-var)">business</span>No departments found</td></tr>';
+      container.innerHTML = '<div class="empty-state"><span class="material-icons-round empty-state-icon">business</span><div class="empty-state-title">No departments found</div><div class="empty-state-desc">Add a department to get started.</div></div>';
       return;
     }
-    tbody.innerHTML = filteredDepts.map(function(d) {
+
+    container.innerHTML = filteredDepts.map(function(d, i) {
       var statusClass = (d.status === 'active') ? 'available' : 'inactive';
-      return '<tr>' +
-        '<td data-label="Department"><div style="font-weight:700">' + esc(d.name) + '</div><div style="font-size:0.72rem;color:var(--on-surface-var)">' + esc(d.id) + '</div></td>' +
-        '<td data-label="Description" style="font-size:0.82rem">' + esc(d.description || '—') + '</td>' +
-        '<td data-label="Status"><span class="badge-status ' + statusClass + '">' + esc(d.status || 'active') + '</span></td>' +
-        '<td data-label="Actions">' +
-        '<button class="icon-btn" onclick="editDept(\'' + d.id + '\')" title="Edit"><span class="material-icons-round">edit</span></button> ' +
-        '<button class="icon-btn danger" onclick="deleteDepartment(\'' + d.id + '\')" title="Delete"><span class="material-icons-round">delete</span></button>' +
-        '</td></tr>';
+      return '<div class="dept-card" style="animation-delay:' + (i * 0.04) + 's">' +
+        '<div class="doctor-card-avatar" style="background:linear-gradient(135deg,#8B5CF6,#7C3AED)">' +
+          '<span class="material-icons-round" style="font-size:18px">business</span>' +
+        '</div>' +
+        '<div class="dept-card-body">' +
+          '<div class="dept-card-name">' + esc(d.name) + '</div>' +
+          (d.description ? '<div class="dept-card-desc">' + esc(d.description) + '</div>' : '') +
+          '<div class="dept-card-id">' + esc(d.id) + '</div>' +
+        '</div>' +
+        '<div class="doctor-card-meta" style="flex-shrink:0">' +
+          '<span class="badge-status ' + statusClass + '">' + esc(d.status || 'active') + '</span>' +
+        '</div>' +
+        '<div class="dept-card-actions">' +
+          '<button class="card-action-btn" onclick="editDept(\'' + d.id + '\')" title="Edit"><span class="material-icons-round">edit</span></button>' +
+          '<button class="card-action-btn danger" onclick="deleteDepartment(\'' + d.id + '\')" title="Delete"><span class="material-icons-round">delete</span></button>' +
+        '</div>' +
+      '</div>';
     }).join('');
   }
 
   /* ─── Filters ─── */
   window.filterDoctors = function() {
     var q = (document.getElementById('doctorSearch').value || '').toLowerCase();
+    var clearBtn = document.getElementById('doctorSearchClear');
     filteredDoctors = doctors.filter(function(d) {
       return (d.name + ' ' + d.dept + ' ' + d.id + ' ' + (d.qualification || '')).toLowerCase().indexOf(q) !== -1;
     });
     renderDoctors();
+    if (clearBtn) clearBtn.style.display = q ? 'flex' : 'none';
+  };
+
+  window.clearDoctorSearch = function() {
+    document.getElementById('doctorSearch').value = '';
+    window.filterDoctors();
+    document.getElementById('doctorSearch').focus();
   };
 
   window.filterDepartments = function() {
     var q = (document.getElementById('deptSearch').value || '').toLowerCase();
+    var clearBtn = document.getElementById('deptSearchClear');
     filteredDepts = departments.filter(function(d) {
       return (d.name + ' ' + (d.description || '') + ' ' + d.id).toLowerCase().indexOf(q) !== -1;
     });
     renderDepartments();
+    if (clearBtn) clearBtn.style.display = q ? 'flex' : 'none';
+  };
+
+  window.clearDeptSearch = function() {
+    document.getElementById('deptSearch').value = '';
+    window.filterDepartments();
+    document.getElementById('deptSearch').focus();
   };
 
   /* ─── Stats ─── */
@@ -181,203 +244,9 @@
     var totalDocs = doctors.length;
     var avail = doctors.filter(function(d) { return d.status === 'available'; }).length;
     var totalDepts = departments.length;
-    var statDoctors = document.getElementById('statDoctors');
-    var statAvail = document.getElementById('statAvailable');
-    var statDepts = document.getElementById('statDepartments');
-    if (statDoctors) statDoctors.textContent = totalDocs;
-    if (statAvail) statAvail.textContent = avail;
-    if (statDepts) statDepts.textContent = totalDepts;
-    renderOverviewCharts();
-  }
-
-  /* ─── Overview Charts ─── */
-  function renderOverviewCharts() {
-    var deptCanvas = document.getElementById('deptChart');
-    var statusCanvas = document.getElementById('statusChart');
-    if (!deptCanvas || !statusCanvas) return;
-    if (typeof Chart === 'undefined') return;
-
-    // 1. Calculate Doctors per Department
-    var deptCounts = {};
-    departments.forEach(function(d) {
-      deptCounts[d.name] = 0;
-    });
-    doctors.forEach(function(doc) {
-      if (doc.dept) {
-        deptCounts[doc.dept] = (deptCounts[doc.dept] || 0) + 1;
-      }
-    });
-
-    var deptLabels = Object.keys(deptCounts);
-    var deptData = Object.values(deptCounts);
-
-    // 2. Calculate Doctor Status Distribution
-    var statusCounts = { available: 0, busy: 0, off: 0 };
-    doctors.forEach(function(doc) {
-      var s = (doc.status || 'available').toLowerCase();
-      if (s === 'off duty') s = 'off';
-      if (statusCounts[s] !== undefined) {
-        statusCounts[s]++;
-      }
-    });
-
-    // 3. Render Department Chart (Bar Chart) - Professional gradient bars
-    if (deptChartInstance) {
-      deptChartInstance.destroy();
-    }
-    var deptCtx = deptCanvas.getContext('2d');
-    var deptGradient = deptCtx.createLinearGradient(0, 0, 0, 300);
-    deptGradient.addColorStop(0, '#0D9488');
-    deptGradient.addColorStop(0.5, '#14b8a6');
-    deptGradient.addColorStop(1, 'rgba(20, 184, 166, 0.15)');
-
-    deptChartInstance = new Chart(deptCanvas, {
-      type: 'bar',
-      data: {
-        labels: deptLabels,
-        datasets: [{
-          label: 'Number of Doctors',
-          data: deptData,
-          backgroundColor: deptGradient,
-          borderColor: '#0D9488',
-          borderWidth: 1,
-          borderRadius: 8,
-          borderSkipped: false,
-          barThickness: 32,
-          hoverBackgroundColor: 'rgba(13, 148, 136, 0.9)',
-          hoverBorderColor: '#0D9488',
-          hoverBorderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: {
-          duration: 800,
-          easing: 'easeOutQuart'
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: 'rgba(255,255,255,0.95)',
-            titleColor: '#0D9488',
-            titleFont: { family: 'Manrope', size: 13, weight: '700' },
-            bodyColor: '#1e293b',
-            bodyFont: { family: 'Inter', size: 12, weight: '600' },
-            borderColor: 'rgba(13,148,136,0.15)',
-            borderWidth: 1,
-            cornerRadius: 10,
-            padding: 12,
-            boxPadding: 6,
-            usePointStyle: true,
-            callbacks: {
-              label: function(ctx) {
-                return ctx.parsed.y + ' doctor' + (ctx.parsed.y !== 1 ? 's' : '');
-              }
-            }
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              stepSize: 1,
-              font: { family: 'Inter', size: 11, weight: '600' },
-              color: '#64748b',
-              padding: 8
-            },
-            grid: {
-              color: 'rgba(0, 0, 0, 0.04)',
-              drawBorder: false,
-              drawTicks: false
-            }
-          },
-          x: {
-            ticks: {
-              font: { family: 'Inter', size: 11, weight: '600' },
-              color: '#475569',
-              maxRotation: 30
-            },
-            grid: { display: false }
-          }
-        }
-      }
-    });
-
-    // 4. Render Status Chart (Doughnut Chart) - Modern ring
-    if (statusChartInstance) {
-      statusChartInstance.destroy();
-    }
-    var statusCtx = statusCanvas.getContext('2d');
-    var greenGrad = statusCtx.createLinearGradient(0, 0, 200, 200);
-    greenGrad.addColorStop(0, '#34D399');
-    greenGrad.addColorStop(1, '#059669');
-    var amberGrad = statusCtx.createLinearGradient(0, 0, 200, 200);
-    amberGrad.addColorStop(0, '#FBBF24');
-    amberGrad.addColorStop(1, '#D97706');
-    var greyGrad = statusCtx.createLinearGradient(0, 0, 200, 200);
-    greyGrad.addColorStop(0, '#D1D5DB');
-    greyGrad.addColorStop(1, '#6B7280');
-
-    statusChartInstance = new Chart(statusCanvas, {
-      type: 'doughnut',
-      data: {
-        labels: ['Available', 'Busy', 'Off Duty'],
-        datasets: [{
-          data: [statusCounts.available || 0, statusCounts.busy || 0, statusCounts.off || 0],
-          backgroundColor: [greenGrad, amberGrad, greyGrad],
-          borderColor: ['#10B981', '#F59E0B', '#6B7280'],
-          borderWidth: 3,
-          hoverOffset: 12,
-          hoverBorderWidth: 4,
-          hoverBorderColor: ['#059669', '#D97706', '#4B5563']
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: {
-          animateRotate: true,
-          duration: 900,
-          easing: 'easeOutQuart'
-        },
-        cutout: '72%',
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: {
-              boxWidth: 12,
-              boxHeight: 12,
-              padding: 18,
-              font: { family: 'Inter', size: 12, weight: '600' },
-              color: '#334155',
-              usePointStyle: true,
-              pointStyle: 'circle'
-            }
-          },
-          tooltip: {
-            backgroundColor: 'rgba(255,255,255,0.95)',
-            titleColor: '#1e293b',
-            titleFont: { family: 'Manrope', size: 13, weight: '700' },
-            bodyColor: '#1e293b',
-            bodyFont: { family: 'Inter', size: 12, weight: '600' },
-            borderColor: 'rgba(0,0,0,0.06)',
-            borderWidth: 1,
-            cornerRadius: 10,
-            padding: 12,
-            boxPadding: 8,
-            usePointStyle: true,
-            callbacks: {
-              label: function(ctx) {
-                var total = ctx.dataset.data.reduce(function(a, b) { return a + b; }, 0);
-                var pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
-                return ctx.label + ': ' + ctx.parsed + ' (' + pct + '%)';
-              }
-            }
-          }
-        }
-      }
-    });
+    animateValue(document.getElementById('statDoctors'), totalDocs);
+    animateValue(document.getElementById('statAvailable'), avail);
+    animateValue(document.getElementById('statDepartments'), totalDepts);
   }
 
   /* ─── Tab Switching ─── */
@@ -388,34 +257,57 @@
     document.querySelectorAll('.bottom-nav-item').forEach(function(i) { i.classList.remove('active'); });
     document.getElementById(tabId).classList.add('active');
     if (btn) btn.classList.add('active');
-    // Sync sidebar nav
     var nav = document.getElementById('nav-' + tabId.replace('tab-', ''));
     if (nav) nav.classList.add('active');
-    // Sync bottom nav by data-tab attribute
     var bottomBtn = document.querySelector('.bottom-nav-item[data-tab="' + tabId + '"]');
     if (bottomBtn) bottomBtn.classList.add('active');
-    // Close mobile search bar
     var mobileBar = document.getElementById('mobileSearchBar');
     if (mobileBar) mobileBar.classList.remove('active');
+    closeFabMenu();
   };
 
-  /* ─── Mobile Search ─── */
   window.handleAdminSearch = function() {
     var q = (document.getElementById('adminGlobalSearch').value || document.getElementById('adminGlobalSearchMobile').value || '').toLowerCase();
-    // Sync both search fields
     if (document.getElementById('adminGlobalSearch').value !== q) document.getElementById('adminGlobalSearch').value = q;
     if (document.getElementById('adminGlobalSearchMobile').value !== q) document.getElementById('adminGlobalSearchMobile').value = q;
-    // Apply to visible tab
     var activeTab = document.querySelector('.admin-tab-pane.active');
     if (!activeTab) return;
-    if (activeTab.id === 'tab-doctors') {
-      window.filterDoctors();
-    } else if (activeTab.id === 'tab-departments') {
-      window.filterDepartments();
-    } else if (activeTab.id === 'tab-login-history') {
-      window.filterLoginHistory();
+    if (activeTab.id === 'tab-doctors') { window.filterDoctors(); }
+    else if (activeTab.id === 'tab-departments') { window.filterDepartments(); }
+    else if (activeTab.id === 'tab-login-history') { window.filterLoginHistory(); }
+  };
+
+  /* ─── FAB ─── */
+  window.handleFabAction = function() {
+    var fab = document.getElementById('fabBtn');
+    var menu = document.getElementById('fabMenu');
+    if (!fab || !menu) return;
+    var isOpen = menu.classList.contains('visible');
+    if (isOpen) {
+      closeFabMenu();
+    } else {
+      menu.classList.add('visible');
+      fab.classList.add('open');
     }
   };
+
+  window.closeFabMenu = function() {
+    var fab = document.getElementById('fabBtn');
+    var menu = document.getElementById('fabMenu');
+    if (menu) menu.classList.remove('visible');
+    if (fab) fab.classList.remove('open');
+  };
+
+  /* Tap outside FAB to close */
+  document.addEventListener('click', function(e) {
+    var fab = document.getElementById('fabBtn');
+    var menu = document.getElementById('fabMenu');
+    if (!fab || !menu) return;
+    if (!fab.contains(e.target) && !menu.contains(e.target)) {
+      menu.classList.remove('visible');
+      fab.classList.remove('open');
+    }
+  });
 
   /* ─── Doctor CRUD ─── */
   window.openAddDoctorModal = function() {
@@ -653,22 +545,26 @@
       return d >= today;
     }).length;
 
-    document.getElementById('statTotalLogins').textContent = total;
-    document.getElementById('statActiveSessions').textContent = active;
-    document.getElementById('statTodayLogins').textContent = todayCount;
+    animateValue(document.getElementById('statTotalLogins'), total);
+    animateValue(document.getElementById('statActiveSessions'), active);
+    animateValue(document.getElementById('statTodayLogins'), todayCount);
   }
 
   function renderLoginHistory(sessions) {
-    var tbody = document.getElementById('loginHistoryBody');
-    if (!tbody) return;
+    var container = document.getElementById('loginTimeline');
+    if (!container) return;
+
+    var skeleton = document.getElementById('loginSkeleton');
+    if (skeleton) skeleton.style.display = 'none';
 
     if (sessions.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--on-surface-var)">' +
-        '<span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px;color:var(--outline-var)">history</span>No login history found</td></tr>';
+      container.innerHTML = '<div class="empty-state"><span class="material-icons-round empty-state-icon">history</span><div class="empty-state-title">No login history</div><div class="empty-state-desc">No sessions found for the selected filters.</div></div>';
       return;
     }
 
-    tbody.innerHTML = sessions.map(function(s) {
+    container.innerHTML = sessions.map(function(s, i) {
+      var roleClass = (s.role === 'Admin' ? 'admin' : 'reception');
+      var roleLabel = (s.role === 'Admin' ? 'AD' : 'RC');
       var statusClass = s.status;
       var statusLabel = s.status === 'logged_out' ? 'Logged Out' : s.status.charAt(0).toUpperCase() + s.status.slice(1);
       var duration = s.sessionDuration;
@@ -677,17 +573,24 @@
         var la = s.lastActivity.toDate ? s.lastActivity.toDate() : new Date(s.lastActivity);
         duration = la.getTime() - lt.getTime();
       }
-      return '<tr>' +
-        '<td data-label="User"><div style="font-weight:700">' + esc(s.user || '—') + '</div></td>' +
-        '<td data-label="Role"><span class="badge-role ' + (s.role === 'Admin' ? 'role-admin' : 'role-reception') + '">' + esc(s.role || '—') + '</span></td>' +
-        '<td data-label="Login Time" style="font-size:0.82rem" title="' + formatTimestamp(s.loginTime) + '">' + formatTimestamp(s.loginTime) + '<br><span style="font-size:0.7rem;color:var(--on-surface-var)">' + getRelativeTime(s.loginTime) + '</span></td>' +
-        '<td data-label="Last Activity" style="font-size:0.82rem" title="' + formatTimestamp(s.lastActivity) + '">' + (s.status === 'active' ? formatTimestamp(s.lastActivity) + '<br><span style="font-size:0.7rem;color:var(--on-surface-var)">' + getRelativeTime(s.lastActivity) + '</span>' : '—') + '</td>' +
-        '<td data-label="Duration" style="font-size:0.82rem">' + formatDuration(duration) + '</td>' +
-        '<td data-label="Device" style="font-size:0.78rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + esc(s.deviceInfo || '') + '">' + esc(getDeviceShort(s.deviceInfo)) + '</td>' +
-        '<td data-label="Status"><span class="badge-status ' + statusClass + '">' + statusLabel + '</span></td>' +
-        '<td data-label="Actions">' +
-        (s.status === 'active' ? '<button class="icon-btn warning" onclick="forceLogoutSession(\'' + s.id + '\')" title="Force Logout"><span class="material-icons-round">logout</span></button>' : '') +
-        '</td></tr>';
+      return '<div class="login-timeline-card" style="animation-delay:' + (i * 0.03) + 's">' +
+        '<div class="lt-left">' +
+          '<div class="lt-avatar ' + roleClass + '">' + roleLabel + '</div>' +
+        '</div>' +
+        '<div class="lt-body">' +
+          '<div class="lt-user">' + esc(s.user || '—') + '</div>' +
+          '<div class="lt-meta">' +
+            '<span class="lt-meta-item"><span class="material-icons-round">badge</span><span class="role-badge ' + roleClass + '">' + esc(s.role || '—') + '</span></span>' +
+            '<span class="lt-meta-item"><span class="material-icons-round">schedule</span>' + getRelativeTime(s.loginTime) + '</span>' +
+            '<span class="lt-meta-item"><span class="material-icons-round">devices</span>' + esc(getDeviceShort(s.deviceInfo)) + '</span>' +
+            (duration ? '<span class="lt-meta-item"><span class="material-icons-round">timelapse</span>' + formatDuration(duration) + '</span>' : '') +
+          '</div>' +
+        '</div>' +
+        '<div class="lt-right">' +
+          '<span class="badge-status ' + statusClass + '">' + statusLabel + '</span>' +
+          (s.status === 'active' ? '<button class="card-action-btn" onclick="forceLogoutSession(\'' + s.id + '\')" title="Force Logout" style="color:#D97706"><span class="material-icons-round">logout</span></button>' : '') +
+        '</div>' +
+      '</div>';
     }).join('');
   }
 
@@ -697,9 +600,7 @@
     var statusFilter = document.getElementById('loginStatusFilter').value;
 
     var filtered = allLoginSessions.filter(function(s) {
-      if (q && (s.user || '').toLowerCase().indexOf(q) === -1 && (s.deviceInfo || '').toLowerCase().indexOf(q) === -1) {
-        return false;
-      }
+      if (q && (s.user || '').toLowerCase().indexOf(q) === -1 && (s.deviceInfo || '').toLowerCase().indexOf(q) === -1) return false;
       if (roleFilter && s.role !== roleFilter) return false;
       if (statusFilter && s.status !== statusFilter) return false;
       return true;
@@ -738,10 +639,7 @@
       var batch = db.batch();
       active.forEach(function(s) {
         var ref = db.collection('login_history').doc(s.id);
-        batch.update(ref, {
-          status: 'logged_out',
-          lastActivity: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        batch.update(ref, { status: 'logged_out', lastActivity: firebase.firestore.FieldValue.serverTimestamp() });
       });
       return batch.commit().then(function() {
         toast(active.length + ' session(s) logged out', 'success', 'logout');
@@ -754,14 +652,11 @@
   };
 
   function loadLoginHistory() {
-    if (loginHistoryUnsubscribe) {
-      loginHistoryUnsubscribe();
-      loginHistoryUnsubscribe = null;
-    }
+    if (loginHistoryUnsubscribe) { loginHistoryUnsubscribe(); loginHistoryUnsubscribe = null; }
 
     window.FIREBASE_READY.then(function(db) {
       if (!db) {
-        document.getElementById('loginHistoryBody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--accent-red)">Firebase not available. Login history disabled.</td></tr>';
+        document.getElementById('loginTimeline').innerHTML = '<div class="empty-state"><span class="material-icons-round empty-state-icon">error_outline</span><div class="empty-state-title">Firebase unavailable</div><div class="empty-state-desc">Login history requires Firebase.</div></div>';
         return;
       }
 
@@ -774,26 +669,20 @@
             data.id = doc.id;
             allLoginSessions.push(data);
           });
-
-          // Sort by loginTime descending (client-side)
           allLoginSessions.sort(function(a, b) {
             var aTime = a.loginTime ? (a.loginTime.toDate ? a.loginTime.toDate().getTime() : new Date(a.loginTime).getTime()) : 0;
             var bTime = b.loginTime ? (b.loginTime.toDate ? b.loginTime.toDate().getTime() : new Date(b.loginTime).getTime()) : 0;
             return bTime - aTime;
           });
-
-          // Filter to last 30 days
           var cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
           allLoginSessions = allLoginSessions.filter(function(s) {
             var t = s.loginTime ? (s.loginTime.toDate ? s.loginTime.toDate().getTime() : new Date(s.loginTime).getTime()) : 0;
             return t >= cutoff;
           });
-
           window.filterLoginHistory();
         }, function(err) {
           console.error('[Admin] Login history error:', err.message);
-          document.getElementById('loginHistoryBody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--accent-red)">' +
-            'Failed to load login history: ' + esc(err.message) + '</td></tr>';
+          document.getElementById('loginTimeline').innerHTML = '<div class="empty-state"><span class="material-icons-round empty-state-icon">error_outline</span><div class="empty-state-title">Failed to load</div><div class="empty-state-desc">' + esc(err.message) + '</div></div>';
         });
     });
   }
@@ -806,21 +695,12 @@
       var bar = document.getElementById('announcementsBar');
       var body = document.getElementById('adminAnnouncementsBody');
       if (!bar || !body) return;
-      if (active.length === 0) {
-        bar.style.display = 'none';
-        return;
-      }
+      if (active.length === 0) { bar.style.display = 'none'; return; }
       bar.style.display = 'block';
       document.getElementById('adminAnnouncementsTitle').textContent = active.length === 1 ? '1 Announcement' : active.length + ' Announcements';
-      body.innerHTML = active.sort(function(a, b) {
-        return (b.createdAt || '').localeCompare(a.createdAt || '');
-      }).map(function(m) {
+      body.innerHTML = active.sort(function(a, b) { return (b.createdAt || '').localeCompare(a.createdAt || ''); }).map(function(m) {
         var date = m.createdAt ? new Date(m.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
-        return '<div class="announcement-item">' +
-          '<h4>' + window.esc(m.title) + '</h4>' +
-          '<p>' + window.esc(m.message) + '</p>' +
-          (date ? '<div class="ann-date">' + date + '</div>' : '') +
-          '</div>';
+        return '<div class="announcement-item"><h4>' + window.esc(m.title) + '</h4><p>' + window.esc(m.message) + '</p>' + (date ? '<div class="ann-date">' + date + '</div>' : '') + '</div>';
       }).join('');
     }).catch(function(err) {
       console.warn('[Admin] Failed to load announcements:', err);
@@ -851,8 +731,7 @@
         if (!isNaN(dt.getTime())) return dt.toISOString().slice(0, 10) === todayStr;
         return false;
       }).length;
-      var el = document.getElementById('statNewPatients');
-      if (el) el.textContent = count;
+      animateValue(document.getElementById('statNewPatients'), count);
     }).catch(function(err) {
       console.warn('[Admin] Failed to load patients:', err);
     });
@@ -868,8 +747,7 @@
         date = String(date);
         return date.slice(0, 10) === todayStr;
       }).length;
-      var el = document.getElementById('statOPDToday');
-      if (el) el.textContent = count;
+      animateValue(document.getElementById('statOPDToday'), count);
     }).catch(function(err) {
       console.warn('[Admin] Failed to load OPD:', err);
     });
@@ -880,7 +758,6 @@
     if (typeof window.hideLoader === 'function') window.hideLoader();
     console.info('[Admin] Initializing admin panel...');
 
-    // Register Chart.js plugins once
     if (!chartsInitialized && typeof Chart !== 'undefined') {
       Chart.register({
         id: 'barShadow',
@@ -936,8 +813,21 @@
     if (greeting) {
       var hr = new Date().getHours();
       var greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
-      greeting.textContent = greet + '! Manage doctors, departments, and system settings.';
+      greeting.textContent = greet + ', Admin';
     }
+
+    // Network status
+    function updateNetworkStatus() {
+      var dot = document.getElementById('ssNetworkDot');
+      var status = document.getElementById('ssNetworkStatus');
+      if (dot && status) {
+        dot.className = 'ss-dot ' + (navigator.onLine ? 'green' : 'red');
+        status.textContent = navigator.onLine ? 'Online' : 'Offline';
+      }
+    }
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
+    updateNetworkStatus();
 
     // Sidebar toggle
     var toggle = document.getElementById('menuToggle');
@@ -956,24 +846,29 @@
       });
     }
 
+    // Mobile search toggle
+    var mobileSearchToggle = document.getElementById('mobileSearchToggle');
+    var mobileSearchBar = document.getElementById('mobileSearchBar');
+    if (mobileSearchToggle && mobileSearchBar) {
+      mobileSearchToggle.addEventListener('click', function() {
+        mobileSearchBar.classList.toggle('active');
+        if (mobileSearchBar.classList.contains('active')) {
+          document.getElementById('adminGlobalSearchMobile').focus();
+        }
+      });
+    }
 
-
-    // Load data in parallel
     Promise.all([loadDoctors(), loadDepartments(), loadTodayPatients(), loadTodayOPD()]).then(function() {
       populateDeptSelects();
       if (typeof window.populateAllDropdowns === 'function') window.populateAllDropdowns();
       console.info('[Admin] Data loaded successfully.');
     });
 
-    // Load announcements
     loadAdminAnnouncements();
-
-    // Start login history listener
     loadLoginHistory();
   }
 
   document.addEventListener('DOMContentLoaded', function() {
-    // Wait for app.js to load
     var checkReady = setInterval(function() {
       if (typeof HMS !== 'undefined' && HMS && HMS.isAuthenticated) {
         clearInterval(checkReady);

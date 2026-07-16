@@ -69,6 +69,8 @@ html {
   font-size: 16px;
   scroll-behavior: smooth;
   -webkit-tap-highlight-color: transparent;
+  overflow-x: clip;
+  width: 100%;
 }
 
 body {
@@ -79,6 +81,9 @@ body {
   -webkit-font-smoothing: antialiased;
   padding-top: var(--safe-top);
   padding-bottom: var(--safe-bottom);
+  overflow-x: clip;
+  max-width: 100%;
+  width: 100%;
 }
 
 * { -webkit-tap-highlight-color: transparent; }
