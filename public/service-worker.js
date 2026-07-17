@@ -1,4 +1,4 @@
-const CACHE = 'wellness-admin-v1';
+const CACHE = 'wellness-admin-v2';
 const STATIC_ASSETS = [
   '/admin.html',
   '/manifest.json',
@@ -13,7 +13,6 @@ const STATIC_ASSETS = [
   '/js/app.js',
   '/js/admin.js',
   '/assets/hms-logo.jpg',
-  '/assets/icon.svg',
   '/offline.html'
 ];
 
