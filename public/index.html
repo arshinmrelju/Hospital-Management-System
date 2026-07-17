@@ -689,7 +689,7 @@
       <div class="filter-bar glass-card">
         <div class="filter-search-row">
           <span class="material-icons-round" style="font-size:18px;color:var(--outline)">search</span>
-          <input type="text" id="patientSearch" class="filter-search-input" placeholder="Search by name, phone or ID…" oninput="clearOpFilter();filterPatients()" />
+          <input type="text" id="patientSearch" class="filter-search-input" placeholder="Search by name, phone or ID…" oninput="clearOpFilter();clearIdSearch();filterPatients()" />
         </div>
         <div class="filter-bar-row">
           <div class="filter-chips" id="filterChips">
@@ -700,7 +700,7 @@
           </div>
           <div class="filter-search-row" style="flex:0 1 240px;margin:0;border-radius:var(--radius-md);padding:4px 12px;">
             <span class="material-icons-round" style="font-size:16px;color:var(--outline)">badge</span>
-            <input type="text" id="patientIdSearch" class="filter-search-input" placeholder="Patient ID…" oninput="filterPatients()" />
+            <input type="text" id="patientIdSearch" class="filter-search-input" placeholder="Patient ID…" oninput="clearPatientSearch();filterPatients()" />
           </div>
           <div class="filter-selects">
             <select id="deptFilter" onchange="filterPatients()" class="filter-select">

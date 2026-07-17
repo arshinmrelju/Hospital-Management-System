@@ -333,6 +333,26 @@ function clearOpFilter() {
   }
 }
 
+function clearIdSearch() {
+  var idEl = document.getElementById('patientIdSearch');
+  if (idEl && idEl.value) {
+    idEl.value = '';
+  }
+}
+window.clearIdSearch = clearIdSearch;
+
+function clearPatientSearch() {
+  var searchEl = document.getElementById('patientSearch');
+  if (searchEl && searchEl.value) {
+    searchEl.value = '';
+  }
+  var topSearchEl = document.getElementById('patientSearchTopbar');
+  if (topSearchEl && topSearchEl.value) {
+    topSearchEl.value = '';
+  }
+}
+window.clearPatientSearch = clearPatientSearch;
+
 function filterPatients() {
   applyFilters();
 }
@@ -342,6 +362,7 @@ function syncSearch(val) {
   const el = document.getElementById('patientSearch');
   if (el) el.value = val;
   clearOpFilter();
+  clearIdSearch();
   filterPatients();
 }
 window.syncSearch = syncSearch;
