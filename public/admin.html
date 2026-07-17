@@ -617,6 +617,28 @@
     </div>
   </div>
 
+  <!-- Today's Patients Modal -->
+  <div class="modal-overlay" id="todayPatientsModal" onclick="closeModal(event,'todayPatientsModal')">
+    <div class="modal glass-card wide-modal">
+      <div class="modal-header">
+        <h2><span class="material-icons-round" style="font-size:20px;vertical-align:-3px">person_add</span> New Patients Today</h2>
+        <button class="modal-close" onclick="closeModal(null,'todayPatientsModal')"><span class="material-icons-round">close</span></button>
+      </div>
+      <div id="todayPatientsBody"></div>
+    </div>
+  </div>
+
+  <!-- Today's OPD Modal -->
+  <div class="modal-overlay" id="todayOPDModal" onclick="closeModal(event,'todayOPDModal')">
+    <div class="modal glass-card wide-modal">
+      <div class="modal-header">
+        <h2><span class="material-icons-round" style="font-size:20px;vertical-align:-3px">how_to_reg</span> OPD Today</h2>
+        <button class="modal-close" onclick="closeModal(null,'todayOPDModal')"><span class="material-icons-round">close</span></button>
+      </div>
+      <div id="todayOPDBody"></div>
+    </div>
+  </div>
+
   <!-- Login Success Overlay -->
   <div class="modal-overlay" id="loginSuccessOverlay" style="background:linear-gradient(135deg, rgba(0,72,64,0.82) 0%, rgba(13,148,136,0.55) 100%);backdrop-filter:blur(24px);z-index:10000;">
     <div style="width:100%;max-width:380px;background:rgba(255,255,255,0.97);border-radius:28px;box-shadow:0 32px 80px rgba(0,80,70,0.30);overflow:hidden;animation:modalIn 0.4s cubic-bezier(0.34,1.56,0.64,1);text-align:center;padding:48px 32px 40px;">

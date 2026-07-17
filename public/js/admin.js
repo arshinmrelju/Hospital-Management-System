@@ -717,12 +717,20 @@
   };
 
   /* ─── Today's Patients & OPD ─── */
+  var _todayPatientsList = [];
+  var _todayPatientsLoaded = false;
+  var _todayPatientsPromise = null;
+  var _todayOPDList = [];
+  var _todayOPDLoaded = false;
+  var _todayOPDPromise = null;
+
   function loadTodayPatients() {
-    return window.API.getPatients().then(function(resp) {
+    _todayPatientsLoaded = false;
+    _todayPatientsPromise = window.API.getPatients().then(function(resp) {
       var list = (resp && resp.data) || [];
       var today = new Date();
       var todayStr = today.toISOString().slice(0, 10);
-      var count = list.filter(function(p) {
+      _todayPatientsList = list.filter(function(p) {
         var d = p.created_on || p['Created On'] || '';
         if (!d) return false;
         d = String(d).trim();
@@ -730,28 +738,150 @@
         var dt = new Date(d);
         if (!isNaN(dt.getTime())) return dt.toISOString().slice(0, 10) === todayStr;
         return false;
-      }).length;
-      animateValue(document.getElementById('statNewPatients'), count);
+      });
+      _todayPatientsLoaded = true;
+      animateValue(document.getElementById('statNewPatients'), _todayPatientsList.length);
     }).catch(function(err) {
       console.warn('[Admin] Failed to load patients:', err);
+      _todayPatientsLoaded = true;
     });
+    return _todayPatientsPromise;
   }
 
   function loadTodayOPD() {
-    return window.API.getAppointments().then(function(resp) {
+    _todayOPDLoaded = false;
+    _todayOPDPromise = window.API.getAppointments().then(function(resp) {
       var list = (resp && resp.data) || [];
       var today = new Date();
       var todayStr = today.toISOString().slice(0, 10);
-      var count = list.filter(function(a) {
+      _todayOPDList = list.filter(function(a) {
         var date = a.appointment_date || a['Appointment Date'] || a.createdAt || a['Created At'] || '';
         date = String(date);
         return date.slice(0, 10) === todayStr;
-      }).length;
-      animateValue(document.getElementById('statOPDToday'), count);
+      });
+      _todayOPDLoaded = true;
+      animateValue(document.getElementById('statOPDToday'), _todayOPDList.length);
     }).catch(function(err) {
       console.warn('[Admin] Failed to load OPD:', err);
+      _todayOPDLoaded = true;
     });
+    return _todayOPDPromise;
   }
+
+  /* ─── Helpers ─── */
+  function patientName(p) {
+    return String(p.fname || p.FirstName || p.Name || p.name || '') + ' ' + String(p.lname || p.LastName || '');
+  }
+
+  function patientId(p) {
+    return p.op_no || p['OP No'] || p['Hosp. OP No'] || p.patient_id || p.id || '—';
+  }
+
+  function patientContact(p) {
+    return String(p.contact || p.Phone || p.phone || p.mobile || p.Mobile || '—');
+  }
+
+  window.toggleCard = function(el) {
+    var card = el.closest ? el.closest('.today-card') : el.parentNode;
+    if (card) card.classList.toggle('expanded');
+  };
+
+  function todayCard(p, i) {
+    var name = patientName(p);
+    var id = patientId(p);
+    var age = p.age || p.Age || '—';
+    var gender = p.gender || p.Gender || p.Sex || '—';
+    var phone = patientContact(p);
+    var dept = p.department || p.dept || p.Department || '—';
+    return '<div class="today-card">' +
+      '<div class="today-card-head" onclick="toggleCard(this)">' +
+        '<span class="today-card-sno">#' + (i + 1) + '</span>' +
+        '<span class="today-card-name">' + window.esc(name) + '</span>' +
+        '<code class="today-card-id">' + window.esc(id) + '</code>' +
+        '<span class="today-card-chevron material-icons-round">expand_more</span>' +
+      '</div>' +
+      '<div class="today-card-body">' +
+        '<div class="today-detail"><span class="today-label">Age</span><span class="today-value">' + window.esc(age) + '</span></div>' +
+        '<div class="today-detail"><span class="today-label">Gender</span><span class="today-value">' + window.esc(gender) + '</span></div>' +
+        '<div class="today-detail"><span class="today-label">Phone</span><span class="today-value">' + window.esc(phone) + '</span></div>' +
+        '<div class="today-detail"><span class="today-label">Department</span><span class="today-value">' + window.esc(dept) + '</span></div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function todayOPDCard(a, i) {
+    var name = a.name || a.patient_name || '';
+    var id = a.op_no || a.patient_id || a.id || '—';
+    var age = a.age || a.patient_age || '—';
+    var gender = a.gender || a.patient_gender || '—';
+    var phone = a.contact || a.phone || '—';
+    var dept = a.department || a.type || '—';
+    var time = '';
+    if (a.appointment_time) time = a.appointment_time;
+    else if (a.createdAt) { var d = new Date(a.createdAt); if (!isNaN(d.getTime())) time = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }); }
+    else if (a['Appointment Time']) time = a['Appointment Time'];
+    return '<div class="today-card">' +
+      '<div class="today-card-head" onclick="toggleCard(this)">' +
+        '<span class="today-card-sno">#' + (i + 1) + '</span>' +
+        '<span class="today-card-name">' + window.esc(name) + '</span>' +
+        '<code class="today-card-id">' + window.esc(id) + '</code>' +
+        '<span class="today-card-chevron material-icons-round">expand_more</span>' +
+      '</div>' +
+      '<div class="today-card-body">' +
+        '<div class="today-detail"><span class="today-label">Age</span><span class="today-value">' + window.esc(age) + '</span></div>' +
+        '<div class="today-detail"><span class="today-label">Gender</span><span class="today-value">' + window.esc(gender) + '</span></div>' +
+        '<div class="today-detail"><span class="today-label">Phone</span><span class="today-value">' + window.esc(phone) + '</span></div>' +
+        '<div class="today-detail"><span class="today-label">Department</span><span class="today-value">' + window.esc(dept) + '</span></div>' +
+        '<div class="today-detail"><span class="today-label">Time</span><span class="today-value">' + window.esc(time || '—') + '</span></div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderTodayPatientsTable() {
+    var el = document.getElementById('todayPatientsBody');
+    if (!el) return;
+    if (_todayPatientsList.length === 0) {
+      el.innerHTML = '<div class="today-empty">No new patients registered today.</div>';
+      return;
+    }
+    el.innerHTML = _todayPatientsList.map(function(p, i) { return todayCard(p, i); }).join('');
+  }
+
+  function renderTodayOPDTable() {
+    var el = document.getElementById('todayOPDBody');
+    if (!el) return;
+    if (_todayOPDList.length === 0) {
+      el.innerHTML = '<div class="today-empty">No OPD patients today.</div>';
+      return;
+    }
+    el.innerHTML = _todayOPDList.map(function(a, i) { return todayOPDCard(a, i); }).join('');
+  }
+
+  window.showTodayPatientsModal = function() {
+    var el = document.getElementById('todayPatientsBody');
+    if (!el) return;
+    if (!_todayPatientsLoaded) {
+      el.innerHTML = '<div class="today-loading"><span class="material-icons-round" style="font-size:28px;color:var(--outline-var);display:block;margin-bottom:8px">hourglass_top</span>Loading patients...</div>';
+      openModal('todayPatientsModal');
+      if (_todayPatientsPromise) _todayPatientsPromise.then(renderTodayPatientsTable);
+      return;
+    }
+    renderTodayPatientsTable();
+    openModal('todayPatientsModal');
+  };
+
+  window.showTodayOPDModal = function() {
+    var el = document.getElementById('todayOPDBody');
+    if (!el) return;
+    if (!_todayOPDLoaded) {
+      el.innerHTML = '<div class="today-loading"><span class="material-icons-round" style="font-size:28px;color:var(--outline-var);display:block;margin-bottom:8px">hourglass_top</span>Loading OPD records...</div>';
+      openModal('todayOPDModal');
+      if (_todayOPDPromise) _todayOPDPromise.then(renderTodayOPDTable);
+      return;
+    }
+    renderTodayOPDTable();
+    openModal('todayOPDModal');
+  };
 
   /* ─── Init ─── */
   function initAdmin() {
@@ -855,6 +985,19 @@
         if (mobileSearchBar.classList.contains('active')) {
           document.getElementById('adminGlobalSearchMobile').focus();
         }
+      });
+    }
+
+    // Stat card click handlers
+    var statCards = document.querySelectorAll('.stat-elevated-card');
+    if (statCards.length >= 2) {
+      statCards[0].style.cursor = 'pointer';
+      statCards[0].addEventListener('click', function() {
+        window.showTodayPatientsModal();
+      });
+      statCards[1].style.cursor = 'pointer';
+      statCards[1].addEventListener('click', function() {
+        window.showTodayOPDModal();
       });
     }
 
