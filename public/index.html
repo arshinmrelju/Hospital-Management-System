@@ -689,7 +689,7 @@
       <div class="filter-bar glass-card">
         <div class="filter-search-row">
           <span class="material-icons-round" style="font-size:18px;color:var(--outline)">search</span>
-          <input type="text" id="patientSearch" class="filter-search-input" placeholder="Search by name, phone or ID…" oninput="filterPatients()" />
+          <input type="text" id="patientSearch" class="filter-search-input" placeholder="Search by name, phone or ID…" oninput="clearOpFilter();filterPatients()" />
         </div>
         <div class="filter-bar-row">
           <div class="filter-chips" id="filterChips">

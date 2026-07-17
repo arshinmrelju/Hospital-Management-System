@@ -325,16 +325,15 @@ function applyFilters() {
   renderTable();
 }
 
-function filterPatients() {
-  var active = document.activeElement;
-  var isNameSearch = active && (active.id === 'patientSearch' || active.id === 'patientSearchTopbar') && active.value.trim();
-  if (isNameSearch) {
-    var opEl = document.getElementById('opFilter');
-    if (opEl && opEl.value.trim()) {
-      opEl.value = '';
-      if (typeof updateAdvBadge === 'function') updateAdvBadge();
-    }
+function clearOpFilter() {
+  var opEl = document.getElementById('opFilter');
+  if (opEl && opEl.value.trim()) {
+    opEl.value = '';
+    if (typeof updateAdvBadge === 'function') updateAdvBadge();
   }
+}
+
+function filterPatients() {
   applyFilters();
 }
 window.filterPatients = filterPatients;
@@ -342,6 +341,7 @@ window.filterPatients = filterPatients;
 function syncSearch(val) {
   const el = document.getElementById('patientSearch');
   if (el) el.value = val;
+  clearOpFilter();
   filterPatients();
 }
 window.syncSearch = syncSearch;
