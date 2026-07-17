@@ -438,7 +438,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* --- Global Search --- */
-var SEARCH_PAGES = [
+window.SEARCH_PAGES = [
   { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
   { id: 'patients', label: 'Patients', icon: 'groups' },
   { id: 'skin', label: 'Skin Registry', icon: 'palette' },
@@ -447,34 +447,37 @@ var SEARCH_PAGES = [
   { id: 'help', label: 'Help', icon: 'help' }
 ];
 
-function initGlobalSearch() {
+(function initGlobalSearch() {
   var searchInput = document.getElementById('globalSearch');
   var mobileSearchInput = document.getElementById('globalSearchMobile');
   var dropdown = document.getElementById('globalSearchDropdown');
   var mobileDropdown = document.getElementById('globalSearchMobileDropdown');
 
-  function renderDropdown(q, dropEl, inputEl) {
-    var query = (q || '').toLowerCase();
-    var matches = query ? SEARCH_PAGES.filter(function(p) { return p.label.toLowerCase().includes(query) || p.id.includes(query); }) : SEARCH_PAGES;
-    if (matches.length === 0) {
+  function renderItems(items, dropEl) {
+    if (items.length === 0) {
       dropEl.innerHTML = '<div class="gs-empty">No pages found</div>';
     } else {
-      dropEl.innerHTML = matches.map(function(p) {
+      dropEl.innerHTML = items.map(function(p) {
         return '<div class="gs-item" data-page="' + p.id + '"><span class="material-icons-round">' + p.icon + '</span><span class="gs-label">' + p.label + '</span></div>';
       }).join('');
     }
     dropEl.classList.add('open');
-    dropEl.querySelectorAll('.gs-item').forEach(function(item) {
-      item.addEventListener('click', function() {
-        selectPage(item.dataset.page, inputEl, dropEl);
-      });
-    });
   }
 
   function selectPage(pageId, inputEl, dropEl) {
     dropEl.classList.remove('open');
     if (inputEl) inputEl.value = '';
-    switchPage(pageId);
+    window.switchPage(pageId);
+  }
+
+  function navigateTo(dropEl, inputEl) {
+    var highlighted = dropEl.querySelector('.gs-item.highlighted');
+    if (highlighted) {
+      selectPage(highlighted.dataset.page, inputEl, dropEl);
+    } else {
+      var first = dropEl.querySelector('.gs-item');
+      if (first) selectPage(first.dataset.page, inputEl, dropEl);
+    }
   }
 
   function handleKeydown(e, inputEl, dropEl) {
@@ -493,12 +496,7 @@ function initGlobalSearch() {
       if (items[idx]) items[idx].classList.add('highlighted');
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      var highlighted = dropEl.querySelector('.gs-item.highlighted');
-      if (highlighted) {
-        selectPage(highlighted.dataset.page, inputEl, dropEl);
-      } else if (items.length > 0) {
-        selectPage(items[0].dataset.page, inputEl, dropEl);
-      }
+      navigateTo(dropEl, inputEl);
     } else if (e.key === 'Escape') {
       dropEl.classList.remove('open');
       inputEl.blur();
@@ -507,10 +505,14 @@ function initGlobalSearch() {
 
   function setupInput(inputEl, dropEl) {
     inputEl.addEventListener('input', function() {
-      renderDropdown(this.value, dropEl, inputEl);
+      var q = (this.value || '').toLowerCase();
+      var matches = q ? window.SEARCH_PAGES.filter(function(p) { return p.label.toLowerCase().includes(q) || p.id.includes(q); }) : window.SEARCH_PAGES;
+      renderItems(matches, dropEl);
     });
     inputEl.addEventListener('focus', function() {
-      renderDropdown(this.value, dropEl, inputEl);
+      var q = (this.value || '').toLowerCase();
+      var matches = q ? window.SEARCH_PAGES.filter(function(p) { return p.label.toLowerCase().includes(q) || p.id.includes(q); }) : window.SEARCH_PAGES;
+      renderItems(matches, dropEl);
     });
     inputEl.addEventListener('keydown', function(e) {
       if (['ArrowDown','ArrowUp','Enter','Escape'].includes(e.key)) {
@@ -518,13 +520,22 @@ function initGlobalSearch() {
       }
     });
     inputEl.addEventListener('blur', function() {
-      setTimeout(function() { dropEl.classList.remove('open'); }, 150);
+      setTimeout(function() { dropEl.classList.remove('open'); }, 200);
     });
   }
 
   if (searchInput && dropdown) setupInput(searchInput, dropdown);
   if (mobileSearchInput && mobileDropdown) setupInput(mobileSearchInput, mobileDropdown);
-}
+
+  document.addEventListener('click', function(e) {
+    var item = e.target.closest('.gs-item');
+    if (item) {
+      var dropEl = item.closest('.global-search-dropdown');
+      var inputEl = dropEl && (dropEl.previousElementSibling && dropEl.previousElementSibling.id === 'globalSearch' ? document.getElementById('globalSearch') : document.getElementById('globalSearchMobile'));
+      selectPage(item.dataset.page, inputEl, dropEl);
+    }
+  });
+})();
 
 document.addEventListener('DOMContentLoaded', initGlobalSearch);
 
