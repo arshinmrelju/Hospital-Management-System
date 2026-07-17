@@ -1011,6 +1011,96 @@
     loadLoginHistory();
   }
 
+  /* ─── Hard Refresh ─── */
+  var ADMIN_CACHE_MAP = {
+    'hms_doctors_cache': 'Doctors cache',
+    'hms_patients_cache_v2': 'Patients cache v2',
+    'hms_patients_cache': 'Legacy patients cache',
+    'hms_local_patients': 'Local patients',
+    'hms_local_appointments': 'Local appointments',
+    'hms_opd_daily_counts': 'OPD daily counts',
+    'hms_reg_daily_counts': 'Registration counts',
+    'hms_exported_patient_ids': 'Export tracker',
+    'hms_last_export_time': 'Last export time',
+    'hms_ortho_next_id': 'Ortho ID seq',
+    'hms_skin_next_id': 'Skin ID seq',
+    'hms_local_skinPatients': 'Local skin patients',
+    'hms_local_orthopedicPatients': 'Local ortho patients'
+  };
+
+  window.adminHardRefresh = function() {
+    var active = [];
+    var activeKeys = [];
+    var totalBytes = 0;
+    for (var key in ADMIN_CACHE_MAP) {
+      if (ADMIN_CACHE_MAP.hasOwnProperty(key)) {
+        try {
+          var val = localStorage.getItem(key);
+          if (val) {
+            active.push(ADMIN_CACHE_MAP[key]);
+            activeKeys.push(key);
+            totalBytes += val.length * 2;
+          }
+        } catch(e) {}
+      }
+    }
+    var body = document.getElementById('hardRefreshModalBody');
+    var loading = document.getElementById('hardRefreshModalLoading');
+    var btn = document.getElementById('hardRefreshExecuteBtn');
+    if (!body) return;
+    if (loading) loading.style.display = 'none';
+    if (btn) btn.style.display = '';
+    var sizeStr = totalBytes > 10240 ? (totalBytes / 1024).toFixed(1) + ' KB' : totalBytes + ' bytes';
+    var html = '';
+    if (active.length === 0) {
+      html = '<div style="text-align:center;padding:8px 0">' +
+        '<span class="material-icons-round" style="font-size:40px;color:var(--outline-var);display:block;margin-bottom:8px">info</span>' +
+        '<p style="color:var(--on-surface-var);font-size:0.9rem;margin:0 0 4px">No caches found to clear.</p>' +
+        '<p style="color:var(--outline);font-size:0.8rem;margin:0">The admin panel will still reload with fresh data.</p>' +
+        '</div>';
+    } else {
+      html = '<div style="margin-bottom:16px">' +
+        '<div style="display:flex;gap:16px;justify-content:center;margin-bottom:16px">' +
+        '<div style="text-align:center;padding:12px 20px;background:var(--surface-low);border-radius:var(--radius-md);min-width:80px">' +
+        '<div style="font-size:1.5rem;font-weight:800;color:var(--portal-accent)">' + active.length + '</div>' +
+        '<div style="font-size:0.7rem;color:var(--on-surface-var);text-transform:uppercase;letter-spacing:0.04em">Items</div>' +
+        '</div>' +
+        '<div style="text-align:center;padding:12px 20px;background:var(--surface-low);border-radius:var(--radius-md);min-width:80px">' +
+        '<div style="font-size:1.5rem;font-weight:800;color:var(--portal-accent)">' + sizeStr + '</div>' +
+        '<div style="font-size:0.7rem;color:var(--on-surface-var);text-transform:uppercase;letter-spacing:0.04em">Size</div>' +
+        '</div>' +
+        '</div>' +
+        '<div style="font-size:0.82rem;color:var(--on-surface-var);margin-bottom:8px;font-weight:600">Caches to clear:</div>' +
+        '<div style="max-height:180px;overflow-y:auto">' +
+        active.map(function(s) {
+          return '<div style="display:flex;align-items:center;gap:8px;padding:4px 8px;font-size:0.82rem;color:var(--on-surface);border-radius:var(--radius-sm)">' +
+            '<span class="material-icons-round" style="font-size:16px;color:var(--outline-var)">delete_outline</span>' +
+            s +
+            '</div>';
+        }).join('') +
+        '</div>' +
+        '</div>';
+    }
+    body.innerHTML = html;
+    var modal = document.getElementById('hardRefreshModal');
+    if (modal) {
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+    window._adminHardRefreshData = { active: active, totalBytes: totalBytes, sizeStr: sizeStr };
+  };
+
+  window.executeAdminHardRefresh = function() {
+    var data = window._adminHardRefreshData || { active: [], totalBytes: 0, sizeStr: '0 bytes' };
+    closeModal(null, 'hardRefreshModal');
+    for (var key in ADMIN_CACHE_MAP) {
+      if (ADMIN_CACHE_MAP.hasOwnProperty(key)) {
+        try { localStorage.removeItem(key); } catch(e) {}
+      }
+    }
+    window.location.reload();
+  };
+
   document.addEventListener('DOMContentLoaded', function() {
     var checkReady = setInterval(function() {
       if (typeof HMS !== 'undefined' && HMS && HMS.isAuthenticated) {

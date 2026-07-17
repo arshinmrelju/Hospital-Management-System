@@ -22,18 +22,26 @@
     if (installBanner) installBanner.classList.remove('visible');
   }
 
+  function triggerPwaInstall() {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function(choice) {
+        if (choice.outcome === 'accepted') {
+          localStorage.setItem('pwa_installed', 'true');
+        }
+        deferredPrompt = null;
+      });
+      return true;
+    }
+    return false;
+  }
+
+  window.triggerPwaInstall = triggerPwaInstall;
+
   if (installBtn && dismissBtn) {
     installBtn.addEventListener('click', function() {
       hideInstallBanner();
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(function(choice) {
-          if (choice.outcome === 'accepted') {
-            localStorage.setItem('pwa_installed', 'true');
-          }
-          deferredPrompt = null;
-        });
-      }
+      triggerPwaInstall();
     });
 
     dismissBtn.addEventListener('click', function() {

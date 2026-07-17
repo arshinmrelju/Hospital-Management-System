@@ -113,6 +113,14 @@
         <span class="nav-label">Login History</span>
       </a>
       <div class="nav-divider"></div>
+      <a href="#" class="nav-item" id="nav-install" onclick="triggerPwaInstall();return false">
+        <span class="material-icons-round">install_mobile</span>
+        <span class="nav-label">Install App</span>
+      </a>
+      <a href="#" class="nav-item" id="nav-hard-refresh" onclick="adminHardRefresh();return false">
+        <span class="material-icons-round">cached</span>
+        <span class="nav-label">Hard Refresh</span>
+      </a>
     </nav>
     <div class="sidebar-user">
       <div class="user-avatar" id="userAvatar">AD</div>
@@ -324,6 +332,18 @@
                 <span class="ss-badge" id="ssNetworkStatus">Online</span>
               </div>
             </div>
+            <div class="ss-divider"></div>
+            <div class="ss-utils">
+              <button class="ss-utils-btn" onclick="triggerPwaInstall();return false">
+                <span class="material-icons-round">install_mobile</span>
+                <span>Install App</span>
+              </button>
+              <span class="ss-utils-sep"></span>
+              <button class="ss-utils-btn" onclick="adminHardRefresh();return false">
+                <span class="material-icons-round">cached</span>
+                <span>Hard Refresh</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -471,6 +491,15 @@
     <button class="fab-menu-item" onclick="openAddDeptModal();closeFabMenu()">
       <span class="material-icons-round">add_business</span>
       <span>Add Department</span>
+    </button>
+    <div style="height:1px;background:var(--outline-var);margin:4px 12px;opacity:0.4"></div>
+    <button class="fab-menu-item" onclick="triggerPwaInstall();closeFabMenu()">
+      <span class="material-icons-round">install_mobile</span>
+      <span>Install App</span>
+    </button>
+    <button class="fab-menu-item" onclick="adminHardRefresh();closeFabMenu()">
+      <span class="material-icons-round">cached</span>
+      <span>Hard Refresh</span>
     </button>
   </div>
 
@@ -636,6 +665,28 @@
         <button class="modal-close" onclick="closeModal(null,'todayOPDModal')"><span class="material-icons-round">close</span></button>
       </div>
       <div id="todayOPDBody"></div>
+    </div>
+  </div>
+
+  <!-- Hard Refresh Confirm Modal -->
+  <div class="modal-overlay" id="hardRefreshModal" onclick="closeModal(event,'hardRefreshModal')">
+    <div class="modal glass-card" style="max-width:480px">
+      <div class="modal-header">
+        <h2><span class="material-icons-round" style="font-size:22px;color:var(--portal-accent)">cached</span> Hard Refresh</h2>
+        <button class="modal-close" onclick="closeModal(null,'hardRefreshModal')"><span class="material-icons-round">close</span></button>
+      </div>
+      <div class="modal-body" id="hardRefreshModalBody">
+        <div style="text-align:center;padding:20px 0" id="hardRefreshModalLoading">
+          <div class="loading-pulse" style="margin:0 auto 12px;width:40px;height:40px;border-radius:50%"></div>
+          <p style="color:var(--on-surface-var);font-size:0.88rem">Checking caches...</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal(null,'hardRefreshModal')">Cancel</button>
+        <button class="btn-primary" id="hardRefreshExecuteBtn" onclick="executeAdminHardRefresh()" style="display:none">
+          <span class="material-icons-round" style="font-size:18px">cached</span> Execute Refresh
+        </button>
+      </div>
     </div>
   </div>
 
