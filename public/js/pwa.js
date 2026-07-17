@@ -22,7 +22,15 @@
     if (installBanner) installBanner.classList.remove('visible');
   }
 
+  function isIOS() {
+    return /iPhone|iPad|iPod/.test(navigator.userAgent);
+  }
+
   function triggerPwaInstall() {
+    if (isStandalone()) {
+      if (typeof toast === 'function') toast('Already installed on your device', 'info', 'install_mobile');
+      return true;
+    }
     if (deferredPrompt) {
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then(function(choice) {
@@ -32,6 +40,15 @@
         deferredPrompt = null;
       });
       return true;
+    }
+    if (isIOS()) {
+      if (typeof toast === 'function') {
+        toast('Tap Share → Add to Home Screen', 'info', 'ios_share');
+      }
+      return true;
+    }
+    if (typeof toast === 'function') {
+      toast('Open this page in Chrome and look for the Install prompt', 'info', 'install_mobile');
     }
     return false;
   }
