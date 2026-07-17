@@ -441,6 +441,14 @@ document.addEventListener('DOMContentLoaded', () => {
 function initGlobalSearch() {
   var searchInput = document.getElementById('globalSearch');
   var mobileSearchInput = document.getElementById('globalSearchMobile');
+  var searchTimeout;
+
+  function searchAllRegistries(q) {
+    ['patientSearch', 'skinSearch', 'orthoSearch'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) { el.value = q; el.dispatchEvent(new Event('input')); }
+    });
+  }
 
   function handleSearch(e) {
     if (e.key !== 'Enter') return;
@@ -455,22 +463,13 @@ function initGlobalSearch() {
     }
 
     var pageSection = document.querySelector('.page-section.active');
-    if (pageSection && pageSection.id === 'page-patients') {
-      var patientSearch = document.getElementById('patientSearch');
-      if (patientSearch) { patientSearch.value = q; patientSearch.dispatchEvent(new Event('input')); toast('Filtering patients for "' + q + '"', 'info', 'search'); }
-    } else if (pageSection && pageSection.id === 'page-skin') {
-      var skinSearch = document.getElementById('skinSearch');
-      if (skinSearch) { skinSearch.value = q; skinSearch.dispatchEvent(new Event('input')); toast('Filtering skin registry for "' + q + '"', 'info', 'search'); }
-    } else if (pageSection && pageSection.id === 'page-ortho') {
-      var orthoSearch = document.getElementById('orthoSearch');
-      if (orthoSearch) { orthoSearch.value = q; orthoSearch.dispatchEvent(new Event('input')); toast('Filtering orthopedic registry for "' + q + '"', 'info', 'search'); }
+    if (pageSection && (pageSection.id === 'page-patients' || pageSection.id === 'page-skin' || pageSection.id === 'page-ortho')) {
+      searchAllRegistries(q);
+      toast('Searching all registries for "' + q + '"', 'info', 'search');
     } else {
-      toast('Searching for "' + q + '" in patient registry...', 'info', 'search');
+      toast('Searching for "' + q + '" across all registries...', 'info', 'search');
       switchPage('patients');
-      setTimeout(function() {
-        var patientSearch = document.getElementById('patientSearch');
-        if (patientSearch) { patientSearch.value = q; patientSearch.dispatchEvent(new Event('input')); }
-      }, 100);
+      setTimeout(function() { searchAllRegistries(q); }, 100);
     }
   }
 
