@@ -680,7 +680,7 @@
           <p class="page-sub">Showing <span id="patientCount">0</span> registered patients</p>
         </div>
         <div style="display:flex;gap:10px;align-items:center;">
-          <button class="btn-primary" id="addPatientBtn" onclick="openAddPatientModal()">
+          <button class="btn-primary" id="addPatientBtn" onclick="openAddPatientModal()" disabled>
             <span class="material-icons-round">person_add</span> Add Patient
           </button>
         </div>
@@ -803,7 +803,7 @@
           <p class="page-sub">Showing <span id="skinCount">0</span> registered skin patients</p>
         </div>
         <div style="display:flex;gap:10px;align-items:center;">
-          <button class="btn-primary" onclick="openAddSkinModal()">
+          <button class="btn-primary" id="addSkinBtn" onclick="openAddSkinModal()" disabled>
             <span class="material-icons-round">person_add</span> Add Skin Patient
           </button>
         </div>
@@ -852,7 +852,7 @@
           <p class="page-sub">Showing <span id="orthoCount">0</span> registered orthopedic patients</p>
         </div>
         <div style="display:flex;gap:10px;align-items:center;">
-          <button class="btn-primary" onclick="openAddOrthoModal()">
+          <button class="btn-primary" id="addOrthoBtn" onclick="openAddOrthoModal()" disabled>
             <span class="material-icons-round">person_add</span> Add Orthopedic Patient
           </button>
         </div>

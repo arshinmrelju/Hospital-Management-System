@@ -527,8 +527,14 @@ function normalizePatients(rawList) {
   });
 }
 
+function setAddPatientEnabled(enabled) {
+  var btn = document.getElementById('addPatientBtn');
+  if (btn) btn.disabled = !enabled;
+}
+
 function refreshPatients() {
   PatientCache.clear();
+  setAddPatientEnabled(false);
   loadPatients(true);
 }
 window.refreshPatients = refreshPatients;
@@ -546,6 +552,7 @@ async function loadPatients(skipCache) {
       window.allPatients = allPatients;
       if (_patientsInitialized) applyFilters();
       hasRenderedCache = true;
+      setAddPatientEnabled(true);
     }
   }
 
@@ -589,6 +596,7 @@ async function loadPatients(skipCache) {
     PatientCache.set(allPatients);
     if (typeof updateExportBadge === 'function') updateExportBadge();
     if (_patientsInitialized) applyFilters();
+    setAddPatientEnabled(true);
   } catch (e) {
     console.error('Failed to load patients:', e);
     const errMsg = e && e.message ? e.message : String(e);

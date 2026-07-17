@@ -252,8 +252,14 @@ async function deleteSkinPatient(id) {
   }
 }
 
+function setAddSkinEnabled(enabled) {
+  var btn = document.getElementById('addSkinBtn');
+  if (btn) btn.disabled = !enabled;
+}
+
 function refreshSkinPatients() {
   SkinCache.clear();
+  setAddSkinEnabled(false);
   loadSkinPatients(true);
 }
 window.refreshSkinPatients = refreshSkinPatients;
@@ -270,6 +276,7 @@ async function loadSkinPatients(skipCache) {
       window.allSkinPatients = allSkinPatients;
       if (_skinInitialized) applySkinFilters();
       hasRenderedCache = true;
+      setAddSkinEnabled(true);
     }
   }
 
@@ -299,6 +306,7 @@ async function loadSkinPatients(skipCache) {
     window.allSkinPatients = allSkinPatients;
     SkinCache.set(allSkinPatients);
     if (_skinInitialized) applySkinFilters();
+    setAddSkinEnabled(true);
   } catch (e) {
     console.error('Failed to load skin patients:', e);
     if (!hasRenderedCache && _skinInitialized) {

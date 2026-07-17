@@ -404,6 +404,19 @@ select.loading option {
   box-shadow: 0 4px 20px rgba(13, 148, 136, 0.40);
 }
 
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-primary:disabled:hover {
+  background: var(--primary-light);
+  transform: none;
+  box-shadow: 0 2px 12px rgba(13, 148, 136, 0.30);
+}
+
 .btn-primary .material-icons-round {
   font-size: 18px;
 }

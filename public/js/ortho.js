@@ -262,8 +262,14 @@ async function deleteOrthoPatient(id) {
   }
 }
 
+function setAddOrthoEnabled(enabled) {
+  var btn = document.getElementById('addOrthoBtn');
+  if (btn) btn.disabled = !enabled;
+}
+
 function refreshOrthoPatients() {
   OrthoCache.clear();
+  setAddOrthoEnabled(false);
   loadOrthoPatients(true);
 }
 window.refreshOrthoPatients = refreshOrthoPatients;
@@ -280,6 +286,7 @@ async function loadOrthoPatients(skipCache) {
       window.allOrthoPatients = allOrthoPatients;
       if (_orthoInitialized) applyOrthoFilters();
       hasRenderedCache = true;
+      setAddOrthoEnabled(true);
     }
   }
 
@@ -309,6 +316,7 @@ async function loadOrthoPatients(skipCache) {
     window.allOrthoPatients = allOrthoPatients;
     OrthoCache.set(allOrthoPatients);
     if (_orthoInitialized) applyOrthoFilters();
+    setAddOrthoEnabled(true);
   } catch (e) {
     console.error('Failed to load orthopedic patients:', e);
     if (!hasRenderedCache && _orthoInitialized) {
