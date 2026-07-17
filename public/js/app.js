@@ -438,43 +438,92 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* --- Global Search --- */
+var SEARCH_PAGES = [
+  { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+  { id: 'patients', label: 'Patients', icon: 'groups' },
+  { id: 'skin', label: 'Skin Registry', icon: 'palette' },
+  { id: 'ortho', label: 'Orthopedic Registry', icon: 'accessibility_new' },
+  { id: 'export', label: 'Export Contacts', icon: 'file_download' },
+  { id: 'help', label: 'Help', icon: 'help' }
+];
+
 function initGlobalSearch() {
   var searchInput = document.getElementById('globalSearch');
   var mobileSearchInput = document.getElementById('globalSearchMobile');
-  var searchTimeout;
+  var dropdown = document.getElementById('globalSearchDropdown');
+  var mobileDropdown = document.getElementById('globalSearchMobileDropdown');
 
-  function searchAllRegistries(q) {
-    ['patientSearch', 'skinSearch', 'orthoSearch'].forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el) { el.value = q; el.dispatchEvent(new Event('input')); }
+  function renderDropdown(q, dropEl, inputEl) {
+    var query = (q || '').toLowerCase();
+    var matches = query ? SEARCH_PAGES.filter(function(p) { return p.label.toLowerCase().includes(query) || p.id.includes(query); }) : SEARCH_PAGES;
+    if (matches.length === 0) {
+      dropEl.innerHTML = '<div class="gs-empty">No pages found</div>';
+    } else {
+      dropEl.innerHTML = matches.map(function(p) {
+        return '<div class="gs-item" data-page="' + p.id + '"><span class="material-icons-round">' + p.icon + '</span><span class="gs-label">' + p.label + '</span></div>';
+      }).join('');
+    }
+    dropEl.classList.add('open');
+    dropEl.querySelectorAll('.gs-item').forEach(function(item) {
+      item.addEventListener('click', function() {
+        selectPage(item.dataset.page, inputEl, dropEl);
+      });
     });
   }
 
-  function handleSearch(e) {
-    if (e.key !== 'Enter') return;
-    var q = e.target.value.trim();
-    if (!q) return;
+  function selectPage(pageId, inputEl, dropEl) {
+    dropEl.classList.remove('open');
+    if (inputEl) inputEl.value = '';
+    switchPage(pageId);
+  }
 
-    var mobileBar = document.getElementById('mobileSearchBar');
-    if (mobileBar && mobileBar.classList.contains('active')) {
-      mobileBar.classList.remove('active');
-      var toggleBtn = document.getElementById('mobileSearchToggle');
-      if (toggleBtn) toggleBtn.querySelector('.material-icons-round').textContent = 'search';
-    }
-
-    var pageSection = document.querySelector('.page-section.active');
-    if (pageSection && (pageSection.id === 'page-patients' || pageSection.id === 'page-skin' || pageSection.id === 'page-ortho')) {
-      searchAllRegistries(q);
-      toast('Searching all registries for "' + q + '"', 'info', 'search');
-    } else {
-      toast('Searching for "' + q + '" across all registries...', 'info', 'search');
-      switchPage('patients');
-      setTimeout(function() { searchAllRegistries(q); }, 100);
+  function handleKeydown(e, inputEl, dropEl) {
+    var items = dropEl.querySelectorAll('.gs-item');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      var idx = Array.from(items).findIndex(function(i) { return i.classList.contains('highlighted'); });
+      if (idx >= 0) items[idx].classList.remove('highlighted');
+      idx = Math.min(idx + 1, items.length - 1);
+      if (items[idx]) items[idx].classList.add('highlighted');
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      var idx = Array.from(items).findIndex(function(i) { return i.classList.contains('highlighted'); });
+      if (idx >= 0) items[idx].classList.remove('highlighted');
+      idx = Math.max(idx - 1, 0);
+      if (items[idx]) items[idx].classList.add('highlighted');
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      var highlighted = dropEl.querySelector('.gs-item.highlighted');
+      if (highlighted) {
+        selectPage(highlighted.dataset.page, inputEl, dropEl);
+      } else if (items.length > 0) {
+        selectPage(items[0].dataset.page, inputEl, dropEl);
+      }
+    } else if (e.key === 'Escape') {
+      dropEl.classList.remove('open');
+      inputEl.blur();
     }
   }
 
-  if (searchInput) searchInput.addEventListener('keydown', handleSearch);
-  if (mobileSearchInput) mobileSearchInput.addEventListener('keydown', handleSearch);
+  function setupInput(inputEl, dropEl) {
+    inputEl.addEventListener('input', function() {
+      renderDropdown(this.value, dropEl, inputEl);
+    });
+    inputEl.addEventListener('focus', function() {
+      renderDropdown(this.value, dropEl, inputEl);
+    });
+    inputEl.addEventListener('keydown', function(e) {
+      if (['ArrowDown','ArrowUp','Enter','Escape'].includes(e.key)) {
+        handleKeydown(e, inputEl, dropEl);
+      }
+    });
+    inputEl.addEventListener('blur', function() {
+      setTimeout(function() { dropEl.classList.remove('open'); }, 150);
+    });
+  }
+
+  if (searchInput && dropdown) setupInput(searchInput, dropdown);
+  if (mobileSearchInput && mobileDropdown) setupInput(mobileSearchInput, mobileDropdown);
 }
 
 document.addEventListener('DOMContentLoaded', initGlobalSearch);

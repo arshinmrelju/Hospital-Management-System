@@ -378,9 +378,10 @@
       <button class="mobile-search-toggle" id="mobileSearchToggle" aria-label="Toggle search">
         <span class="material-icons-round">search</span>
       </button>
-      <div class="topbar-search">
+      <div class="topbar-search" style="position:relative;">
         <span class="material-icons-round search-icon">search</span>
-        <input type="text" id="globalSearch" placeholder="Search patients, appointments..." />
+        <input type="text" id="globalSearch" placeholder="Search pages..." autocomplete="off" />
+        <div class="global-search-dropdown" id="globalSearchDropdown"></div>
       </div>
       <div class="topbar-actions">
         <button class="topbar-btn" id="notifBtn" aria-label="Notifications">
@@ -393,9 +394,10 @@
 
     <!-- Mobile Search Bar -->
     <div class="mobile-search-bar" id="mobileSearchBar">
-      <div class="topbar-search">
+      <div class="topbar-search" style="position:relative;">
         <span class="material-icons-round search-icon">search</span>
-        <input type="text" id="globalSearchMobile" placeholder="Search patients, appointments…" />
+        <input type="text" id="globalSearchMobile" placeholder="Search pages…" autocomplete="off" />
+        <div class="global-search-dropdown" id="globalSearchMobileDropdown"></div>
       </div>
     </div>
 
