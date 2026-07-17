@@ -537,8 +537,6 @@ window.SEARCH_PAGES = [
   });
 })();
 
-document.addEventListener('DOMContentLoaded', initGlobalSearch);
-
 var _tabStates = {};
 
 function _saveTabState(id) {
