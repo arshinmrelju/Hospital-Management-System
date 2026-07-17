@@ -10,6 +10,12 @@ window.OPD_RECORDS = OPD_RECORDS;
 let filteredOpdRecords = null;
 let opdDimension = 'all';
 
+function isDuplicateOpdEntry(patientId, department) {
+  return OPD_RECORDS.some(function(r) {
+    return (r.patient_id === patientId || r.op_no === patientId) && r.department === department;
+  });
+}
+
 /* --- Export Tracker --- */
 const EXPORTED_IDS_KEY = 'hms_exported_patient_ids';
 
@@ -417,6 +423,13 @@ function submitOpdAssign() {
     timestamp: now.toISOString()
   };
 
+  if (isDuplicateOpdEntry(record.patient_id, record.department)) {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<span class="material-icons-round" style="font-size:14px;">how_to_reg</span> Add to OPD'; }
+    closeModal(null, 'opdAssignModal');
+    toast(record.name + ' is already in ' + record.department + ' OPD', 'info');
+    return;
+  }
+
   OPD_RECORDS.push(record);
   if (filteredOpdRecords) filteredOpdRecords.push(record);
 
@@ -487,7 +500,7 @@ async function loadOpdRecords() {
     const appointments = (response && response.success) ? (response.data || []) : [];
     var patientLookup = window.allPatients || [];
     OPD_RECORDS = appointments
-      .filter(a => a.type === 'OPD' || a.type === 'OPD Consultation' || a.type === 'Skin OPD')
+      .filter(a => a.type === 'OPD' || a.type === 'OPD Consultation' || a.type === 'Skin OPD' || a.type === 'Ortho OPD')
       .map((a, i) => {
         var name = a.patient_name || a.patientName || '';
         var age = a.patient_age || a.patientAge || a.age || '';
@@ -519,12 +532,19 @@ async function loadOpdRecords() {
           contact: (match2 ? patientContact(match2) : a.phone || a.contact || ''),
           op_no: (match2 ? (match2.op_no || match2['Hosp. OP No'] || match2['OP No'] || '') : ''),
           doctor: doctor,
-          department: a.type === 'Skin OPD' ? 'Skin' : (a.type === 'OPD Consultation' ? 'Consultation' : 'General'),
+          department: a.type === 'Skin OPD' ? 'Skin' : a.type === 'Ortho OPD' ? 'Ortho' : (a.type === 'OPD Consultation' ? 'Consultation' : 'General'),
           complaint: a.reason || a.complaint || '—',
           time: a.appointment_time || a.time || '—',
           timestamp: a.createdAt || a.appointment_date || new Date().toISOString()
         };
       });
+    var seen = {};
+    OPD_RECORDS = OPD_RECORDS.filter(function(r) {
+      var key = (r.patient_id || r.op_no || '') + '::' + (r.department || '');
+      if (seen[key]) return false;
+      seen[key] = true;
+      return true;
+    });
   } catch (e) {
     addConsoleLog('WARN', 'Could not load OPD records: ' + e.message);
   } finally {

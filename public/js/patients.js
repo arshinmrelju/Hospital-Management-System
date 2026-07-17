@@ -700,7 +700,7 @@ async function submitAddPatient(e) {
         status: 'waiting',
         reason: raw.notes || ''
       }).then(function() {
-        if (typeof OPD_RECORDS !== 'undefined' && OPD_RECORDS !== null) {
+        if (typeof OPD_RECORDS !== 'undefined' && OPD_RECORDS !== null && typeof isDuplicateOpdEntry === 'function' && !isDuplicateOpdEntry(newP.op_no || newP.id, 'General')) {
           OPD_RECORDS.push({
             id: 'OPD-' + Date.now(),
             patient_id: newP.op_no || newP.id,

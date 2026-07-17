@@ -392,7 +392,7 @@ async function submitAddSkin(e) {
       timestamp: now.toISOString(),
       _isNew: true
     };
-    if (window.OPD_RECORDS) {
+    if (window.OPD_RECORDS && (!isDuplicateOpdEntry || !isDuplicateOpdEntry(returnedId, 'Skin'))) {
       window.OPD_RECORDS.push(opdRecord);
       if (typeof renderOpdRecords === 'function') renderOpdRecords();
     }
