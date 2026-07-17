@@ -326,6 +326,15 @@ function applyFilters() {
 }
 
 function filterPatients() {
+  var active = document.activeElement;
+  var isNameSearch = active && (active.id === 'patientSearch' || active.id === 'patientSearchTopbar') && active.value.trim();
+  if (isNameSearch) {
+    var opEl = document.getElementById('opFilter');
+    if (opEl && opEl.value.trim()) {
+      opEl.value = '';
+      if (typeof updateAdvBadge === 'function') updateAdvBadge();
+    }
+  }
   applyFilters();
 }
 window.filterPatients = filterPatients;
