@@ -206,6 +206,7 @@ window.clearAdvancedFilters = clearAdvancedFilters;
 
 function applyFilters() {
   const search = (document.getElementById('patientSearch')?.value || '').toLowerCase();
+  const patientId = (document.getElementById('patientIdSearch')?.value || '').toLowerCase();
   const dept = document.getElementById('deptFilter')?.value || '';
   const status = document.getElementById('statusFilter')?.value || '';
 
@@ -225,6 +226,12 @@ function applyFilters() {
     // 1. Global Search
     const name = `${p.fname} ${p.lname} ${p.op_no || p.id} ${p.contact} ${p.doctor || ''}`.toLowerCase();
     if (search && !name.includes(search)) return false;
+
+    // 1b. Patient ID specific search
+    if (patientId) {
+      const pId = (p.op_no || p.id || '').toString().toLowerCase();
+      if (!pId.includes(patientId)) return false;
+    }
     
     // 2. Tab chips (All, Admitted, Outpatient, Discharged)
     if (activeFilter === 'admitted' && p.patient_type !== 'admitted') return false;
