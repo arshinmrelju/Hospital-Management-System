@@ -1032,19 +1032,6 @@
       greeting.textContent = greet + ', Admin';
     }
 
-    // Network status
-    function updateNetworkStatus() {
-      var dot = document.getElementById('ssNetworkDot');
-      var status = document.getElementById('ssNetworkStatus');
-      if (dot && status) {
-        dot.className = 'ss-dot ' + (navigator.onLine ? 'green' : 'red');
-        status.textContent = navigator.onLine ? 'Online' : 'Offline';
-      }
-    }
-    window.addEventListener('online', updateNetworkStatus);
-    window.addEventListener('offline', updateNetworkStatus);
-    updateNetworkStatus();
-
     // Sidebar toggle
     var toggle = document.getElementById('menuToggle');
     var sidebar = document.getElementById('sidebar');
