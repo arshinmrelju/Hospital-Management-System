@@ -37,6 +37,39 @@ function _clearDoctorsCache() {
   try { localStorage.removeItem(DOCTORS_CACHE_KEY); } catch (e) {}
 }
 
+var _departmentsCache = null;
+var _departmentsCacheTime = 0;
+var DEPARTMENTS_CACHE_TTL = 5 * 60 * 1000;
+var DEPARTMENTS_CACHE_KEY = 'hms_departments_cache';
+
+function _loadDepartmentsCache() {
+  try {
+    var raw = localStorage.getItem(DEPARTMENTS_CACHE_KEY);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      if (parsed.data && parsed.timestamp && (Date.now() - parsed.timestamp < DEPARTMENTS_CACHE_TTL)) {
+        _departmentsCache = parsed.data;
+        _departmentsCacheTime = parsed.timestamp;
+      }
+    }
+  } catch (e) {}
+}
+_loadDepartmentsCache();
+
+function _saveDepartmentsCache(data) {
+  _departmentsCache = data;
+  _departmentsCacheTime = Date.now();
+  try {
+    localStorage.setItem(DEPARTMENTS_CACHE_KEY, JSON.stringify({ data: data, timestamp: _departmentsCacheTime }));
+  } catch (e) {}
+}
+
+function _clearDepartmentsCache() {
+  _departmentsCache = null;
+  _departmentsCacheTime = 0;
+  try { localStorage.removeItem(DEPARTMENTS_CACHE_KEY); } catch (e) {}
+}
+
 var _patientsTotal = 0;
 var _batchSize = 5000;
 var _patientsLoading = null;
@@ -204,8 +237,9 @@ window.API = {
         return fallbackPatients(params);
       });
     } else {
-      // Step 1: get paginated count; fall back if old server returns all data without "total"
-      promise = sheetsFetch({ action: 'getPatients', limit: 1, offset: 0 }).then(function(meta) {
+      // Step 1: fetch first batch (limit = _batchSize, offset = 0)
+      var batchSize = _batchSize;
+      promise = sheetsFetch({ action: 'getPatients', limit: batchSize, offset: 0 }).then(function(meta) {
         if (!meta.success) {
           console.warn('Using LocalStorage patients fallback.');
           return fallbackPatients(params);
@@ -229,9 +263,17 @@ window.API = {
         }
         _patientsTotal = total;
 
-        // Step 2: fetch all pages sequentially with retry
-        var allData = [];
-        var batchSize = _batchSize;
+        var firstBatchData = (meta.data || []).map(normalizePatient);
+
+        // If the first batch already contains all patients, we're done!
+        if (firstBatchData.length >= total || total <= batchSize) {
+          _patientsCache = firstBatchData;
+          setLocalData('patients', firstBatchData);
+          return { success: true, data: firstBatchData };
+        }
+
+        // Step 2: fetch remaining pages sequentially with retry
+        var allData = firstBatchData;
         var pages = Math.ceil(total / batchSize);
 
         function loadPage(idx, retried) {
@@ -256,7 +298,8 @@ window.API = {
             return loadPage(idx + 1);
           });
         }
-        return loadPage(0, false);
+        // Start loading from page 1 since page 0 (first batch) is already loaded!
+        return loadPage(1, false);
       });
     }
 
@@ -534,8 +577,12 @@ window.API = {
   },
 
   getDepartments: function() {
+    if (_departmentsCache && (Date.now() - _departmentsCacheTime < DEPARTMENTS_CACHE_TTL)) {
+      return Promise.resolve({ success: true, data: _departmentsCache, cached: true });
+    }
     return sheetsFetch({ action: 'getDepartments' }).then(function(resp) {
       if (resp.success && resp.data) {
+        _saveDepartmentsCache(resp.data);
         return resp;
       } else {
         return { success: true, data: [
@@ -551,6 +598,7 @@ window.API = {
   },
 
   createDepartment: function(data) {
+    _clearDepartmentsCache();
     var q = { action: 'createDepartment' };
     ['name','description','status'].forEach(function(k) {
       if (data[k]) q[k] = data[k];
@@ -559,6 +607,7 @@ window.API = {
   },
 
   updateDepartment: function(id, data) {
+    _clearDepartmentsCache();
     var q = { action: 'updateDepartment', id: id };
     for (var k in data) {
       if (data.hasOwnProperty(k)) q[k] = data[k];
@@ -567,6 +616,7 @@ window.API = {
   },
 
   deleteDepartment: function(id) {
+    _clearDepartmentsCache();
     return sheetsFetch({ action: 'deleteDepartment', id: id });
   },
 

@@ -85,6 +85,20 @@
 
   /* ─── Data Loading ─── */
   function loadDoctors() {
+    try {
+      var raw = localStorage.getItem('hms_doctors_cache');
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        var list = (parsed && parsed.data) || [];
+        if (list.length > 0) {
+          doctors = list;
+          filteredDoctors = list.slice();
+          renderDoctors();
+          updateStats();
+        }
+      }
+    } catch (e) {}
+
     return window.API.getDoctors().then(function(resp) {
       var list = (resp && resp.data) || [];
       doctors = list;
@@ -95,11 +109,27 @@
     }).catch(function(err) {
       console.error('Failed to load doctors:', err);
       allDoctorsLoaded = true;
-      document.getElementById('doctorList').innerHTML = '<div class="empty-state"><span class="material-icons-round empty-state-icon">error_outline</span><div class="empty-state-title">Failed to load</div><div class="empty-state-desc">Could not load doctors. Check your connection.</div></div>';
+      if (doctors.length === 0) {
+        document.getElementById('doctorList').innerHTML = '<div class="empty-state"><span class="material-icons-round empty-state-icon">error_outline</span><div class="empty-state-title">Failed to load</div><div class="empty-state-desc">Could not load doctors. Check your connection.</div></div>';
+      }
     });
   }
 
   function loadDepartments() {
+    try {
+      var raw = localStorage.getItem('hms_departments_cache');
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        var list = (parsed && parsed.data) || [];
+        if (list.length > 0) {
+          departments = list;
+          filteredDepts = list.slice();
+          renderDepartments();
+          updateStats();
+        }
+      }
+    } catch (e) {}
+
     return window.API.getDepartments().then(function(resp) {
       var list = (resp && resp.data) || [];
       departments = list;
@@ -110,7 +140,9 @@
     }).catch(function(err) {
       console.error('Failed to load departments:', err);
       allDeptsLoaded = true;
-      document.getElementById('deptList').innerHTML = '<div class="empty-state"><span class="material-icons-round empty-state-icon">error_outline</span><div class="empty-state-title">Failed to load</div><div class="empty-state-desc">Could not load departments.</div></div>';
+      if (departments.length === 0) {
+        document.getElementById('deptList').innerHTML = '<div class="empty-state"><span class="material-icons-round empty-state-icon">error_outline</span><div class="empty-state-title">Failed to load</div><div class="empty-state-desc">Could not load departments.</div></div>';
+      }
     });
   }
 
@@ -726,6 +758,31 @@
 
   function loadTodayPatients() {
     _todayPatientsLoaded = false;
+
+    // 1. Try to read from local cache immediately
+    try {
+      var cachedData = localStorage.getItem('hms_local_patients');
+      if (cachedData) {
+        var list = JSON.parse(cachedData) || [];
+        var today = new Date();
+        var todayStr = today.toISOString().slice(0, 10);
+        _todayPatientsList = list.filter(function(p) {
+          var d = p.created_on || p['Created On'] || '';
+          if (!d) return false;
+          d = String(d).trim();
+          if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.slice(0, 10) === todayStr;
+          var dt = new Date(d);
+          if (!isNaN(dt.getTime())) return dt.toISOString().slice(0, 10) === todayStr;
+          return false;
+        });
+        _todayPatientsLoaded = true;
+        var el = document.getElementById('statNewPatients');
+        if (el) el.textContent = _todayPatientsList.length;
+      }
+    } catch (e) {
+      console.warn('[Admin] Failed to parse cached patients:', e);
+    }
+
     _todayPatientsPromise = window.API.getPatients().then(function(resp) {
       var list = (resp && resp.data) || [];
       var today = new Date();
@@ -741,6 +798,10 @@
       });
       _todayPatientsLoaded = true;
       animateValue(document.getElementById('statNewPatients'), _todayPatientsList.length);
+      var modal = document.getElementById('todayPatientsModal');
+      if (modal && modal.classList.contains('active')) {
+        renderTodayPatientsTable();
+      }
     }).catch(function(err) {
       console.warn('[Admin] Failed to load patients:', err);
       _todayPatientsLoaded = true;
@@ -750,6 +811,27 @@
 
   function loadTodayOPD() {
     _todayOPDLoaded = false;
+
+    // 1. Try to read from local cache immediately
+    try {
+      var cachedData = localStorage.getItem('hms_local_appointments');
+      if (cachedData) {
+        var list = JSON.parse(cachedData) || [];
+        var today = new Date();
+        var todayStr = today.toISOString().slice(0, 10);
+        _todayOPDList = list.filter(function(a) {
+          var date = a.appointment_date || a['Appointment Date'] || a.createdAt || a['Created At'] || '';
+          date = String(date);
+          return date.slice(0, 10) === todayStr;
+        });
+        _todayOPDLoaded = true;
+        var el = document.getElementById('statOPDToday');
+        if (el) el.textContent = _todayOPDList.length;
+      }
+    } catch (e) {
+      console.warn('[Admin] Failed to parse cached OPD:', e);
+    }
+
     _todayOPDPromise = window.API.getAppointments().then(function(resp) {
       var list = (resp && resp.data) || [];
       var today = new Date();
@@ -761,6 +843,10 @@
       });
       _todayOPDLoaded = true;
       animateValue(document.getElementById('statOPDToday'), _todayOPDList.length);
+      var modal = document.getElementById('todayOPDModal');
+      if (modal && modal.classList.contains('active')) {
+        renderTodayOPDTable();
+      }
     }).catch(function(err) {
       console.warn('[Admin] Failed to load OPD:', err);
       _todayOPDLoaded = true;
@@ -1014,6 +1100,7 @@
   /* ─── Hard Refresh ─── */
   var ADMIN_CACHE_MAP = {
     'hms_doctors_cache': 'Doctors cache',
+    'hms_departments_cache': 'Departments cache',
     'hms_patients_cache_v2': 'Patients cache v2',
     'hms_patients_cache': 'Legacy patients cache',
     'hms_local_patients': 'Local patients',
