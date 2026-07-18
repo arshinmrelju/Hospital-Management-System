@@ -3,6 +3,11 @@
 
   var devMessages = [];
   var REFRESH_HISTORY_KEY = 'hms_refresh_history';
+  var CHECKIN_HISTORY_KEY = 'hms_checkin_history';
+  var PORTAL_TABS = {
+    reception: ['Dashboard', 'Patients', 'Skin Registry', 'Orthopedic Registry', 'Export Contacts', 'Help'],
+    admin: ['Overview', 'Doctors', 'Departments', 'Login History']
+  };
 
   var CACHE_MAP = {
     'hms_patients_cache_v2': 'Patients cache',
@@ -342,6 +347,323 @@
     toast('Refresh history cleared', 'info', 'delete_sweep');
   };
 
+  /* ─── Check-in ─── */
+  window.openCheckinModal = function(entry) {
+    initCheckinForm();
+    var isEdit = entry && entry.id;
+    var headerTitle = document.getElementById('checkinModalHeaderTitle');
+    var submitBtn = document.getElementById('checkinSubmitBtn');
+    if (isEdit) {
+      window._editingCheckinId = entry.id;
+      document.getElementById('checkinDate').value = entry.date;
+      document.getElementById('checkinDeveloper').value = entry.developer || 'Arshin';
+      document.getElementById('checkinStatus').value = entry.status || 'Stable';
+      document.getElementById('checkinIssues').value = entry.issuesFound || '';
+      document.getElementById('checkinResolved').value = entry.issuesResolved || '';
+      document.getElementById('checkinNotes').value = entry.notes || '';
+      if (entry.pages && entry.pages.length > 0) {
+        var firstPage = entry.pages[0];
+        if (firstPage === 'For Review') {
+          document.getElementById('checkinPortal').value = 'for-review';
+          window.updateCheckinTabs();
+        } else {
+          var parts = firstPage.split(' > ');
+          var portalVal = parts[0] === 'Admin' ? 'admin' : 'reception';
+          document.getElementById('checkinPortal').value = portalVal;
+          window.updateCheckinTabs();
+          var tabName = parts.slice(1).join(' > ') || parts[0];
+          var radio = document.querySelector('#checkinTabs input[type=radio][value="' + tabName + '"]');
+          if (radio) radio.checked = true;
+          var label = radio ? radio.closest('.checkin-tab-check') : null;
+          if (label) label.classList.add('checked');
+        }
+      }
+      var isOpen = entry.entryStatus !== 'closed';
+      if (headerTitle) headerTitle.textContent = isOpen ? 'Close Check-in' : 'Edit Check-in';
+      if (submitBtn) submitBtn.innerHTML = '<span class="material-icons-round">' + (isOpen ? 'check_circle' : 'edit') + '</span> ' + (isOpen ? 'Close Check-in' : 'Update Check-in');
+    } else {
+      window._editingCheckinId = null;
+      if (headerTitle) headerTitle.textContent = 'New Check-in';
+      if (submitBtn) submitBtn.innerHTML = '<span class="material-icons-round">assignment_turned_in</span> Open Check-in';
+    }
+    window.updateStatusDot(document.getElementById('checkinStatus'));
+    var modal = document.getElementById('checkinModal');
+    if (modal) { modal.classList.add('active'); document.body.style.overflow = 'hidden'; }
+  };
+
+  window.closeCheckinModal = function(event) {
+    if (event && event.target !== event.currentTarget) return;
+    var modal = document.getElementById('checkinModal');
+    if (modal) { modal.classList.remove('active'); document.body.style.overflow = ''; }
+    window._editingCheckinId = null;
+  };
+  window.updateStatusDot = function(sel) {
+    var dot = document.getElementById('statusDot');
+    if (!dot) return;
+    var val = sel.value;
+    dot.className = 'cf-status-indicator';
+    if (val === 'Stable') dot.classList.add('s-stable');
+    else if (val === 'Minor Issues') dot.classList.add('s-minor');
+    else if (val === 'Critical') dot.classList.add('s-critical');
+    else if (val === 'Under Maintenance') dot.classList.add('s-maint');
+  };
+
+  window.updateCheckinTabs = function() {
+    var portal = document.getElementById('checkinPortal');
+    var container = document.getElementById('checkinTabs');
+    var field = document.getElementById('checkinTabsField');
+    if (!portal || !container) return;
+    container.innerHTML = '';
+    var selected = portal.value;
+    if (selected === 'for-review') {
+      if (field) field.style.display = 'none';
+      return;
+    }
+    if (field) field.style.display = '';
+    if (!selected) {
+      container.innerHTML = '<div class="checkin-tabs-empty">Select a portal to see its tabs</div>';
+      return;
+    }
+    var tabList = PORTAL_TABS[selected] || [];
+    tabList.forEach(function(t) {
+      var label = document.createElement('label');
+      label.className = 'checkin-tab-check';
+      var rb = document.createElement('input');
+      rb.type = 'radio';
+      rb.name = 'checkinTab';
+      rb.value = t;
+      label.appendChild(rb);
+      var span = document.createElement('span');
+      span.textContent = t;
+      label.appendChild(span);
+      container.appendChild(label);
+    });
+  };
+
+  function getCheckinHistory() {
+    try { return JSON.parse(localStorage.getItem(CHECKIN_HISTORY_KEY)) || []; }
+    catch(e) { return []; }
+  }
+
+  function saveCheckinHistory(history) {
+    try { localStorage.setItem(CHECKIN_HISTORY_KEY, JSON.stringify(history)); } catch(e) {}
+  }
+
+  function initCheckinForm() {
+    var dateInput = document.getElementById('checkinDate');
+    if (dateInput) {
+      var today = new Date();
+      dateInput.value = today.getFullYear() + '-' +
+        String(today.getMonth() + 1).padStart(2, '0') + '-' +
+        String(today.getDate()).padStart(2, '0');
+    }
+    var devInput = document.getElementById('checkinDeveloper');
+    if (devInput) devInput.value = 'Arshin';
+    var heroName = document.getElementById('checkinHeroName');
+    if (heroName) heroName.textContent = 'Arshin';
+    var heroAvatar = document.getElementById('checkinHeroAvatar');
+    if (heroAvatar) heroAvatar.textContent = 'A';
+    var heroDate = document.getElementById('checkinHeroDate');
+    if (heroDate) heroDate.textContent = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    var portal = document.getElementById('checkinPortal');
+    if (portal) { portal.value = ''; }
+    window.updateCheckinTabs();
+  }
+
+  window.submitCheckin = function(e) {
+    e.preventDefault();
+    var date = document.getElementById('checkinDate').value;
+    var dev = document.getElementById('checkinDeveloper').value.trim();
+    var status = document.getElementById('checkinStatus').value;
+    var issues = document.getElementById('checkinIssues').value.trim();
+    var resolved = document.getElementById('checkinResolved').value.trim();
+    var notes = document.getElementById('checkinNotes').value.trim();
+    var portal = document.getElementById('checkinPortal').value;
+    var tabsContainer = document.getElementById('checkinTabs');
+    var pages = [];
+    if (portal === 'for-review') {
+      pages = ['For Review'];
+    } else if (portal) {
+      var checks = tabsContainer.querySelectorAll('input[type=radio]:checked');
+      var selectedTabs = Array.prototype.map.call(checks, function(c) { return c.value; });
+      var portalLabel = portal === 'reception' ? 'Reception' : 'Admin';
+      pages = selectedTabs.map(function(t) { return portalLabel + ' > ' + t; });
+    }
+    if (!date) { toast('Please select a visit date', 'warning'); return; }
+    if (!portal) { toast('Please select a portal to review', 'warning'); return; }
+    if (portal !== 'for-review' && pages.length === 0) { toast('Please select at least one tab', 'warning'); return; }
+    var btn = document.getElementById('checkinSubmitBtn');
+    setButtonLoading(btn, 'Saving...');
+    var history = getCheckinHistory();
+    var editId = window._editingCheckinId;
+    if (editId) {
+      for (var i = 0; i < history.length; i++) {
+        if (history[i].id === editId) {
+          history[i].date = date;
+          history[i].developer = dev || 'Arshin';
+          history[i].status = status;
+          history[i].pages = pages;
+          history[i].issuesFound = issues;
+          history[i].issuesResolved = resolved;
+          history[i].notes = notes;
+          if (history[i].entryStatus !== 'closed') history[i].entryStatus = 'closed';
+          break;
+        }
+      }
+      saveCheckinHistory(history);
+      document.getElementById('checkinForm').reset();
+      closeCheckinModal();
+      renderCheckinHistory();
+      loadCheckinStats();
+      setButtonIdle(btn);
+      toast('Check-in closed', 'success', 'check_circle');
+    } else {
+      var entry = {
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        date: date,
+        developer: dev || 'Arshin',
+        status: status,
+        pages: pages,
+        issuesFound: issues,
+        issuesResolved: resolved,
+        notes: notes,
+        entryStatus: 'open',
+        createdAt: new Date().toISOString()
+      };
+      history.push(entry);
+      saveCheckinHistory(history);
+      document.getElementById('checkinForm').reset();
+      closeCheckinModal();
+      renderCheckinHistory();
+      loadCheckinStats();
+      setButtonIdle(btn);
+      toast('Check-in logged', 'success', 'assignment_turned_in');
+    }
+  };
+
+  function renderCheckinHistory() {
+    renderCheckinTable();
+    renderRecentCheckins();
+    loadCheckinStats();
+  }
+
+  function renderCheckinTable() {
+    var tbody = document.getElementById('checkinTableBody');
+    if (!tbody) return;
+    var history = getCheckinHistory();
+    if (history.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--on-surface-var)">' +
+        '<span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px;color:var(--outline-var)">assignment_turned_in</span>No check-ins yet</td></tr>';
+      return;
+    }
+    var sorted = history.slice().sort(function(a, b) {
+      return b.createdAt.localeCompare(a.createdAt);
+    });
+    tbody.innerHTML = sorted.map(function(c) {
+      var d = new Date(c.date + 'T00:00:00');
+      var dateStr = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      var pagesStr = (c.pages && c.pages.length > 0) ? c.pages.join(', ') : '—';
+      var statusClass = c.status === 'Stable' ? 'available' : c.status === 'Minor Issues' ? 'pending' : c.status === 'Critical' ? 'critical' : 'off';
+      var isOpen = c.entryStatus !== 'closed';
+      var entryBadge = isOpen ? '<span class="badge-status pending" style="font-size:0.62rem;margin-left:4px">Open</span>' : '<span class="badge-status completed" style="font-size:0.62rem;margin-left:4px">Closed</span>';
+      var closeBtn = isOpen
+        ? '<button class="btn-icon-only" onclick="closeCheckinEntry(\'' + c.id + '\')" title="Close check-in" style="color:#0D9488;background:none;border:none;cursor:pointer;font-size:18px;padding:4px"><span class="material-icons-round">check_circle</span></button>'
+        : '<button class="btn-icon-only" onclick="editCheckinEntry(\'' + c.id + '\')" title="Edit check-in" style="color:#2563EB;background:none;border:none;cursor:pointer;font-size:18px;padding:4px"><span class="material-icons-round">edit</span></button>';
+      return '<tr>' +
+        '<td data-label="Date" style="font-size:0.78rem;white-space:nowrap">' + dateStr + entryBadge + '</td>' +
+        '<td data-label="Developer">' + esc(c.developer || 'Developer') + '</td>' +
+        '<td data-label="Pages" style="font-size:0.82rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(pagesStr) + '</td>' +
+        '<td data-label="Status"><span class="badge-status ' + statusClass + '">' + esc(c.status || 'Stable') + '</span></td>' +
+        '<td data-label="Issues Found" style="font-size:0.82rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(c.issuesFound || '—') + '</td>' +
+        '<td data-label="Issues Resolved" style="font-size:0.82rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(c.issuesResolved || '—') + '</td>' +
+        '<td data-label="Action" style="white-space:nowrap">' + closeBtn +
+        '<button class="btn-icon-only" onclick="deleteCheckin(\'' + c.id + '\')" title="Delete check-in" style="color:#ef4444;background:none;border:none;cursor:pointer;font-size:18px;padding:4px"><span class="material-icons-round">delete</span></button></td>' +
+        '</tr>';
+    }).join('');
+    setTimeout(labelDynamicTables, 50);
+  }
+
+  function renderRecentCheckins() {
+    var container = document.getElementById('recentCheckins');
+    if (!container) return;
+    var history = getCheckinHistory();
+    var sorted = history.slice().sort(function(a, b) {
+      return b.createdAt.localeCompare(a.createdAt);
+    });
+    if (sorted.length === 0) {
+      container.innerHTML = '<div class="checkin-empty-state">' +
+        '<span class="material-icons-round">assignment_turned_in</span>' +
+        '<p>No check-ins yet</p>' +
+        '<span>Click "New Check-in" to log your first visit</span></div>';
+      return;
+    }
+    container.innerHTML = sorted.slice(0, 5).map(function(c) {
+      var d = new Date(c.date + 'T00:00:00');
+      var dateStr = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      var pagesStr = (c.pages && c.pages.length > 0) ? c.pages.join(', ') : 'No pages';
+      var statusClass = c.status === 'Stable' ? 'available' : c.status === 'Minor Issues' ? 'pending' : c.status === 'Critical' ? 'critical' : 'off';
+      var entryStatusClass = c.entryStatus !== 'closed' ? 'pending' : 'completed';
+      var entryStatusLabel = c.entryStatus !== 'closed' ? 'Open' : 'Closed';
+      return '<div class="checkin-recent-item">' +
+        '<div class="checkin-recent-dot"><span class="material-icons-round">assignment_turned_in</span></div>' +
+        '<div class="checkin-recent-info">' +
+        '<div class="checkin-recent-name">' + esc(dateStr) + '</div>' +
+        '<div class="checkin-recent-meta">Pages: ' + esc(pagesStr) + '</div>' +
+        (c.issuesFound ? '<div style="font-size:0.75rem;color:var(--outline);margin-top:3px">Issues: ' + esc(c.issuesFound) + '</div>' : '') +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">' +
+        '<span class="badge-status ' + entryStatusClass + '" style="font-size:0.6rem">' + entryStatusLabel + '</span>' +
+        '<span class="badge-status ' + statusClass + '" style="font-size:0.6rem">' + esc(c.status) + '</span>' +
+        '</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  function loadCheckinStats() {
+    var history = getCheckinHistory();
+    var totalEl = document.getElementById('checkinTotal');
+    var issuesFoundEl = document.getElementById('checkinIssuesFound');
+    var issuesResolvedEl = document.getElementById('checkinIssuesResolved');
+    if (totalEl) totalEl.textContent = history.length;
+    var found = 0, resolved = 0;
+    history.forEach(function(c) {
+      if (c.issuesFound && c.issuesFound.trim()) found++;
+      if (c.issuesResolved && c.issuesResolved.trim()) resolved++;
+    });
+    if (issuesFoundEl) issuesFoundEl.textContent = found;
+    if (issuesResolvedEl) issuesResolvedEl.textContent = resolved;
+  }
+
+  window.closeCheckinEntry = function(id) {
+    window.editCheckinEntry(id);
+  };
+
+  window.editCheckinEntry = function(id) {
+    var history = getCheckinHistory();
+    for (var i = 0; i < history.length; i++) {
+      if (history[i].id === id) {
+        window.openCheckinModal(history[i]);
+        return;
+      }
+    }
+  };
+
+  window.deleteCheckin = function(id) {
+    if (!confirm('Delete this check-in entry permanently?')) return;
+    var history = getCheckinHistory();
+    history = history.filter(function(c) { return c.id !== id; });
+    saveCheckinHistory(history);
+    renderCheckinHistory();
+    toast('Check-in deleted', 'success', 'delete');
+  };
+
+  window.clearCheckinHistory = function() {
+    if (!confirm('Clear all check-in history entries?')) return;
+    saveCheckinHistory([]);
+    renderCheckinHistory();
+    toast('Check-in history cleared', 'info', 'delete_sweep');
+  };
+
   /* ─── Init ─── */
   function initDeveloper() {
     if (typeof window.hideLoader === 'function') window.hideLoader();
@@ -354,6 +676,10 @@
     updateCacheBadge();
     loadMaintenanceStats();
     renderRefreshHistory();
+
+    // Initialize check-in stats and history
+    loadCheckinStats();
+    renderCheckinHistory();
 
     // Sidebar toggle
     var toggle = document.getElementById('menuToggle');
