@@ -230,6 +230,18 @@ function renderOpdRecords() {
           var recId = String(p.op_no || p.patient_id || p.id || '');
           return ptId && ptId !== '' && recId && recId !== '' && ptId === recId;
         });
+        // Fallback: match by full name
+        if (!matchedPatient && p.name) {
+          matchedPatient = patientLookup.find(function(pt) {
+            return patientFullName(pt).toLowerCase() === String(p.name).toLowerCase().trim();
+          });
+        }
+        // Fallback: match by contact
+        if (!matchedPatient && p.contact) {
+          matchedPatient = patientLookup.find(function(pt) {
+            return patientContact(pt).replace(/\s/g, '') === String(p.contact).replace(/\s/g, '');
+          });
+        }
         if (matchedPatient) {
           var createdOn = String(matchedPatient.created_on || matchedPatient['Created On'] || '').trim();
           if (createdOn) {
