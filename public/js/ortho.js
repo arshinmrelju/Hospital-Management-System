@@ -34,6 +34,7 @@ let filteredOrthoPatients = [];
 let orthoCurrentPage = 1;
 const ORTHO_ROWS_PER_PAGE = 10;
 let orthoSortCol = null, orthoSortDir = 1;
+let orthoActiveFilter = 'all';
 var _orthoInitialized = false;
 
 function getConditionTypeLabel(val) {
@@ -103,12 +104,86 @@ function validateOrthoInput(data) {
 
 function applyOrthoFilters() {
   const search = (document.getElementById('orthoSearch')?.value || '').toLowerCase();
+  const patientId = (document.getElementById('orthoPatientIdSearch')?.value || '').toLowerCase();
+  const dept = document.getElementById('orthoDeptFilter')?.value || '';
+  const status = document.getElementById('orthoStatusFilter')?.value || '';
+
+  const minAgeVal = document.getElementById('orthoMinAgeFilter')?.value;
+  const minAge = minAgeVal ? parseInt(minAgeVal) : 0;
+  const maxAgeVal = document.getElementById('orthoMaxAgeFilter')?.value;
+  const maxAge = maxAgeVal ? parseInt(maxAgeVal) : 999;
+
+  const place = (document.getElementById('orthoPlaceFilter')?.value || '').toLowerCase();
+  const doctor = (document.getElementById('orthoDoctorFilter')?.value || '').toLowerCase();
+  const op = (document.getElementById('orthoOpFilter')?.value || '').toLowerCase();
+  const visitFrom = document.getElementById('orthoVisitFromFilter')?.value || '';
+  const visitTo = document.getElementById('orthoVisitToFilter')?.value || '';
 
   filteredOrthoPatients = allOrthoPatients.filter(p => {
     const pid = p.ortho_id || p.id || '';
     const name = p.patient_name || '';
     const haystack = (pid + ' ' + name + ' ' + (p.contact || '')).toLowerCase();
     if (search && !haystack.includes(search)) return false;
+
+    if (patientId) {
+      const pId = (p.ortho_id || p.id || '').toString().toLowerCase();
+      if (!pId.includes(patientId)) return false;
+    }
+
+    if (orthoActiveFilter === 'admitted' && p.patient_type !== 'admitted') return false;
+    if (orthoActiveFilter === 'outpatient' && p.patient_type !== 'outpatient') return false;
+    if (orthoActiveFilter === 'discharged' && p.status !== 'discharged') return false;
+
+    if (dept && p.department !== dept) return false;
+    if (status && p.status !== status) return false;
+
+    const age = parseInt(p.age);
+    if (!isNaN(age)) {
+      if (age < minAge || age > maxAge) return false;
+    } else if (minAgeVal || maxAgeVal) {
+      return false;
+    }
+
+    if (place) {
+      const pPlace = (p.place || '').toLowerCase();
+      if (!pPlace.includes(place)) return false;
+    }
+
+    if (doctor) {
+      const pDoctor = (p.doctor || '').toLowerCase();
+      if (!pDoctor.includes(doctor)) return false;
+    }
+
+    if (op) {
+      const pOp = (p.ortho_id || p.id || '').toString().toLowerCase();
+      if (!pOp.includes(op)) return false;
+    }
+
+    if (visitFrom || visitTo) {
+      let visitDate = null;
+      if (p.last_visit) {
+        let d = p.last_visit;
+        if (d.toDate) d = d.toDate();
+        else if (d.seconds) d = new Date(d.seconds * 1000);
+        visitDate = new Date(d);
+      }
+      if (!visitDate || isNaN(visitDate.getTime())) return false;
+      if (visitFrom) {
+        const fromDate = new Date(visitFrom);
+        if (!isNaN(fromDate.getTime())) {
+          fromDate.setHours(0, 0, 0, 0);
+          if (visitDate < fromDate) return false;
+        }
+      }
+      if (visitTo) {
+        const toDate = new Date(visitTo);
+        if (!isNaN(toDate.getTime())) {
+          toDate.setHours(23, 59, 59, 999);
+          if (visitDate > toDate) return false;
+        }
+      }
+    }
+
     return true;
   });
 
@@ -122,6 +197,16 @@ function applyOrthoFilters() {
   orthoCurrentPage = 1;
   const countEl = document.getElementById('orthoCount');
   if (countEl) countEl.textContent = filteredOrthoPatients.length;
+
+  const advResultsCount = document.getElementById('orthoAdvResultsCount');
+  if (advResultsCount) {
+    if (minAgeVal || maxAgeVal || place || doctor || op || visitFrom || visitTo) {
+      advResultsCount.textContent = '(' + filteredOrthoPatients.length + ' found)';
+    } else {
+      advResultsCount.textContent = '';
+    }
+  }
+
   renderOrthoTable();
 }
 
@@ -129,6 +214,74 @@ function filterOrthoPatients() {
   applyOrthoFilters();
 }
 window.filterOrthoPatients = filterOrthoPatients;
+
+function setOrthoFilter(btn, filter) {
+  document.querySelectorAll('#orthoFilterChips .chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  orthoActiveFilter = filter;
+  applyOrthoFilters();
+}
+window.setOrthoFilter = setOrthoFilter;
+
+function toggleOrthoAdvancedPanel() {
+  const panel = document.getElementById('orthoAdvancedSearchPanel');
+  const bar = document.querySelector('#page-ortho .filter-bar');
+  const btn = document.getElementById('toggleOrthoAdvancedSearch');
+  if (panel.style.display === 'none') {
+    panel.style.display = 'block';
+    if (bar) { bar.style.borderBottomLeftRadius = '0'; bar.style.borderBottomRightRadius = '0'; }
+    if (btn) { btn.style.background = 'var(--primary-soft)'; btn.style.color = 'var(--primary-light)'; }
+  } else {
+    panel.style.display = 'none';
+    if (bar) { bar.style.borderBottomLeftRadius = ''; bar.style.borderBottomRightRadius = ''; }
+    if (btn) { btn.style.background = ''; btn.style.color = ''; }
+    const ids = ['orthoMinAgeFilter','orthoMaxAgeFilter','orthoPlaceFilter','orthoDoctorFilter','orthoOpFilter','orthoVisitFromFilter','orthoVisitToFilter'];
+    ids.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    updateOrthoAdvBadge();
+    applyOrthoFilters();
+  }
+}
+window.toggleOrthoAdvancedPanel = toggleOrthoAdvancedPanel;
+
+function updateOrthoAdvBadge() {
+  var count = 0;
+  var minAgeVal = document.getElementById('orthoMinAgeFilter')?.value;
+  if (minAgeVal && parseInt(minAgeVal) > 0) count++;
+  var maxAgeVal = document.getElementById('orthoMaxAgeFilter')?.value;
+  if (maxAgeVal && parseInt(maxAgeVal) < 150 && maxAgeVal !== '') count++;
+  var placeVal = document.getElementById('orthoPlaceFilter')?.value;
+  if (placeVal && placeVal.trim() !== '') count++;
+  var doctorVal = document.getElementById('orthoDoctorFilter')?.value;
+  if (doctorVal && doctorVal.trim() !== '') count++;
+  var opVal = document.getElementById('orthoOpFilter')?.value;
+  if (opVal && opVal.trim() !== '') count++;
+  var visitFromVal = document.getElementById('orthoVisitFromFilter')?.value;
+  if (visitFromVal && visitFromVal !== '') count++;
+  var visitToVal = document.getElementById('orthoVisitToFilter')?.value;
+  if (visitToVal && visitToVal !== '') count++;
+  var badge = document.getElementById('orthoAdvActiveBadge');
+  var clearBtn = document.getElementById('orthoAdvClearBtn');
+  if (badge) {
+    badge.textContent = count;
+    badge.style.display = count > 0 ? 'inline-block' : 'none';
+  }
+  if (clearBtn) clearBtn.style.display = count > 0 ? 'inline-flex' : 'none';
+}
+window.updateOrthoAdvBadge = updateOrthoAdvBadge;
+
+function clearOrthoAdvancedFilters() {
+  var ids = ['orthoMinAgeFilter','orthoMaxAgeFilter','orthoPlaceFilter','orthoDoctorFilter','orthoOpFilter','orthoVisitFromFilter','orthoVisitToFilter'];
+  ids.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  updateOrthoAdvBadge();
+  applyOrthoFilters();
+}
+window.clearOrthoAdvancedFilters = clearOrthoAdvancedFilters;
 
 function updateOrthoPagination() {
   const total = filteredOrthoPatients.length;

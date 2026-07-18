@@ -34,6 +34,7 @@ let filteredSkinPatients = [];
 let skinCurrentPage = 1;
 const SKIN_ROWS_PER_PAGE = 10;
 let skinSortCol = null, skinSortDir = 1;
+let skinActiveFilter = 'all';
 var _skinInitialized = false;
 
 function skinFormatDate(d) {
@@ -104,12 +105,86 @@ function validateSkinInput(data) {
 
 function applySkinFilters() {
   const search = (document.getElementById('skinSearch')?.value || '').toLowerCase();
+  const patientId = (document.getElementById('skinPatientIdSearch')?.value || '').toLowerCase();
+  const dept = document.getElementById('skinDeptFilter')?.value || '';
+  const status = document.getElementById('skinStatusFilter')?.value || '';
+
+  const minAgeVal = document.getElementById('skinMinAgeFilter')?.value;
+  const minAge = minAgeVal ? parseInt(minAgeVal) : 0;
+  const maxAgeVal = document.getElementById('skinMaxAgeFilter')?.value;
+  const maxAge = maxAgeVal ? parseInt(maxAgeVal) : 999;
+
+  const place = (document.getElementById('skinPlaceFilter')?.value || '').toLowerCase();
+  const doctor = (document.getElementById('skinDoctorFilter')?.value || '').toLowerCase();
+  const op = (document.getElementById('skinOpFilter')?.value || '').toLowerCase();
+  const visitFrom = document.getElementById('skinVisitFromFilter')?.value || '';
+  const visitTo = document.getElementById('skinVisitToFilter')?.value || '';
 
   filteredSkinPatients = allSkinPatients.filter(p => {
     const pid = p.skin_id || p.id || '';
     const name = p.patient_name || '';
     const haystack = (pid + ' ' + name + ' ' + (p.contact || '')).toLowerCase();
     if (search && !haystack.includes(search)) return false;
+
+    if (patientId) {
+      const pId = (p.skin_id || p.id || '').toString().toLowerCase();
+      if (!pId.includes(patientId)) return false;
+    }
+
+    if (skinActiveFilter === 'admitted' && p.patient_type !== 'admitted') return false;
+    if (skinActiveFilter === 'outpatient' && p.patient_type !== 'outpatient') return false;
+    if (skinActiveFilter === 'discharged' && p.status !== 'discharged') return false;
+
+    if (dept && p.department !== dept) return false;
+    if (status && p.status !== status) return false;
+
+    const age = parseInt(p.age);
+    if (!isNaN(age)) {
+      if (age < minAge || age > maxAge) return false;
+    } else if (minAgeVal || maxAgeVal) {
+      return false;
+    }
+
+    if (place) {
+      const pPlace = (p.place || '').toLowerCase();
+      if (!pPlace.includes(place)) return false;
+    }
+
+    if (doctor) {
+      const pDoctor = (p.doctor || '').toLowerCase();
+      if (!pDoctor.includes(doctor)) return false;
+    }
+
+    if (op) {
+      const pOp = (p.skin_id || p.id || '').toString().toLowerCase();
+      if (!pOp.includes(op)) return false;
+    }
+
+    if (visitFrom || visitTo) {
+      let visitDate = null;
+      if (p.last_visit) {
+        let d = p.last_visit;
+        if (d.toDate) d = d.toDate();
+        else if (d.seconds) d = new Date(d.seconds * 1000);
+        visitDate = new Date(d);
+      }
+      if (!visitDate || isNaN(visitDate.getTime())) return false;
+      if (visitFrom) {
+        const fromDate = new Date(visitFrom);
+        if (!isNaN(fromDate.getTime())) {
+          fromDate.setHours(0, 0, 0, 0);
+          if (visitDate < fromDate) return false;
+        }
+      }
+      if (visitTo) {
+        const toDate = new Date(visitTo);
+        if (!isNaN(toDate.getTime())) {
+          toDate.setHours(23, 59, 59, 999);
+          if (visitDate > toDate) return false;
+        }
+      }
+    }
+
     return true;
   });
 
@@ -123,6 +198,16 @@ function applySkinFilters() {
   skinCurrentPage = 1;
   const countEl = document.getElementById('skinCount');
   if (countEl) countEl.textContent = filteredSkinPatients.length;
+
+  const advResultsCount = document.getElementById('skinAdvResultsCount');
+  if (advResultsCount) {
+    if (minAgeVal || maxAgeVal || place || doctor || op || visitFrom || visitTo) {
+      advResultsCount.textContent = '(' + filteredSkinPatients.length + ' found)';
+    } else {
+      advResultsCount.textContent = '';
+    }
+  }
+
   renderSkinTable();
 }
 
@@ -130,6 +215,74 @@ function filterSkinPatients() {
   applySkinFilters();
 }
 window.filterSkinPatients = filterSkinPatients;
+
+function setSkinFilter(btn, filter) {
+  document.querySelectorAll('#skinFilterChips .chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  skinActiveFilter = filter;
+  applySkinFilters();
+}
+window.setSkinFilter = setSkinFilter;
+
+function toggleSkinAdvancedPanel() {
+  const panel = document.getElementById('skinAdvancedSearchPanel');
+  const bar = document.querySelector('#page-skin .filter-bar');
+  const btn = document.getElementById('toggleSkinAdvancedSearch');
+  if (panel.style.display === 'none') {
+    panel.style.display = 'block';
+    if (bar) { bar.style.borderBottomLeftRadius = '0'; bar.style.borderBottomRightRadius = '0'; }
+    if (btn) { btn.style.background = 'var(--primary-soft)'; btn.style.color = 'var(--primary-light)'; }
+  } else {
+    panel.style.display = 'none';
+    if (bar) { bar.style.borderBottomLeftRadius = ''; bar.style.borderBottomRightRadius = ''; }
+    if (btn) { btn.style.background = ''; btn.style.color = ''; }
+    const ids = ['skinMinAgeFilter','skinMaxAgeFilter','skinPlaceFilter','skinDoctorFilter','skinOpFilter','skinVisitFromFilter','skinVisitToFilter'];
+    ids.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    updateSkinAdvBadge();
+    applySkinFilters();
+  }
+}
+window.toggleSkinAdvancedPanel = toggleSkinAdvancedPanel;
+
+function updateSkinAdvBadge() {
+  var count = 0;
+  var minAgeVal = document.getElementById('skinMinAgeFilter')?.value;
+  if (minAgeVal && parseInt(minAgeVal) > 0) count++;
+  var maxAgeVal = document.getElementById('skinMaxAgeFilter')?.value;
+  if (maxAgeVal && parseInt(maxAgeVal) < 150 && maxAgeVal !== '') count++;
+  var placeVal = document.getElementById('skinPlaceFilter')?.value;
+  if (placeVal && placeVal.trim() !== '') count++;
+  var doctorVal = document.getElementById('skinDoctorFilter')?.value;
+  if (doctorVal && doctorVal.trim() !== '') count++;
+  var opVal = document.getElementById('skinOpFilter')?.value;
+  if (opVal && opVal.trim() !== '') count++;
+  var visitFromVal = document.getElementById('skinVisitFromFilter')?.value;
+  if (visitFromVal && visitFromVal !== '') count++;
+  var visitToVal = document.getElementById('skinVisitToFilter')?.value;
+  if (visitToVal && visitToVal !== '') count++;
+  var badge = document.getElementById('skinAdvActiveBadge');
+  var clearBtn = document.getElementById('skinAdvClearBtn');
+  if (badge) {
+    badge.textContent = count;
+    badge.style.display = count > 0 ? 'inline-block' : 'none';
+  }
+  if (clearBtn) clearBtn.style.display = count > 0 ? 'inline-flex' : 'none';
+}
+window.updateSkinAdvBadge = updateSkinAdvBadge;
+
+function clearSkinAdvancedFilters() {
+  var ids = ['skinMinAgeFilter','skinMaxAgeFilter','skinPlaceFilter','skinDoctorFilter','skinOpFilter','skinVisitFromFilter','skinVisitToFilter'];
+  ids.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  updateSkinAdvBadge();
+  applySkinFilters();
+}
+window.clearSkinAdvancedFilters = clearSkinAdvancedFilters;
 
 function updateSkinPagination() {
   const total = filteredSkinPatients.length;

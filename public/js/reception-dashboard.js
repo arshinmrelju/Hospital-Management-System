@@ -10,9 +10,26 @@ window.OPD_RECORDS = OPD_RECORDS;
 let filteredOpdRecords = null;
 let opdDimension = 'all';
 
+function _opdEntryKey(patientId, department) {
+  return String(patientId || '').toLowerCase().trim() + '::' + String(department || '').toLowerCase().trim();
+}
+
+function getOpdSeenKeys() {
+  var keys = {};
+  OPD_RECORDS.forEach(function(r) {
+    var key = _opdEntryKey(r.patient_id || r.op_no, r.department);
+    if (key) keys[key] = true;
+  });
+  return keys;
+}
+
 function isDuplicateOpdEntry(patientId, department) {
+  if (!patientId) return false;
+  var key = _opdEntryKey(patientId, department);
+  if (!key) return false;
   return OPD_RECORDS.some(function(r) {
-    return (r.patient_id === patientId || r.op_no === patientId) && r.department === department;
+    var rKey = _opdEntryKey(r.patient_id || r.op_no, r.department);
+    return rKey === key;
   });
 }
 
@@ -552,8 +569,8 @@ async function loadOpdRecords() {
       });
     var seen = {};
     OPD_RECORDS = OPD_RECORDS.filter(function(r) {
-      var key = (r.patient_id || r.op_no || '') + '::' + (r.department || '');
-      if (seen[key]) return false;
+      var key = _opdEntryKey(r.patient_id || r.op_no, r.department);
+      if (!key || seen[key]) return false;
       seen[key] = true;
       return true;
     });
