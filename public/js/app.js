@@ -11,7 +11,7 @@ var AUTH_DURATION_MS = 12 * 60 * 60 * 1000;
 
 window.HMS = {
   isAuthenticated() {
-    var VALID_CODES = ['WMP01', 'WMPAD01', 'WMPDEV01'];
+    var VALID_CODES = ['WMP01', 'WMPAD01', 'WMPDEV01', 'WMPR001'];
     var stored = localStorage.getItem('hms_auth');
     if (!stored) return false;
     try {

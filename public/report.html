@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>System Report – Wellness Medicals HMS</title>
+  <link rel="icon" type="image/jpeg" href="assets/hms-logo.jpg">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0D9488">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="description" content="Complete system report for Wellness Medicals HMS." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" media="print" onload="this.media='all';this.onload=null" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/portals.css" />
+  <link rel="stylesheet" href="css/administration.css" />
+  <style>
+    .rpt-tab-pane { display: none; }
+    .rpt-tab-pane.active { display: block; }
+
+    .rpt-page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .rpt-page-header h1 {
+      font-family: var(--font-head);
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--on-surface);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .rpt-page-header h1 .material-icons-round { font-size: 28px; color: #0D9488; }
+
+    .rpt-hero {
+      position: relative;
+      border-radius: 22px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .rpt-hero-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #004d46 0%, #0D9488 50%, #14b8a6 100%);
+    }
+    .rpt-hero-bg::before {
+      content: '';
+      position: absolute;
+      top: -80px; right: -60px;
+      width: 260px; height: 260px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+      pointer-events: none;
+    }
+    .rpt-hero-content {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 28px 32px;
+      gap: 16px;
+    }
+    .rpt-hero-text { flex: 1; }
+    .rpt-hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 100px;
+      padding: 4px 12px 4px 8px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.85);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 10px;
+    }
+    .rpt-hero-badge .material-icons-round { font-size: 14px; }
+    .rpt-hero-title {
+      font-family: var(--font-head);
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #fff;
+      margin: 0 0 4px;
+      line-height: 1.2;
+    }
+    .rpt-hero-sub {
+      font-size: 0.84rem;
+      color: rgba(255,255,255,0.68);
+      font-weight: 500;
+      margin: 0;
+      max-width: 480px;
+    }
+    .rpt-hero-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 14px;
+    }
+    .rpt-hero-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255,255,255,0.10);
+      border-radius: 100px;
+      padding: 5px 12px 5px 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.82);
+    }
+    .rpt-hero-pill .material-icons-round { font-size: 14px; color: rgba(255,255,255,0.6); }
+    .rpt-hero-avatar-wrap { flex-shrink: 0; text-align: center; }
+    .rpt-hero-avatar-ring {
+      width: 68px; height: 68px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+      border: 2.5px solid rgba(255,255,255,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .rpt-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .rpt-stat-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 22px;
+      background: #fff;
+      border: 1.5px solid rgba(13,148,136,0.10);
+      border-radius: 18px;
+      box-shadow: 0 2px 12px rgba(0,100,90,0.07), 0 1px 3px rgba(0,0,0,0.04);
+      transition: transform 0.22s, box-shadow 0.22s;
+    }
+    .rpt-stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 28px rgba(0,100,90,0.13), 0 2px 6px rgba(0,0,0,0.06);
+    }
+    .rpt-stat-icon {
+      width: 50px; height: 50px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .rpt-stat-icon .material-icons-round { font-size: 24px; }
+    .rpt-stat-info { flex: 1; }
+    .rpt-stat-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--on-surface-var);
+    }
+    .rpt-stat-value {
+      font-size: 1.9rem;
+      font-weight: 800;
+      font-family: var(--font-head);
+      color: var(--on-surface);
+      margin-top: 1px;
+      line-height: 1.1;
+    }
+    .rpt-stat-desc {
+      font-size: 0.7rem;
+      color: var(--outline);
+      margin-top: 3px;
+    }
+
+    .rpt-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 1024px) {
+      .rpt-grid { grid-template-columns: 1fr; }
+    }
+
+    .rpt-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .rpt-section-header h3 {
+      font-family: var(--font-head);
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--on-surface);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .rpt-section-header h3 .material-icons-round { font-size: 20px; color: #0D9488; }
+
+    .rpt-table-wrap {
+      overflow-x: auto;
+    }
+    .rpt-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .rpt-table th {
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--outline);
+      border-bottom: 2px solid var(--surface-high);
+      white-space: nowrap;
+    }
+    .rpt-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--surface-high);
+      color: var(--on-surface);
+    }
+    .rpt-table tbody tr:hover { background: rgba(13,148,136,0.03); }
+
+    .rpt-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 10px;
+      border-radius: 100px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .rpt-badge.available { background: rgba(5,150,105,0.10); color: #059669; }
+    .rpt-badge.pending { background: rgba(217,119,6,0.10); color: #D97706; }
+    .rpt-badge.critical { background: rgba(220,38,38,0.10); color: #DC2626; }
+    .rpt-badge.inactive { background: rgba(107,114,128,0.10); color: #6B7280; }
+
+    .rpt-empty {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--on-surface-var);
+    }
+    .rpt-empty .material-icons-round {
+      font-size: 40px;
+      color: var(--outline-var);
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .rpt-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--surface-high);
+    }
+    .rpt-row:last-child { border-bottom: none; }
+    .rpt-row-label { font-size: 0.85rem; color: var(--on-surface-var); }
+    .rpt-row-value { font-size: 0.95rem; font-weight: 700; color: var(--on-surface); }
+
+    .rpt-bar {
+      height: 8px;
+      border-radius: 4px;
+      background: var(--surface-high);
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .rpt-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #0D9488, #14b8a6);
+      transition: width 0.6s ease;
+    }
+
+    .rpt-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .rpt-action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 12px;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .rpt-action-btn.primary {
+      background: linear-gradient(135deg, #00685f, #0D9488);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(13,148,136,0.30);
+    }
+    .rpt-action-btn.primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(13,148,136,0.40);
+    }
+    .rpt-action-btn.secondary {
+      background: var(--surface-low);
+      color: var(--on-surface);
+      border: 1.5px solid var(--outline-var);
+    }
+    .rpt-action-btn.secondary:hover { background: var(--surface-high); }
+
+    .rpt-print-header {
+      display: none;
+    }
+    .rpt-generation-info {
+      font-size: 0.78rem;
+      color: var(--outline);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    @media print {
+      .sidebar, .topbar, .bottom-nav, .rpt-actions, #pageLoader, .modal-overlay, .ambient-bg, .announcements-bar { display: none !important; }
+      .main-content { margin-left: 0 !important; padding: 0 !important; }
+      .rpt-print-header { display: block; text-align: center; margin-bottom: 20px; }
+      .rpt-stat-card { break-inside: avoid; }
+      .widget { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
+      body { background: #fff; }
+      .rpt-hero { border-radius: 0; }
+    }
+
+    @media (max-width: 768px) {
+      .rpt-table thead { display: none; }
+      .rpt-table tr { display: block; padding: 12px 14px; border-bottom: 1px solid var(--surface-high); }
+      .rpt-table td { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border: none; font-size: 0.82rem; gap: 8px; }
+      .rpt-table td::before { content: attr(data-label); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--outline); flex-shrink: 0; }
+      .rpt-table td:last-child { padding-bottom: 0; }
+      .bottom-nav { display: flex !important; }
+      .fab { display: flex !important; }
+    }
+    @media (max-width: 600px) {
+      .rpt-stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .rpt-hero-content { padding: 16px 14px; flex-direction: column; text-align: center; }
+      .rpt-hero-title { font-size: 1.25rem; }
+      .rpt-hero-meta { justify-content: center; gap: 8px; }
+      .rpt-hero-pill { font-size: 0.72rem; padding: 4px 10px 4px 8px; }
+      .rpt-hero-avatar-ring { width: 48px; height: 48px; font-size: 1rem; }
+      .rpt-hero-avatar-wrap div[style] { font-size: 0.48rem !important; }
+      .rpt-hero-sub { font-size: 0.75rem; }
+      .rpt-hero-badge { font-size: 0.68rem; }
+      .rpt-stat-value { font-size: 1.3rem; }
+      .rpt-stat-icon { width: 38px; height: 38px; }
+      .rpt-stat-icon .material-icons-round { font-size: 18px; }
+      .page-body { padding-bottom: 80px; }
+    }
+    @media (max-width: 480px) {
+      .rpt-hero-avatar-wrap { display: none; }
+      .rpt-hero-sub { display: none; }
+      .rpt-hero-content { padding: 14px 12px; flex-direction: column; text-align: center; gap: 4px; }
+      .rpt-hero-title { font-size: 1.1rem; margin: 0; }
+      .rpt-hero-badge { font-size: 0.65rem; padding: 2px 10px 2px 7px; margin-bottom: 2px; gap: 4px; display: inline-flex; }
+      .rpt-hero-badge .material-icons-round { font-size: 12px; }
+      .rpt-hero-meta { display: flex; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; gap: 6px; margin-top: 6px; padding-bottom: 2px; justify-content: flex-start; scrollbar-width: none; }
+      .rpt-hero-meta::-webkit-scrollbar { display: none; }
+      .rpt-hero-pill { flex-shrink: 0; font-size: 0.7rem; padding: 4px 10px 4px 7px; gap: 4px; border-radius: 100px; }
+      .rpt-hero-pill .material-icons-round { font-size: 13px; }
+      .rpt-stats { grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px; }
+      .rpt-stat-card { padding: 12px 14px; border-radius: 16px; }
+      .rpt-stat-value { font-size: 1.3rem; }
+      .rpt-stat-icon { width: 34px; height: 34px; }
+      .rpt-stat-icon .material-icons-round { font-size: 17px; }
+      .rpt-hero { margin-bottom: 14px; }
+      .page-body { padding-bottom: 68px; }
+      .rpt-grid { gap: 12px; }
+      .widget { padding: 14px 16px !important; border-radius: 16px; }
+      .rpt-section-header { margin-bottom: 12px; }
+      .rpt-section-header h3 { font-size: 0.85rem; }
+      .rpt-section-header h3 .material-icons-round { font-size: 16px; }
+      .rpt-table tr { padding: 10px 12px; }
+      .rpt-table td { padding: 5px 0; font-size: 0.78rem; }
+      .rpt-table td::before { font-size: 0.62rem; }
+      .rpt-action-btn { font-size: 0.78rem; padding: 8px 14px; gap: 5px; }
+      .rpt-empty-state { padding: 24px 14px; }
+      .rpt-empty-state .material-icons-round { font-size: 34px; }
+      .bottom-nav-item { min-width: 0; padding: 6px 8px; }
+      .bottom-nav-label { font-size: 0.6rem; }
+      .page-body { padding-bottom: 68px; }
+    }
+    @media (max-width: 380px) {
+      .rpt-hero-content { padding: 10px 8px; }
+      .rpt-hero-title { font-size: 1rem; }
+      .rpt-hero-badge { font-size: 0.58rem; padding: 1px 7px 1px 5px; }
+      .rpt-hero-pill { font-size: 0.62rem; padding: 3px 7px 3px 5px; gap: 3px; }
+      .rpt-hero-pill .material-icons-round { font-size: 11px; }
+      .rpt-stat-value { font-size: 1.1rem; }
+      .rpt-stat-icon { width: 28px; height: 28px; }
+      .rpt-stat-icon .material-icons-round { font-size: 14px; }
+      .rpt-stat-card { padding: 10px 12px; }
+      .widget { padding: 12px 14px !important; }
+      .rpt-section-header h3 { font-size: 0.78rem; }
+      .bottom-nav-label { font-size: 0.55rem; }
+      .page-body { padding-bottom: 60px; }
+    }
+  </style>
+</head>
+
+<body class="app-body portal-reception">
+
+  <div id="pageLoader">
+    <div class="loader-glass">
+      <div class="loader-logo-wrap">
+        <div class="loader-logo-ring">
+          <img src="assets/hms-logo.jpg" alt="Wellness Medicals" />
+        </div>
+      </div>
+      <div class="loader-heartbeat">
+        <svg width="120" height="40" viewBox="0 0 120 40" fill="none">
+          <path class="heartbeat-path" d="M0 20 H40 L45 10 L50 30 L55 15 L60 25 L65 20 H120" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h2 class="loader-title">Wellness Medicals</h2>
+      <p class="loader-subtitle">Hospital Management System</p>
+      <p class="loader-msg" id="loaderMsg">Generating system report...</p>
+      <div class="loader-dots"><div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay active" id="loginOverlay" style="background:linear-gradient(135deg, rgba(0,72,64,0.72) 0%, rgba(13,148,136,0.48) 100%);backdrop-filter:blur(18px);">
+    <div style="width:100%;max-width:400px;background:rgba(255,255,255,0.97);border-radius:28px;box-shadow:0 32px 80px rgba(30,58,138,0.28),0 0 0 1.5px rgba(59,130,246,0.18);overflow:hidden;animation:modalIn 0.36s cubic-bezier(0.34,1.56,0.64,1);">
+      <div style="background:linear-gradient(135deg, #00685f 0%, #0D9488 60%, #14b8a6 100%);padding:36px 32px 28px;text-align:center;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.06);pointer-events:none;"></div>
+        <div style="position:absolute;bottom:-20px;left:-20px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,0.05);pointer-events:none;"></div>
+        <div style="width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,0.15);border:3px solid rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 0 0 6px rgba(255,255,255,0.08);">
+          <img src="assets/hms-logo.jpg" alt="Wellness Medicals" style="width:64px;height:64px;border-radius:50%;object-fit:cover;display:block;" />
+        </div>
+        <h2 style="color:#fff;font-family:var(--font-head);font-size:1.25rem;font-weight:800;margin:0 0 4px;letter-spacing:-0.01em;">Wellness Medicals</h2>
+        <p style="color:rgba(255,255,255,0.78);font-size:0.82rem;margin:0;font-weight:500;">Owner · System Report</p>
+      </div>
+      <div style="padding:28px 32px 32px;">
+        <p style="text-align:center;font-size:0.82rem;color:var(--on-surface-var);margin:0 0 20px;line-height:1.5;">Enter owner access code to view system report.</p>
+        <form id="loginForm">
+          <div style="position:relative;margin-bottom:6px;">
+            <span class="material-icons-round" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--primary-light);pointer-events:none;">lock</span>
+            <input type="password" id="loginCodeInput" placeholder="● ● ● ● ● ●" autocomplete="off"
+              style="width:100%;background:var(--surface-low);border:2px solid var(--outline-var);border-radius:var(--radius-md);padding:13px 14px 13px 44px;font-size:1.15rem;text-align:left;letter-spacing:5px;font-weight:700;color:var(--on-surface);transition:border-color 0.2s,box-shadow 0.2s;box-sizing:border-box;"
+              onfocus="this.style.borderColor='#0D9488';this.style.boxShadow='0 0 0 3px rgba(13,148,136,0.15)'"
+              onblur="this.style.borderColor='var(--outline-var)';this.style.boxShadow='none'" />
+          </div>
+          <p id="loginError" style="display:none;color:#ef4444;font-size:0.78rem;font-weight:600;text-align:center;margin:8px 0 0;padding:8px 12px;background:rgba(239,68,68,0.08);border-radius:var(--radius-sm);"></p>
+          <button type="submit" id="loginBtn"
+            style="width:100%;margin-top:18px;background:linear-gradient(135deg,#00685f,#0D9488);color:#fff;border:none;border-radius:var(--radius-md);padding:14px 20px;font-family:var(--font-body);font-size:0.95rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 6px 24px rgba(13,148,136,0.35);transition:all 0.2s;letter-spacing:0.02em;"
+            onmouseover="this.style.background='linear-gradient(135deg,#005a52,#0c8076)';this.style.transform='translateY(-1px)';this.style.boxShadow='0 10px 32px rgba(13,148,136,0.45)'"
+            onmouseout="this.style.background='linear-gradient(135deg,#00685f,#0D9488)';this.style.transform='translateY(0)';this.style.boxShadow='0 6px 24px rgba(13,148,136,0.35)'">
+            <span class="material-icons-round" style="font-size:18px;">description</span>
+            View System Report
+          </button>
+        </form>
+        <p style="text-align:center;margin:18px 0 0;font-size:0.72rem;color:var(--outline);">Wellness Medicals HMS · <span style="color:var(--primary-light);font-weight:600;">Report</span></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img src="assets/hms-logo.jpg" alt="Wellness Medicals Logo" class="brand-icon" />
+      <div class="brand-text">
+        <span class="brand-title">Wellness</span>
+        <span class="brand-sub">Medicals HMS</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav">
+      <a href="#" class="nav-item active" id="nav-executive" onclick="switchRptTab('tab-executive', this);return false">
+        <span class="material-icons-round">dashboard</span>
+        <span class="nav-label">Executive Summary</span>
+      </a>
+      <a href="#" class="nav-item" id="nav-patients" onclick="switchRptTab('tab-patients', this);return false">
+        <span class="material-icons-round">people</span>
+        <span class="nav-label">Patient Report</span>
+      </a>
+      <a href="#" class="nav-item" id="nav-clinics" onclick="switchRptTab('tab-clinics', this);return false">
+        <span class="material-icons-round">medical_services</span>
+        <span class="nav-label">Clinic Registries</span>
+      </a>
+      <a href="#" class="nav-item" id="nav-staff" onclick="switchRptTab('tab-staff', this);return false">
+        <span class="material-icons-round">badge</span>
+        <span class="nav-label">Staff &amp; Departments</span>
+      </a>
+      <a href="#" class="nav-item" id="nav-activity" onclick="switchRptTab('tab-activity', this);return false">
+        <span class="material-icons-round">monitor_heart</span>
+        <span class="nav-label">System Activity</span>
+      </a>
+      <div class="nav-divider"></div>
+      <a href="#" class="nav-item" id="nav-print" onclick="window.print();return false">
+        <span class="material-icons-round">print</span>
+        <span class="nav-label">Print Report</span>
+      </a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="userAvatar">OW</div>
+      <div class="user-info">
+        <span class="user-name" id="sidebarUserName">Owner</span>
+        <span class="user-role" id="sidebarUserRole">Report Viewer</span>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()" title="Logout">
+        <span class="material-icons-round">logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+        <span class="material-icons-round">menu</span>
+      </button>
+      <div class="topbar-brand">
+        <img src="assets/hms-logo.jpg" alt="Wellness Medicals" class="topbar-brand-icon" />
+        <div class="topbar-brand-text">
+          <span class="topbar-brand-title">Wellness Medicals</span>
+          <span class="topbar-brand-sub">System Report</span>
+        </div>
+      </div>
+      <div class="topbar-mobile-title">
+        <span class="material-icons-round" style="font-size:16px;color:var(--primary-light);">description</span>
+        <span>System Report</span>
+      </div>
+      <div class="topbar-search" style="visibility:hidden;">
+        <span class="material-icons-round search-icon">search</span>
+        <input type="text" placeholder="Search..." />
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-avatar" id="topbarAvatar">OW</div>
+      </div>
+    </header>
+
+    <main class="page-body">
+
+      <div class="rpt-print-header">
+        <img src="assets/hms-logo.jpg" alt="Wellness Medicals" style="width:48px;height:48px;border-radius:50%;margin-bottom:8px;" />
+        <h1 style="font-family:var(--font-head);font-size:1.2rem;font-weight:800;color:var(--on-surface);margin:0;">Wellness Medicals</h1>
+        <p style="color:var(--on-surface-var);font-size:0.85rem;margin:0;">Complete System Report</p>
+      </div>
+
+      <!-- ═══ EXECUTIVE SUMMARY ═══ -->
+      <div class="rpt-tab-pane active" id="tab-executive">
+
+        <div class="rpt-hero">
+          <div class="rpt-hero-bg"></div>
+          <div class="rpt-hero-content">
+            <div class="rpt-hero-text">
+              <div class="rpt-hero-badge">
+                <span class="material-icons-round">description</span>
+                System Report
+              </div>
+              <h2 class="rpt-hero-title">Executive Summary</h2>
+              <p class="rpt-hero-sub">Complete overview of Wellness Medicals Hospital Management System — patient registrations, appointments, staff, and system health at a glance.</p>
+              <div class="rpt-hero-meta">
+                <div class="rpt-hero-pill">
+                  <span class="material-icons-round">calendar_today</span>
+                  <span id="rptReportDate"></span>
+                </div>
+                <div class="rpt-hero-pill">
+                  <span class="material-icons-round">schedule</span>
+                  <span id="rptReportTime"></span>
+                </div>
+                <div class="rpt-hero-pill">
+                  <span class="material-icons-round">update</span>
+                  <span id="rptDataFreshness">Loading...</span>
+                </div>
+              </div>
+            </div>
+            <div class="rpt-hero-avatar-wrap">
+              <div class="rpt-hero-avatar-ring" id="rptHeroAvatar">WM</div>
+              <div style="font-size:0.65rem;color:rgba(255,255,255,0.55);font-weight:600;margin-top:6px;text-transform:uppercase;letter-spacing:0.05em;">Report</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rpt-actions" style="margin-bottom:20px;">
+          <button class="rpt-action-btn primary" onclick="refreshReport()">
+            <span class="material-icons-round" style="font-size:18px">refresh</span>
+            Refresh Data
+          </button>
+          <button class="rpt-action-btn secondary" onclick="window.print()">
+            <span class="material-icons-round" style="font-size:18px">print</span>
+            Print / Export PDF
+          </button>
+        </div>
+
+        <div class="rpt-stats" id="rptExecutiveStats">
+          <div class="rpt-stat-card">
+            <div class="rpt-stat-icon" style="background:rgba(13,148,136,0.10);">
+              <span class="material-icons-round" style="color:#0D9488">people</span>
+            </div>
+            <div class="rpt-stat-info">
+              <div class="rpt-stat-label">Total Patients</div>
+              <div class="rpt-stat-value" id="rptTotalPatients">—</div>
+              <div class="rpt-stat-desc">Registered in system</div>
+            </div>
+          </div>
+          <div class="rpt-stat-card">
+            <div class="rpt-stat-icon" style="background:rgba(245,158,11,0.10);">
+              <span class="material-icons-round" style="color:#F59E0B">how_to_reg</span>
+            </div>
+            <div class="rpt-stat-info">
+              <div class="rpt-stat-label">OPD Appointments</div>
+              <div class="rpt-stat-value" id="rptTotalAppointments">—</div>
+              <div class="rpt-stat-desc">Total appointments</div>
+            </div>
+          </div>
+          <div class="rpt-stat-card">
+            <div class="rpt-stat-icon" style="background:rgba(59,130,246,0.10);">
+              <span class="material-icons-round" style="color:#3B82F6">local_hospital</span>
+            </div>
+            <div class="rpt-stat-info">
+              <div class="rpt-stat-label">Doctors</div>
+              <div class="rpt-stat-value" id="rptTotalDoctors">—</div>
+              <div class="rpt-stat-desc">On staff</div>
+            </div>
+          </div>
+          <div class="rpt-stat-card">
+            <div class="rpt-stat-icon" style="background:rgba(139,92,246,0.10);">
+              <span class="material-icons-round" style="color:#8B5CF6">business</span>
+            </div>
+            <div class="rpt-stat-info">
+              <div class="rpt-stat-label">Departments</div>
+              <div class="rpt-stat-value" id="rptTotalDepts">—</div>
+              <div class="rpt-stat-desc">Service divisions</div>
+            </div>
+          </div>
+          <div class="rpt-stat-card">
+            <div class="rpt-stat-icon" style="background:rgba(16,185,129,0.10);">
+              <span class="material-icons-round" style="color:#10B981">spa</span>
+            </div>
+            <div class="rpt-stat-info">
+              <div class="rpt-stat-label">Skin Clinic</div>
+              <div class="rpt-stat-value" id="rptTotalSkin">—</div>
+              <div class="rpt-stat-desc">Registry patients</div>
+            </div>
+          </div>
+          <div class="rpt-stat-card">
+            <div class="rpt-stat-icon" style="background:rgba(239,68,68,0.10);">
+              <span class="material-icons-round" style="color:#EF4444">accessibility_new</span>
+            </div>
+            <div class="rpt-stat-info">
+              <div class="rpt-stat-label">Orthopedic</div>
+              <div class="rpt-stat-value" id="rptTotalOrtho">—</div>
+              <div class="rpt-stat-desc">Registry patients</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rpt-grid">
+          <div class="widget glass-card">
+            <div class="rpt-section-header">
+              <h3><span class="material-icons-round">today</span> Today's Activity</h3>
+            </div>
+            <div id="rptTodayContent">
+              <div class="rpt-row"><span class="rpt-row-label">New Patients Registered</span><span class="rpt-row-value" id="rptTodayPatients">—</span></div>
+              <div class="rpt-row"><span class="rpt-row-label">OPD Appointments</span><span class="rpt-row-value" id="rptTodayOPD">—</span></div>
+              <div class="rpt-row"><span class="rpt-row-label">Active Login Sessions</span><span class="rpt-row-value" id="rptActiveSessions">—</span></div>
+              <div class="rpt-row"><span class="rpt-row-label">Active Broadcasts</span><span class="rpt-row-value" id="rptActiveBroadcasts">—</span></div>
+              <div class="rpt-row"><span class="rpt-row-label">Developer Check-ins (Open)</span><span class="rpt-row-value" id="rptOpenCheckins">—</span></div>
+            </div>
+          </div>
+          <div class="widget glass-card">
+            <div class="rpt-section-header">
+              <h3><span class="material-icons-round">assignment_turned_in</span> Developer Summary</h3>
+            </div>
+            <div id="rptDevContent">
+              <div class="rpt-row"><span class="rpt-row-label">Total Check-ins</span><span class="rpt-row-value" id="rptDevTotal">—</span></div>
+              <div class="rpt-row"><span class="rpt-row-label">Issues Found</span><span class="rpt-row-value" id="rptDevIssuesFound">—</span></div>
+              <div class="rpt-row"><span class="rpt-row-label">Issues Resolved</span><span class="rpt-row-value" id="rptDevIssuesResolved">—</span></div>
+              <div class="rpt-row"><span class="rpt-row-label">System Status</span><span class="rpt-row-value" id="rptDevStatus"><span class="rpt-badge available">Stable</span></span></div>
+              <div class="rpt-row"><span class="rpt-row-label">Last Check-in</span><span class="rpt-row-value" id="rptLastCheckin">—</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="widget glass-card" style="margin-bottom:24px;">
+          <div class="rpt-section-header">
+            <h3><span class="material-icons-round">broadcast_on_home</span> Recent Broadcasts</h3>
+          </div>
+          <div id="rptBroadcastList">
+            <div class="rpt-empty"><span class="material-icons-round">campaign</span>No broadcasts</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ═══ PATIENT REPORT ═══ -->
+      <div class="rpt-tab-pane" id="tab-patients">
+        <div class="rpt-page-header">
+          <h1><span class="material-icons-round">people</span> Patient Report</h1>
+          <span class="rpt-generation-info" id="rptPatientDate"></span>
+        </div>
+
+        <div class="rpt-stats">
+          <div class="rpt-stat-card">
+            <div class="rpt-stat-icon" style="background:rgba(13,148,136,0.10);">
+              <span class="material-icons-round" style="color:#0D9488">group</span>
+            </div>
+            <div class="rpt-stat-info">
+              <div class="rpt-stat-label">Total Registered</div>
+              <div class="rpt-stat-value" id="rptPtTotal">—</div>
+              <div class="rpt-stat-desc">All patients in system</div>
+            </div>
+          </div>
+          <div class="rpt-stat-card">
+            <div class="rpt-stat-icon" style="background:rgba(16,185,129,0.10);">
+              <span class="material-icons-round" style="color:#10B981">person_add</span>
+            </div>
+            <div class="rpt-stat-info">
+              <div class="rpt-stat-label">New Today</div>
+              <div class="rpt-stat-value" id="rptPtToday">—</div>
+              <div class="rpt-stat-desc">Registered today</div>
+            </div>
+          </div>
+          <div class="rpt-stat-card">
+            <div class="rpt-stat-icon" style="background:rgba(245,158,11,0.10);">
+              <span class="material-icons-round" style="color:#F59E0B">date_range</span>
+            </div>
+            <div class="rpt-stat-info">
+              <div class="rpt-stat-label">This Month</div>
+              <div class="rpt-stat-value" id="rptPtMonth">—</div>
+              <div class="rpt-stat-desc">New this month</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rpt-grid">
+          <div class="widget glass-card">
+            <div class="rpt-section-header">
+              <h3><span class="material-icons-round">gender</span> Gender Distribution</h3>
+            </div>
+            <div id="rptGenderContent">
+              <div class="rpt-row"><span class="rpt-row-label">Male</span><span class="rpt-row-value" id="rptGenderMale">—</span></div>
+              <div class="rpt-row"><span class="rpt-row-label">Female</span><span class="rpt-row-value" id="rptGenderFemale">—</span></div>
+              <div class="rpt-row"><span class="rpt-row-label">Other / Unspecified</span><span class="rpt-row-value" id="rptGenderOther">—</span></div>
+            </div>
+          </div>
+          <div class="widget glass-card">
+            <div class="rpt-section-header">
+              <h3><span class="material-icons-round">category</span> Patient Types</h3>
+            </div>
+            <div id="rptPatientTypes">
+              <div class="rpt-row"><span class="rpt-row-label">Outpatient</span><span class="rpt-row-value" id="rptTypeOP">—</span></div>
+              <div class="rpt-row"><span class="rpt-row-label">Inpatient</span><span class="rpt-row-value" id="rptTypeIP">—</span></div>
+              <div class="rpt-row"><span class="rpt-row-label">Other / Unspecified</span><span class="rpt-row-value" id="rptTypeOther">—</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="widget glass-card">
+          <div class="rpt-section-header">
+            <h3><span class="material-icons-round">table_rows</span> Recent Patient Registrations</h3>
+          </div>
+          <div class="rpt-table-wrap">
+            <table class="rpt-table">
+              <thead>
+                <tr>
+                  <th>OP No</th>
+                  <th>Name</th>
+                  <th>Age</th>
+                  <th>Gender</th>
+                  <th>Contact</th>
+                  <th>Department</th>
+                  <th>Registered</th>
+                </tr>
+              </thead>
+              <tbody id="rptPatientTable">
+                <tr><td colspan="7" class="rpt-empty"><span class="material-icons-round">hourglass_top</span>Loading patients...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="widget glass-card" style="margin-top:20px;">
+          <div class="rpt-section-header">
+            <h3><span class="material-icons-round">appointments</span> Appointment Summary</h3>
+          </div>
+          <div class="rpt-table-wrap">
+            <table class="rpt-table">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody id="rptApptStatusTable">
+                <tr><td colspan="2" class="rpt-empty"><span class="material-icons-round">hourglass_top</span>Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ CLINIC REGISTRIES ═══ -->
+      <div class="rpt-tab-pane" id="tab-clinics">
+        <div class="rpt-page-header">
+          <h1><span class="material-icons-round">medical_services</span> Clinic Registries</h1>
+          <span class="rpt-generation-info" id="rptClinicDate"></span>
+        </div>
+
+        <div class="rpt-stats">
+          <div class="rpt-stat-card">
+            <div class="rpt-stat-icon" style="background:rgba(16,185,129,0.10);">
+              <span class="material-icons-round" style="color:#10B981">spa</span>
+            </div>
+            <div class="rpt-stat-info">
+              <div class="rpt-stat-label">Skin Clinic</div>
+              <div class="rpt-stat-value" id="rptSkinTotal">—</div>
+              <div class="rpt-stat-desc">Total skin patients</div>
+            </div>
+          </div>
+          <div class="rpt-stat-card">
+            <div class="rpt-stat-icon" style="background:rgba(239,68,68,0.10);">
+              <span class="material-icons-round" style="color:#EF4444">accessibility_new</span>
+            </div>
+            <div class="rpt-stat-info">
+              <div class="rpt-stat-label">Orthopedic</div>
+              <div class="rpt-stat-value" id="rptOrthoTotal">—</div>
+              <div class="rpt-stat-desc">Total ortho patients</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="widget glass-card" style="margin-bottom:20px;">
+          <div class="rpt-section-header">
+            <h3><span class="material-icons-round">spa</span> Skin Clinic Registry</h3>
+          </div>
+          <div class="rpt-table-wrap">
+            <table class="rpt-table">
+              <thead>
+                <tr>
+                  <th>Skin ID</th>
+                  <th>Patient Name</th>
+                  <th>Age</th>
+                  <th>Gender</th>
+                  <th>Contact</th>
+                  <th>Place</th>
+                  <th>Last Visit</th>
+                </tr>
+              </thead>
+              <tbody id="rptSkinTable">
+                <tr><td colspan="7" class="rpt-empty"><span class="material-icons-round">hourglass_top</span>Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="widget glass-card">
+          <div class="rpt-section-header">
+            <h3><span class="material-icons-round">accessibility_new</span> Orthopedic Registry</h3>
+          </div>
+          <div class="rpt-table-wrap">
+            <table class="rpt-table">
+              <thead>
+                <tr>
+                  <th>Ortho ID</th>
+                  <th>Patient Name</th>
+                  <th>Age</th>
+                  <th>Gender</th>
+                  <th>Diagnosis</th>
+                  <th>Body Part</th>
+                  <th>Severity</th>
+                </tr>
+              </thead>
+              <tbody id="rptOrthoTable">
+                <tr><td colspan="7" class="rpt-empty"><span class="material-icons-round">hourglass_top</span>Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ STAFF & DEPARTMENTS ═══ -->
+      <div class="rpt-tab-pane" id="tab-staff">
+        <div class="rpt-page-header">
+          <h1><span class="material-icons-round">badge</span> Staff &amp; Departments</h1>
+          <span class="rpt-generation-info" id="rptStaffDate"></span>
+        </div>
+
+        <div class="rpt-stats">
+          <div class="rpt-stat-card">
+            <div class="rpt-stat-icon" style="background:rgba(59,130,246,0.10);">
+              <span class="material-icons-round" style="color:#3B82F6">local_hospital</span>
+            </div>
+            <div class="rpt-stat-info">
+              <div class="rpt-stat-label">Total Doctors</div>
+              <div class="rpt-stat-value" id="rptStaffDoctors">—</div>
+              <div class="rpt-stat-desc">Medical staff</div>
+            </div>
+          </div>
+          <div class="rpt-stat-card">
+            <div class="rpt-stat-icon" style="background:rgba(16,185,129,0.10);">
+              <span class="material-icons-round" style="color:#10B981">check_circle</span>
+            </div>
+            <div class="rpt-stat-info">
+              <div class="rpt-stat-label">Available</div>
+              <div class="rpt-stat-value" id="rptStaffAvailable">—</div>
+              <div class="rpt-stat-desc">On duty</div>
+            </div>
+          </div>
+          <div class="rpt-stat-card">
+            <div class="rpt-stat-icon" style="background:rgba(139,92,246,0.10);">
+              <span class="material-icons-round" style="color:#8B5CF6">business</span>
+            </div>
+            <div class="rpt-stat-info">
+              <div class="rpt-stat-label">Departments</div>
+              <div class="rpt-stat-value" id="rptStaffDepts">—</div>
+              <div class="rpt-stat-desc">Active departments</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="widget glass-card" style="margin-bottom:20px;">
+          <div class="rpt-section-header">
+            <h3><span class="material-icons-round">local_hospital</span> Doctors Directory</h3>
+          </div>
+          <div class="rpt-table-wrap">
+            <table class="rpt-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Initials</th>
+                  <th>Department</th>
+                  <th>Qualification</th>
+                  <th>Contact</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="rptDoctorTable">
+                <tr><td colspan="7" class="rpt-empty"><span class="material-icons-round">hourglass_top</span>Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="widget glass-card">
+          <div class="rpt-section-header">
+            <h3><span class="material-icons-round">business</span> Departments</h3>
+          </div>
+          <div class="rpt-table-wrap">
+            <table class="rpt-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Description</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="rptDeptTable">
+                <tr><td colspan="4" class="rpt-empty"><span class="material-icons-round">hourglass_top</span>Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SYSTEM ACTIVITY ═══ -->
+      <div class="rpt-tab-pane" id="tab-activity">
+        <div class="rpt-page-header">
+          <h1><span class="material-icons-round">monitor_heart</span> System Activity</h1>
+          <span class="rpt-generation-info" id="rptActivityDate"></span>
+        </div>
+
+        <div class="widget glass-card" style="margin-bottom:20px;">
+          <div class="rpt-section-header">
+            <h3><span class="material-icons-round">history</span> Developer Check-in History</h3>
+          </div>
+          <div class="rpt-table-wrap">
+            <table class="rpt-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Developer</th>
+                  <th>Pages Reviewed</th>
+                  <th>Status</th>
+                  <th>Issues Found</th>
+                  <th>Issues Resolved</th>
+                  <th>Entry</th>
+                </tr>
+              </thead>
+              <tbody id="rptCheckinTable">
+                <tr><td colspan="7" class="rpt-empty"><span class="material-icons-round">assignment_turned_in</span>No check-in data</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="widget glass-card">
+          <div class="rpt-section-header">
+            <h3><span class="material-icons-round">login</span> Login Sessions (Recent 30 days)</h3>
+          </div>
+          <div class="rpt-table-wrap">
+            <table class="rpt-table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Role</th>
+                  <th>Login Time</th>
+                  <th>Device</th>
+                  <th>Duration</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="rptLoginTable">
+                <tr><td colspan="6" class="rpt-empty"><span class="material-icons-round">history</span>Login history requires Firebase</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="bottom-nav-item active" onclick="switchRptTab('tab-executive',this);return false" data-tab="tab-executive">
+      <span class="material-icons-round">dashboard</span>
+      <span class="bottom-nav-label">Summary</span>
+    </button>
+    <button class="bottom-nav-item" onclick="switchRptTab('tab-patients',this);return false" data-tab="tab-patients">
+      <span class="material-icons-round">people</span>
+      <span class="bottom-nav-label">Patients</span>
+    </button>
+    <button class="bottom-nav-item" onclick="switchRptTab('tab-clinics',this);return false" data-tab="tab-clinics">
+      <span class="material-icons-round">medical_services</span>
+      <span class="bottom-nav-label">Clinics</span>
+    </button>
+    <button class="bottom-nav-item" onclick="switchRptTab('tab-staff',this);return false" data-tab="tab-staff">
+      <span class="material-icons-round">badge</span>
+      <span class="bottom-nav-label">Staff</span>
+    </button>
+    <button class="bottom-nav-item" onclick="switchRptTab('tab-activity',this);return false" data-tab="tab-activity">
+      <span class="material-icons-round">monitor_heart</span>
+      <span class="bottom-nav-label">Activity</span>
+    </button>
+  </nav>
+
+  <!-- FAB for mobile -->
+  <button class="fab" id="fabBtn" onclick="handleRptFab()" aria-label="Quick actions">
+    <span class="material-icons-round">add</span>
+  </button>
+
+  <div class="fab-menu" id="fabMenu">
+    <button class="fab-menu-item" onclick="window.refreshReport();closeRptFabMenu()">
+      <span class="material-icons-round">refresh</span>
+      <span>Refresh Data</span>
+    </button>
+    <button class="fab-menu-item" onclick="window.print();closeRptFabMenu()">
+      <span class="material-icons-round">print</span>
+      <span>Print Report</span>
+    </button>
+    <div style="height:1px;background:var(--outline-var);margin:4px 12px;opacity:0.4"></div>
+    <button class="fab-menu-item" onclick="triggerPwaInstall();closeRptFabMenu()">
+      <span class="material-icons-round">install_mobile</span>
+      <span>Install App</span>
+    </button>
+  </div>
+
+  <div id="toastContainer"></div>
+
+  <!-- PWA Install Banner -->
+  <div class="pwa-install-banner" id="pwaInstallBanner">
+    <div class="pwa-install-content">
+      <img src="assets/hms-logo.jpg" alt="Wellness Medicals" class="pwa-install-icon" />
+      <div class="pwa-install-text">
+        <strong>Wellness Report</strong>
+        <span>Install for quick access</span>
+      </div>
+    </div>
+    <div class="pwa-install-actions">
+      <button class="pwa-install-btn" id="pwaInstallBtn">Install</button>
+      <button class="pwa-install-dismiss" id="pwaInstallDismiss">&times;</button>
+    </div>
+  </div>
+
+  <!-- Offline Indicator -->
+  <div class="offline-indicator" id="offlineIndicator">
+    <span class="material-icons-round">wifi_off</span>
+    <span>You are offline. Some features may be limited.</span>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+  <script src="js/sheets-api.js"></script>
+  <script src="js/firebase-init.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/pwa.js"></script>
+
+  <script>
+  (function() {
+    'use strict';
+
+    var CHECKIN_HISTORY_KEY = 'hms_checkin_history';
+    var _reportData = {
+      patients: [],
+      appointments: [],
+      doctors: [],
+      departments: [],
+      skinPatients: [],
+      orthoPatients: [],
+      messages: [],
+      loginSessions: [],
+      checkins: []
+    };
+
+    function esc(str) {
+      if (typeof str !== 'string') return str || '';
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function setLoading(id, text) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = text || 'Loading...';
+    }
+
+    /* ─── Auth ─── */
+    function reportLogin(code) {
+      if (code === 'WMPR001') {
+        localStorage.setItem('hms_auth', JSON.stringify({
+          code: 'WMPR001', name: 'Owner', role: 'Report', timestamp: Date.now()
+        }));
+        if (window.logLoginEvent) {
+          window.logLoginEvent('Owner', 'Report', 'report');
+        }
+        return true;
+      }
+      return false;
+    }
+
+    function initLogin() {
+      var overlay = document.getElementById('loginOverlay');
+      if (!overlay) return;
+      if (HMS && HMS.isAuthenticated()) {
+        overlay.classList.remove('active');
+        initReport();
+        return;
+      }
+      overlay.classList.add('active');
+      if (typeof window.hideLoader === 'function') window.hideLoader();
+      document.body.style.overflow = 'hidden';
+      var form = document.getElementById('loginForm');
+      var input = document.getElementById('loginCodeInput');
+      var error = document.getElementById('loginError');
+      if (!form || !input) return;
+      form.onsubmit = function(e) {
+        e.preventDefault();
+        var code = input.value.trim();
+        if (reportLogin(code)) {
+          overlay.classList.remove('active');
+          document.body.style.overflow = '';
+          input.value = '';
+          if (error) error.style.display = 'none';
+          var auth = JSON.parse(localStorage.getItem('hms_auth'));
+          showLoginSuccess(auth ? auth.role : 'Owner');
+          setTimeout(function() { initReport(); }, 2600);
+        } else {
+          if (error) { error.textContent = 'Invalid code. Please try again.'; error.style.display = 'block'; }
+          input.value = '';
+          input.focus();
+        }
+      };
+      input.focus();
+    }
+
+    /* ─── Tab Switching ─── */
+    window.switchRptTab = function(tabId, btn) {
+      document.querySelectorAll('.rpt-tab-pane').forEach(function(p) { p.classList.remove('active'); });
+      document.querySelectorAll('.sidebar-nav .nav-item').forEach(function(i) { i.classList.remove('active'); });
+      document.querySelectorAll('.bottom-nav-item').forEach(function(i) { i.classList.remove('active'); });
+      document.getElementById(tabId).classList.add('active');
+      if (btn) btn.classList.add('active');
+      var navBtn = document.querySelector('.bottom-nav-item[data-tab="' + tabId + '"]');
+      if (navBtn) navBtn.classList.add('active');
+      closeRptFabMenu();
+    };
+
+    window.handleRptFab = function() {
+      var fab = document.getElementById('fabBtn');
+      var menu = document.getElementById('fabMenu');
+      if (!fab || !menu) return;
+      var isOpen = menu.classList.contains('visible');
+      if (isOpen) { closeRptFabMenu(); }
+      else { menu.classList.add('visible'); fab.classList.add('open'); }
+    };
+
+    window.closeRptFabMenu = function() {
+      var fab = document.getElementById('fabBtn');
+      var menu = document.getElementById('fabMenu');
+      if (menu) menu.classList.remove('visible');
+      if (fab) fab.classList.remove('open');
+    };
+
+    document.addEventListener('click', function(e) {
+      var fab = document.getElementById('fabBtn');
+      var menu = document.getElementById('fabMenu');
+      if (!fab || !menu) return;
+      if (!fab.contains(e.target) && !menu.contains(e.target)) {
+        menu.classList.remove('visible');
+        fab.classList.remove('open');
+      }
+    });
+
+    /* ─── Toast ─── */
+    function toast(msg, type, icon) {
+      if (window.toast) { window.toast(msg, type, icon); return; }
+      var container = document.getElementById('toastContainer');
+      if (!container) return;
+      var t = document.createElement('div');
+      t.className = 'toast ' + (type || 'info');
+      t.innerHTML = '<span class="material-icons-round" style="font-size:18px">' + (icon || 'info') + '</span><span>' + esc(msg) + '</span>';
+      container.appendChild(t);
+      requestAnimationFrame(function() { t.classList.add('show'); });
+      setTimeout(function() { t.classList.remove('show'); setTimeout(function() { t.remove(); }, 300); }, 3000);
+    }
+
+    function setButtonLoading(btn, text) {
+      if (!btn) return;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="material-icons-round" style="font-size:18px">hourglass_top</span> ' + (text || 'Loading...');
+    }
+
+    function setButtonIdle(btn) {
+      if (!btn) return;
+      btn.disabled = false;
+      btn.innerHTML = '<span class="material-icons-round" style="font-size:18px">refresh</span> Refresh Data';
+    }
+
+    /* ─── Data Loading ─── */
+    function loadPatients() {
+      return window.API.getPatients().then(function(resp) {
+        _reportData.patients = (resp && resp.data) || [];
+        return _reportData.patients;
+      }).catch(function(err) {
+        console.warn('[Report] Failed to load patients:', err);
+        _reportData.patients = [];
+        return [];
+      });
+    }
+
+    function loadAppointments() {
+      return window.API.getAppointments().then(function(resp) {
+        _reportData.appointments = (resp && resp.data) || [];
+        return _reportData.appointments;
+      }).catch(function(err) {
+        console.warn('[Report] Failed to load appointments:', err);
+        _reportData.appointments = [];
+        return [];
+      });
+    }
+
+    function loadDoctors() {
+      return window.API.getDoctors().then(function(resp) {
+        _reportData.doctors = (resp && resp.data) || [];
+        return _reportData.doctors;
+      }).catch(function(err) {
+        console.warn('[Report] Failed to load doctors:', err);
+        _reportData.doctors = [];
+        return [];
+      });
+    }
+
+    function loadDepartments() {
+      return window.API.getDepartments().then(function(resp) {
+        _reportData.departments = (resp && resp.data) || [];
+        return _reportData.departments;
+      }).catch(function(err) {
+        console.warn('[Report] Failed to load departments:', err);
+        _reportData.departments = [];
+        return [];
+      });
+    }
+
+    function loadSkinPatients() {
+      return window.API.getSkinPatients().then(function(resp) {
+        _reportData.skinPatients = (resp && resp.data) || [];
+        return _reportData.skinPatients;
+      }).catch(function(err) {
+        console.warn('[Report] Failed to load skin patients:', err);
+        _reportData.skinPatients = [];
+        return [];
+      });
+    }
+
+    function loadOrthoPatients() {
+      return window.API.getOrthopedicPatients().then(function(resp) {
+        _reportData.orthoPatients = (resp && resp.data) || [];
+        return _reportData.orthoPatients;
+      }).catch(function(err) {
+        console.warn('[Report] Failed to load ortho patients:', err);
+        _reportData.orthoPatients = [];
+        return [];
+      });
+    }
+
+    function loadMessages() {
+      return window.API.getMessages().then(function(resp) {
+        _reportData.messages = (resp && resp.data) || [];
+        return _reportData.messages;
+      }).catch(function(err) {
+        console.warn('[Report] Failed to load messages:', err);
+        _reportData.messages = [];
+        return [];
+      });
+    }
+
+    function loadCheckins() {
+      try {
+        var raw = localStorage.getItem(CHECKIN_HISTORY_KEY);
+        _reportData.checkins = raw ? JSON.parse(raw) : [];
+      } catch(e) {
+        _reportData.checkins = [];
+      }
+      return _reportData.checkins;
+    }
+
+    function loadLoginSessions() {
+      return window.FIREBASE_READY.then(function(db) {
+        if (!db) return [];
+        return db.collection('login_history')
+          .orderBy('loginTime', 'desc')
+          .limit(100)
+          .get()
+          .then(function(snapshot) {
+            var sessions = [];
+            snapshot.forEach(function(doc) {
+              var data = doc.data();
+              data.id = doc.id;
+              sessions.push(data);
+            });
+            _reportData.loginSessions = sessions;
+            return sessions;
+          })
+          .catch(function(err) {
+            console.warn('[Report] Failed to load login sessions:', err);
+            _reportData.loginSessions = [];
+            return [];
+          });
+      });
+    }
+
+    function formatTimestamp(ts) {
+      if (!ts) return '—';
+      var d = ts.toDate ? ts.toDate() : new Date(ts);
+      if (isNaN(d.getTime())) return '—';
+      return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function formatDuration(ms) {
+      if (!ms || ms <= 0) return '—';
+      var seconds = Math.floor(ms / 1000);
+      if (seconds < 60) return seconds + 's';
+      var minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return minutes + 'm ' + (seconds % 60) + 's';
+      var hours = Math.floor(minutes / 60);
+      return hours + 'h ' + (minutes % 60) + 'm';
+    }
+
+    function getDeviceShort(ua) {
+      if (!ua) return '—';
+      if (ua.indexOf('Windows') !== -1) return 'Windows';
+      if (ua.indexOf('Mac') !== -1) return 'macOS';
+      if (ua.indexOf('Linux') !== -1) return 'Linux';
+      if (ua.indexOf('Android') !== -1) return 'Android';
+      if (ua.indexOf('iPhone') !== -1 || ua.indexOf('iPad') !== -1) return 'iOS';
+      return 'Other';
+    }
+
+    /* ─── Render Functions ─── */
+
+    function renderExecutiveSummary() {
+      var p = _reportData.patients;
+      var a = _reportData.appointments;
+      var d = _reportData.doctors;
+      var depts = _reportData.departments;
+      var skin = _reportData.skinPatients;
+      var ortho = _reportData.orthoPatients;
+      var msgs = _reportData.messages;
+      var checkins = _reportData.checkins;
+      var sessions = _reportData.loginSessions;
+
+      var el = function(id, val) {
+        var e = document.getElementById(id);
+        if (e) e.textContent = val !== undefined && val !== null ? val : '—';
+      };
+
+      el('rptTotalPatients', p.length + skin.length + ortho.length);
+      el('rptTotalAppointments', a.length);
+      el('rptTotalDoctors', d.length);
+      el('rptTotalDepts', depts.length);
+      el('rptTotalSkin', skin.length);
+      el('rptTotalOrtho', ortho.length);
+
+      // Today
+      var todayStr = new Date().toISOString().slice(0, 10);
+      var todayPatients = p.filter(function(pt) {
+        var cd = pt.created_on || pt['Created On'] || '';
+        return cd.slice(0, 10) === todayStr;
+      }).length + skin.filter(function(pt) {
+        var cd = pt.created_on || pt['Created On'] || '';
+        return cd.slice(0, 10) === todayStr;
+      }).length + ortho.filter(function(pt) {
+        var cd = pt.created_on || pt['Created On'] || '';
+        return cd.slice(0, 10) === todayStr;
+      }).length;
+      var todayOPD = a.filter(function(ap) {
+        var ad = ap.appointment_date || ap['Appointment Date'] || ap.createdAt || '';
+        return String(ad).slice(0, 10) === todayStr;
+      }).length;
+      var activeSessions = sessions.filter(function(s) { return s.status === 'active'; }).length;
+      var activeMsgs = msgs.filter(function(m) { return m.status === 'active'; }).length;
+      var openCheckins = checkins.filter(function(c) { return c.entryStatus !== 'closed'; }).length;
+
+      el('rptTodayPatients', todayPatients);
+      el('rptTodayOPD', todayOPD);
+      el('rptActiveSessions', activeSessions);
+      el('rptActiveBroadcasts', activeMsgs);
+      el('rptOpenCheckins', openCheckins);
+
+      // Dev summary
+      var devTotal = checkins.length;
+      var devFound = checkins.filter(function(c) { return c.issuesFound && c.issuesFound.trim(); }).length;
+      var devResolved = checkins.filter(function(c) { return c.issuesResolved && c.issuesResolved.trim(); }).length;
+      el('rptDevTotal', devTotal);
+      el('rptDevIssuesFound', devFound);
+      el('rptDevIssuesResolved', devResolved);
+
+      var lastCheckin = checkins.length > 0 ? checkins.sort(function(a, b) {
+        return (b.createdAt || '').localeCompare(a.createdAt || '');
+      })[0] : null;
+      if (lastCheckin) {
+        var cd = new Date(lastCheckin.date + 'T00:00:00');
+        el('rptLastCheckin', cd.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }));
+      }
+
+      // Latest check-in status
+      var latestStatus = lastCheckin ? lastCheckin.status : 'Stable';
+      var statusBadge = document.getElementById('rptDevStatus');
+      if (statusBadge) {
+        var cls = latestStatus === 'Stable' ? 'available' : latestStatus === 'Minor Issues' ? 'pending' : latestStatus === 'Critical' ? 'critical' : 'inactive';
+        statusBadge.innerHTML = '<span class="rpt-badge ' + cls + '">' + esc(latestStatus) + '</span>';
+      }
+
+      // Broadcasts
+      var bcList = document.getElementById('rptBroadcastList');
+      if (bcList) {
+        var activeBroadcasts = msgs.filter(function(m) { return m.status === 'active'; });
+        if (activeBroadcasts.length === 0) {
+          bcList.innerHTML = '<div class="rpt-empty"><span class="material-icons-round">campaign</span>No active broadcasts</div>';
+        } else {
+          bcList.innerHTML = activeBroadcasts.sort(function(a, b) {
+            return (b.createdAt || '').localeCompare(a.createdAt || '');
+          }).slice(0, 5).map(function(m) {
+            var date = m.createdAt ? new Date(m.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+            return '<div class="rpt-row"><div><div style="font-weight:700;font-size:0.85rem">' + esc(m.title) + '</div><div style="font-size:0.78rem;color:var(--on-surface-var);margin-top:2px">' + esc(m.message) + '</div></div><div style="text-align:right;flex-shrink:0"><span style="font-size:0.72rem;color:var(--outline)">' + date + '</span></div></div>';
+          }).join('');
+        }
+      }
+
+      // Data freshness
+      var freshnessEl = document.getElementById('rptDataFreshness');
+      if (freshnessEl) freshnessEl.textContent = 'Updated ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function renderPatientReport() {
+      var p = _reportData.patients;
+      var a = _reportData.appointments;
+
+      var el = function(id, val) {
+        var e = document.getElementById(id);
+        if (e) e.textContent = val !== undefined && val !== null ? val : '—';
+      };
+
+      el('rptPtTotal', p.length);
+
+      var todayStr = new Date().toISOString().slice(0, 10);
+      var monthStr = todayStr.slice(0, 7);
+      var todayCount = p.filter(function(pt) {
+        var cd = pt.created_on || pt['Created On'] || '';
+        return cd.slice(0, 10) === todayStr;
+      }).length;
+      var monthCount = p.filter(function(pt) {
+        var cd = pt.created_on || pt['Created On'] || '';
+        return cd.slice(0, 7) === monthStr;
+      }).length;
+      el('rptPtToday', todayCount);
+      el('rptPtMonth', monthCount);
+
+      // Gender
+      var male = p.filter(function(pt) { return (pt.gender || '').toLowerCase() === 'male'; }).length;
+      var female = p.filter(function(pt) { return (pt.gender || '').toLowerCase() === 'female'; }).length;
+      var other = p.length - male - female;
+      el('rptGenderMale', male);
+      el('rptGenderFemale', female);
+      el('rptGenderOther', other);
+
+      // Types
+      var op = p.filter(function(pt) { return (pt.patient_type || '').toLowerCase() === 'outpatient'; }).length;
+      var ip = p.filter(function(pt) { return (pt.patient_type || '').toLowerCase() === 'inpatient'; }).length;
+      var typeOther = p.length - op - ip;
+      el('rptTypeOP', op);
+      el('rptTypeIP', ip);
+      el('rptTypeOther', typeOther);
+
+      // Patient table (last 50)
+      var tbody = document.getElementById('rptPatientTable');
+      if (tbody) {
+        if (p.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="rpt-empty"><span class="material-icons-round">people</span>No patients registered</td></tr>';
+        } else {
+          var sorted = p.slice().sort(function(a, b) {
+            var ad = a.created_on || a['Created On'] || '';
+            var bd = b.created_on || b['Created On'] || '';
+            return bd.localeCompare(ad);
+          }).slice(0, 50);
+          tbody.innerHTML = sorted.map(function(pt) {
+            var name = (pt.fname || pt['First Name'] || pt.Name || '') + ' ' + (pt.lname || pt['Last Name'] || '');
+            var opNo = pt.op_no || pt['OP No'] || pt.id || '—';
+            var age = pt.age || pt['Age'] || '—';
+            var gender = pt.gender || pt['Gender'] || '—';
+            var contact = pt.contact || pt['Phone'] || '—';
+            var dept = pt.department || pt['Department'] || '—';
+            var created = pt.created_on || pt['Created On'] || '—';
+            if (created && created.length > 10) created = created.slice(0, 10);
+            return '<tr><td data-label="OP No">' + esc(opNo) + '</td><td data-label="Name"><strong>' + esc(name.trim()) + '</strong></td><td data-label="Age">' + esc(age) + '</td><td data-label="Gender">' + esc(gender) + '</td><td data-label="Contact">' + esc(contact) + '</td><td data-label="Department">' + esc(dept) + '</td><td data-label="Registered">' + esc(created) + '</td></tr>';
+          }).join('');
+        }
+      }
+
+      // Appointments by status
+      var apptBody = document.getElementById('rptApptStatusTable');
+      if (apptBody) {
+        var statuses = {};
+        a.forEach(function(ap) {
+          var s = ap.status || 'unknown';
+          statuses[s] = (statuses[s] || 0) + 1;
+        });
+        var keys = Object.keys(statuses);
+        if (keys.length === 0) {
+          apptBody.innerHTML = '<tr><td colspan="2" class="rpt-empty"><span class="material-icons-round">how_to_reg</span>No appointments</td></tr>';
+        } else {
+          apptBody.innerHTML = keys.map(function(k) {
+            var cls = k === 'waiting' || k === 'confirmed' ? 'pending' : k === 'in-progress' ? 'available' : k === 'completed' || k === 'done' ? 'available' : k === 'cancelled' ? 'inactive' : 'pending';
+            return '<tr><td data-label="Status"><span class="rpt-badge ' + cls + '">' + esc(k) + '</span></td><td data-label="Count" style="font-weight:700">' + statuses[k] + '</td></tr>';
+          }).join('');
+        }
+      }
+    }
+
+    function renderClinicRegistries() {
+      var skin = _reportData.skinPatients;
+      var ortho = _reportData.orthoPatients;
+
+      var el = function(id, val) {
+        var e = document.getElementById(id);
+        if (e) e.textContent = val !== undefined && val !== null ? val : '—';
+      };
+      el('rptSkinTotal', skin.length);
+      el('rptOrthoTotal', ortho.length);
+
+      // Skin table
+      var skinTbody = document.getElementById('rptSkinTable');
+      if (skinTbody) {
+        if (skin.length === 0) {
+          skinTbody.innerHTML = '<tr><td colspan="7" class="rpt-empty"><span class="material-icons-round">spa</span>No skin clinic patients</td></tr>';
+        } else {
+          var sortedSkin = skin.slice().sort(function(a, b) {
+            var ad = a.created_on || a['Created On'] || '';
+            var bd = b.created_on || b['Created On'] || '';
+            return bd.localeCompare(ad);
+          }).slice(0, 50);
+          skinTbody.innerHTML = sortedSkin.map(function(s) {
+            return '<tr><td data-label="Skin ID">' + esc(s.skin_id || s['Skin ID'] || s.id || '—') + '</td><td data-label="Patient Name"><strong>' + esc(s.patient_name || s['Patient Name'] || '') + '</strong></td><td data-label="Age">' + esc(s.age || s['Age'] || '—') + '</td><td data-label="Gender">' + esc(s.gender || s['Gender'] || '—') + '</td><td data-label="Contact">' + esc(s.contact || s['Contact'] || '—') + '</td><td data-label="Place">' + esc(s.place || s['Place'] || '—') + '</td><td data-label="Last Visit">' + esc((s.last_visit || s['Last Visit'] || '—').slice(0, 10)) + '</td></tr>';
+          }).join('');
+        }
+      }
+
+      // Ortho table
+      var orthoTbody = document.getElementById('rptOrthoTable');
+      if (orthoTbody) {
+        if (ortho.length === 0) {
+          orthoTbody.innerHTML = '<tr><td colspan="7" class="rpt-empty"><span class="material-icons-round">accessibility_new</span>No orthopedic patients</td></tr>';
+        } else {
+          var sortedOrtho = ortho.slice().sort(function(a, b) {
+            var ad = a.created_on || a['Created On'] || '';
+            var bd = b.created_on || b['Created On'] || '';
+            return bd.localeCompare(ad);
+          }).slice(0, 50);
+          orthoTbody.innerHTML = sortedOrtho.map(function(o) {
+            return '<tr><td data-label="Ortho ID">' + esc(o.ortho_id || o['Ortho ID'] || o.id || '—') + '</td><td data-label="Patient Name"><strong>' + esc(o.patient_name || o['Patient Name'] || '') + '</strong></td><td data-label="Age">' + esc(o.age || o['Age'] || '—') + '</td><td data-label="Gender">' + esc(o.gender || o['Gender'] || '—') + '</td><td data-label="Diagnosis">' + esc(o.diagnosis || o['Diagnosis'] || '—') + '</td><td data-label="Body Part">' + esc(o.body_part || o['Body Part'] || '—') + '</td><td data-label="Severity">' + esc(o.severity || o['Severity'] || '—') + '</td></tr>';
+          }).join('');
+        }
+      }
+    }
+
+    function renderStaffReport() {
+      var d = _reportData.doctors;
+      var depts = _reportData.departments;
+      var avail = d.filter(function(doc) { return doc.status === 'available'; }).length;
+
+      var el = function(id, val) {
+        var e = document.getElementById(id);
+        if (e) e.textContent = val !== undefined && val !== null ? val : '—';
+      };
+      el('rptStaffDoctors', d.length);
+      el('rptStaffAvailable', avail);
+      el('rptStaffDepts', depts.length);
+
+      // Doctor table
+      var docTbody = document.getElementById('rptDoctorTable');
+      if (docTbody) {
+        if (d.length === 0) {
+          docTbody.innerHTML = '<tr><td colspan="7" class="rpt-empty"><span class="material-icons-round">local_hospital</span>No doctors registered</td></tr>';
+        } else {
+          docTbody.innerHTML = d.map(function(doc) {
+            var statusCls = doc.status === 'available' ? 'available' : doc.status === 'busy' ? 'pending' : 'inactive';
+            var contact = doc.phone || doc.email || '—';
+            return '<tr><td data-label="ID">' + esc(doc.id || '—') + '</td><td data-label="Name"><strong>' + esc(doc.name || '') + '</strong></td><td data-label="Initials">' + esc(doc.initials || '—') + '</td><td data-label="Department">' + esc(doc.dept || '—') + '</td><td data-label="Qualification">' + esc(doc.qualification || '—') + '</td><td data-label="Contact">' + esc(contact) + '</td><td data-label="Status"><span class="rpt-badge ' + statusCls + '">' + esc(doc.status || '—') + '</span></td></tr>';
+          }).join('');
+        }
+      }
+
+      // Dept table
+      var deptTbody = document.getElementById('rptDeptTable');
+      if (deptTbody) {
+        if (depts.length === 0) {
+          deptTbody.innerHTML = '<tr><td colspan="4" class="rpt-empty"><span class="material-icons-round">business</span>No departments</td></tr>';
+        } else {
+          deptTbody.innerHTML = depts.map(function(dep) {
+            var statusCls = dep.status === 'active' ? 'available' : 'inactive';
+            return '<tr><td data-label="ID">' + esc(dep.id || '—') + '</td><td data-label="Name"><strong>' + esc(dep.name || '') + '</strong></td><td data-label="Description">' + esc(dep.description || '—') + '</td><td data-label="Status"><span class="rpt-badge ' + statusCls + '">' + esc(dep.status || '—') + '</span></td></tr>';
+          }).join('');
+        }
+      }
+    }
+
+    function renderActivityReport() {
+      var checkins = _reportData.checkins;
+      var sessions = _reportData.loginSessions;
+
+      // Check-in table
+      var checkinTbody = document.getElementById('rptCheckinTable');
+      if (checkinTbody) {
+        if (checkins.length === 0) {
+          checkinTbody.innerHTML = '<tr><td colspan="7" class="rpt-empty"><span class="material-icons-round">assignment_turned_in</span>No developer check-ins recorded</td></tr>';
+        } else {
+          var sorted = checkins.slice().sort(function(a, b) {
+            return (b.createdAt || '').localeCompare(a.createdAt || '');
+          });
+          checkinTbody.innerHTML = sorted.map(function(c) {
+            var d = new Date(c.date + 'T00:00:00');
+            var dateStr = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+            var pagesStr = (c.pages && c.pages.length > 0) ? c.pages.join(', ') : '—';
+            var statusCls = c.status === 'Stable' ? 'available' : c.status === 'Minor Issues' ? 'pending' : c.status === 'Critical' ? 'critical' : 'inactive';
+            var entryStatus = c.entryStatus !== 'closed' ? 'Open' : 'Closed';
+            var entryCls = c.entryStatus !== 'closed' ? 'pending' : 'available';
+            return '<tr><td data-label="Date">' + dateStr + '</td><td data-label="Developer">' + esc(c.developer || 'Developer') + '</td><td data-label="Pages Reviewed" style="font-size:0.82rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(pagesStr) + '</td><td data-label="Status"><span class="rpt-badge ' + statusCls + '">' + esc(c.status || '—') + '</span></td><td data-label="Issues Found">' + esc(c.issuesFound || '—') + '</td><td data-label="Issues Resolved">' + esc(c.issuesResolved || '—') + '</td><td data-label="Entry"><span class="rpt-badge ' + entryCls + '">' + entryStatus + '</span></td></tr>';
+          }).join('');
+        }
+      }
+
+      // Login session table
+      var loginTbody = document.getElementById('rptLoginTable');
+      if (loginTbody) {
+        if (sessions.length === 0) {
+          loginTbody.innerHTML = '<tr><td colspan="6" class="rpt-empty"><span class="material-icons-round">history</span>No login sessions found</td></tr>';
+        } else {
+          loginTbody.innerHTML = sessions.slice(0, 50).map(function(s) {
+            var roleCls = s.role === 'Admin' ? 'available' : 'pending';
+            var statusCls = s.status === 'active' ? 'available' : s.status === 'logged_out' ? 'inactive' : 'pending';
+            var duration = s.sessionDuration;
+            if (!duration && s.loginTime && s.lastActivity && s.status !== 'active') {
+              var lt = s.loginTime.toDate ? s.loginTime.toDate() : new Date(s.loginTime);
+              var la = s.lastActivity.toDate ? s.lastActivity.toDate() : new Date(s.lastActivity);
+              duration = la.getTime() - lt.getTime();
+            }
+            return '<tr><td data-label="User">' + esc(s.user || '—') + '</td><td data-label="Role"><span class="rpt-badge ' + roleCls + '">' + esc(s.role || '—') + '</span></td><td data-label="Login Time">' + formatTimestamp(s.loginTime) + '</td><td data-label="Device">' + getDeviceShort(s.deviceInfo) + '</td><td data-label="Duration">' + formatDuration(duration) + '</td><td data-label="Status"><span class="rpt-badge ' + statusCls + '">' + esc(s.status || '—') + '</span></td></tr>';
+          }).join('');
+        }
+      }
+    }
+
+    /* ─── Init ─── */
+    function initReport() {
+      if (typeof window.hideLoader === 'function') window.hideLoader();
+      console.info('[Report] Initializing system report...');
+
+      // Set report generation date/time
+      var now = new Date();
+      var dateEl = document.getElementById('rptReportDate');
+      if (dateEl) dateEl.textContent = now.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      var timeEl = document.getElementById('rptReportTime');
+      if (timeEl) timeEl.textContent = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+      // Set dates on tabs
+      ['rptPatientDate', 'rptClinicDate', 'rptStaffDate', 'rptActivityDate'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = 'Generated: ' + now.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      });
+
+      // Sidebar toggle
+      var toggle = document.getElementById('menuToggle');
+      var sidebar = document.getElementById('sidebar');
+      var overlay = document.getElementById('sidebarOverlay');
+      if (toggle && sidebar && overlay) {
+        toggle.addEventListener('click', function() {
+          sidebar.classList.toggle('open');
+          overlay.classList.toggle('active');
+          document.body.style.overflow = sidebar.classList.contains('open') ? 'hidden' : '';
+        });
+        overlay.addEventListener('click', function() {
+          sidebar.classList.remove('open');
+          overlay.classList.remove('active');
+          document.body.style.overflow = '';
+        });
+      }
+
+      // Load all data
+      loadCheckins();
+      Promise.all([
+        loadPatients(),
+        loadAppointments(),
+        loadDoctors(),
+        loadDepartments(),
+        loadSkinPatients(),
+        loadOrthoPatients(),
+        loadMessages()
+      ]).then(function() {
+        renderExecutiveSummary();
+        renderPatientReport();
+        renderClinicRegistries();
+        renderStaffReport();
+        // Load login sessions separately (Firebase, might fail)
+        loadLoginSessions().then(function() {
+          renderActivityReport();
+        }).catch(function() {
+          renderActivityReport();
+        });
+      }).catch(function(err) {
+        console.error('[Report] Error loading data:', err);
+      });
+    }
+
+    window.refreshReport = function() {
+      var btn = document.querySelector('.rpt-action-btn.primary');
+      setButtonLoading(btn, 'Refreshing...');
+      loadCheckins();
+      Promise.all([
+        loadPatients(),
+        loadAppointments(),
+        loadDoctors(),
+        loadDepartments(),
+        loadSkinPatients(),
+        loadOrthoPatients(),
+        loadMessages()
+      ]).then(function() {
+        renderExecutiveSummary();
+        renderPatientReport();
+        renderClinicRegistries();
+        renderStaffReport();
+        return loadLoginSessions();
+      }).then(function() {
+        renderActivityReport();
+        setButtonIdle(btn);
+        toast('Report refreshed', 'success', 'refresh');
+      }).catch(function() {
+        renderActivityReport();
+        setButtonIdle(btn);
+        toast('Report refreshed', 'success', 'refresh');
+      });
+    };
+
+    window.handleLogout = function() {
+      if (HMS) HMS.logout();
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+      var checkReady = setInterval(function() {
+        if (typeof HMS !== 'undefined' && HMS && HMS.isAuthenticated) {
+          clearInterval(checkReady);
+          initLogin();
+        }
+      }, 50);
+      setTimeout(function() { clearInterval(checkReady); }, 5000);
+    });
+
+  })();
+  </script>
+</body>
+
+</html>

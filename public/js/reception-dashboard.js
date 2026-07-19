@@ -57,9 +57,11 @@ function getUnexportedPatients() {
 
 function updateExportBadge() {
   const allPatients = window.allPatients || [];
+  const allSkin = window.allSkinPatients || [];
+  const allOrtho = window.allOrthoPatients || [];
   const pending = getUnexportedPatients();
   const count = pending.length;
-  const total = allPatients.length;
+  const total = allPatients.length + allSkin.length + allOrtho.length;
 
   /* Sidebar badge */
   const navBadge = document.getElementById('navExportBadge');
@@ -649,15 +651,18 @@ function updateStats() {
   }
 
   /* --- New Registrations Today --- */
-  var todayRegs = (window.allPatients || []).filter(function (p) {
-    var d = p.created_on || p['Created On'] || '';
-    if (!d) return false;
-    d = String(d).trim();
-    if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.slice(0, 10) === todayStr;
-    var dt = new Date(d);
-    if (!isNaN(dt.getTime())) return dt.toISOString().slice(0, 10) === todayStr;
-    return false;
-  }).length;
+  function filterToday(patients) {
+    return (patients || []).filter(function (p) {
+      var d = p.created_on || p['Created On'] || '';
+      if (!d) return false;
+      d = String(d).trim();
+      if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.slice(0, 10) === todayStr;
+      var dt = new Date(d);
+      if (!isNaN(dt.getTime())) return dt.toISOString().slice(0, 10) === todayStr;
+      return false;
+    });
+  }
+  var todayRegs = filterToday(window.allPatients).length + filterToday(window.allSkinPatients).length + filterToday(window.allOrthoPatients).length;
   var regEl = document.querySelector('.stat-card[style*="--accent:#0D9488"] .stat-value');
   if (regEl) {
     if (window.animateCounter) window.animateCounter(regEl, todayRegs);
