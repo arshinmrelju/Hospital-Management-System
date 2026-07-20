@@ -66,8 +66,8 @@ function renderTable() {
       <td data-label="Last Visit" style="font-size:.82rem">${formatDate(p.last_visit)}</td>
       <td data-label="Status"><span class="badge-status ${p.status}">${esc(cap(p.status))}</span></td>
       <td data-label="Actions">
-        <button class="icon-btn" title="View" onclick="viewPatient('${p.id}')"><span class="material-icons-round">visibility</span></button>
-        <button class="icon-btn" title="Edit" onclick="editPatient('${p.id}')"><span class="material-icons-round">edit</span></button>
+        <button class="icon-btn" title="View" onclick="viewPatient('${esc(p.op_no || p.id)}')"><span class="material-icons-round">visibility</span></button>
+        <button class="icon-btn" title="Edit" onclick="editPatient('${esc(p.op_no || p.id)}')"><span class="material-icons-round">edit</span></button>
         <button class="icon-btn" title="Add to OPD"
           onclick="addToOpdRegister(this)"
           data-id="${esc(p.op_no || p.id)}" data-name="${esc(patientFullName(p))}"
@@ -76,7 +76,7 @@ function renderTable() {
           data-contact="${esc(patientContact(p))}">
           <span class="material-icons-round">how_to_reg</span>
         </button>
-        <button class="icon-btn danger" title="Delete" onclick="deletePatient('${p.id}')"><span class="material-icons-round">delete</span></button>
+        <button class="icon-btn danger" title="Delete" onclick="deletePatient('${esc(p.op_no || p.id)}')"><span class="material-icons-round">delete</span></button>
       </td>
     </tr>
   `).join('');
@@ -417,8 +417,12 @@ function changePage(dir) {
   renderTable();
 }
 
+function _findPatient(id) {
+  return allPatients.find(function(pt) { return pt.op_no == id || pt.id == id || pt.contact == id; });
+}
+
 function viewPatient(id) {
-  const p = allPatients.find(pt => pt.id == id);
+  const p = _findPatient(id);
   if (!p) return;
   const titleEl = document.getElementById('viewPatientTitle');
   if (titleEl) titleEl.textContent = `${p.fname} ${p.lname}`;
@@ -452,7 +456,7 @@ function viewPatient(id) {
 }
 
 function editPatient(id) {
-  const p = allPatients.find(pt => pt.id == id);
+  const p = _findPatient(id);
   if (!p) { toast('Patient not found', 'error'); return; }
   document.getElementById('editPatientId').value = id;
   document.getElementById('editPatientTitle').textContent = `Edit ${p.fname} ${p.lname}`;
@@ -510,12 +514,14 @@ async function submitEditPatient(e) {
 }
 
 async function deletePatient(id) {
-  if (!confirm('Remove this patient from the registry?')) return;
+  const p = _findPatient(id);
+  if (!p) { toast('Patient not found', 'error'); return; }
+  if (!confirm('Remove ' + (p.fname || '') + ' ' + (p.lname || '') + ' from the registry?')) return;
   try {
     await window.API.deletePatient(id);
-    allPatients = allPatients.filter(p => p.id != id);
+    allPatients = allPatients.filter(function(pt) { return pt.id != id && pt.op_no != id; });
     window.allPatients = allPatients;
-    filteredPatients = filteredPatients.filter(p => p.id != id);
+    filteredPatients = filteredPatients.filter(function(pt) { return pt.id != id && pt.op_no != id; });
     PatientCache.clear();
     applyFilters();
     toast('Patient record removed', 'warning', 'delete');
