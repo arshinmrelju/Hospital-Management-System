@@ -363,8 +363,16 @@ function handleCreateAppointment(e) {
   var sheet = getAppointmentsSheet(ss);
   var rows = sheet.getDataRange().getValues();
   var lastToken = 0;
+  var newPatientId = (e.parameter.patient_id || '').toString().trim().toLowerCase();
+  var newDate = (e.parameter.appointment_date || '').toString().trim();
+  var newType = (e.parameter.type || 'OPD').toString().trim().toLowerCase();
   for (var i = 1; i < rows.length; i++) {
     if (rows[i][1] > lastToken) lastToken = rows[i][1];
+    if (rows[i][2] && rows[i][2].toString().trim().toLowerCase() === newPatientId &&
+        rows[i][7] && rows[i][7].toString().trim() === newDate &&
+        rows[i][9] && rows[i][9].toString().trim().toLowerCase() === newType) {
+      return { success: false, error: 'duplicate' };
+    }
   }
   var now = new Date();
   var id = 'A' + String(now.getTime()).slice(-8);

@@ -453,6 +453,8 @@ window.API = {
     return sheetsFetch(q).then(function(resp) {
       if (resp.success) {
         return resp;
+      } else if (resp.error === 'duplicate') {
+        return resp;
       } else {
         var local = getLocalData('appointments') || seedLocalAppointments();
         var maxToken = 0;

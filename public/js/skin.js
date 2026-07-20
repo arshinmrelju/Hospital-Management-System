@@ -545,7 +545,7 @@ async function submitAddSkin(e) {
       timestamp: now.toISOString(),
       _isNew: true
     };
-    if (window.OPD_RECORDS && (!isDuplicateOpdEntry || !isDuplicateOpdEntry(returnedId, 'Skin'))) {
+    if (window.OPD_RECORDS && (!isDuplicateOpdEntry || !isDuplicateOpdEntry(returnedId, 'Skin', raw.patient_name, raw.contact))) {
       window.OPD_RECORDS.push(opdRecord);
       if (typeof renderOpdRecords === 'function') renderOpdRecords();
     }
@@ -558,6 +558,14 @@ async function submitAddSkin(e) {
       type: 'Skin OPD',
       status: 'waiting',
       reason: ''
+    }).then(function(resp) {
+      if (resp && resp.error === 'duplicate') {
+        if (window.OPD_RECORDS) {
+          var idx = window.OPD_RECORDS.indexOf(opdRecord);
+          if (idx > -1) window.OPD_RECORDS.splice(idx, 1);
+        }
+        if (typeof renderOpdRecords === 'function') renderOpdRecords();
+      }
     }).catch(function() {});
 
     toast('Skin patient ' + raw.patient_name + ' registered! ID: ' + returnedId + ' — added to Skin OPD', 'success');

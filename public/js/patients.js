@@ -729,8 +729,9 @@ async function submitAddPatient(e) {
         type: 'OPD',
         status: 'waiting',
         reason: raw.notes || ''
-      }).then(function() {
-        if (typeof OPD_RECORDS !== 'undefined' && OPD_RECORDS !== null && typeof isDuplicateOpdEntry === 'function' && !isDuplicateOpdEntry(newP.op_no || newP.id, 'General')) {
+      }).then(function(resp) {
+        if (resp && resp.error === 'duplicate') return;
+        if (typeof OPD_RECORDS !== 'undefined' && OPD_RECORDS !== null && typeof isDuplicateOpdEntry === 'function' && !isDuplicateOpdEntry(newP.op_no || newP.id, 'General', fullName, raw.contact)) {
           OPD_RECORDS.push({
             id: 'OPD-' + Date.now(),
             patient_id: newP.op_no || newP.id,
@@ -740,6 +741,7 @@ async function submitAddPatient(e) {
             contact: raw.contact || '',
             op_no: newP.op_no || newP.id,
             doctor: raw.doctor || 'Unassigned',
+            department: 'General',
             complaint: raw.notes || '—',
             time: timeStr,
             timestamp: now.toISOString(),

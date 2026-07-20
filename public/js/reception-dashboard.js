@@ -10,8 +10,17 @@ window.OPD_RECORDS = OPD_RECORDS;
 let filteredOpdRecords = null;
 let opdDimension = 'all';
 
-function _opdEntryKey(patientId, department) {
-  return String(patientId || '').toLowerCase().trim() + '::' + String(department || '').toLowerCase().trim();
+function _opdEntryKey(patientId, department, date) {
+  var d = date || '';
+  return String(patientId || '').toLowerCase().trim() + '::' + String(department || '').toLowerCase().trim() + '::' + d;
+}
+
+function _todayKey(patientId, department) {
+  return _opdEntryKey(patientId, department, new Date().toISOString().split('T')[0]);
+}
+
+function _opdNameContactKey(name, contact) {
+  return String(name || '').toLowerCase().trim() + '::' + String(contact || '').toLowerCase().trim();
 }
 
 function getOpdSeenKeys() {
@@ -23,13 +32,23 @@ function getOpdSeenKeys() {
   return keys;
 }
 
-function isDuplicateOpdEntry(patientId, department) {
-  if (!patientId) return false;
-  var key = _opdEntryKey(patientId, department);
-  if (!key) return false;
+function isDuplicateOpdEntry(patientId, department, name, contact) {
+  if (!patientId && !name) return false;
+  var today = new Date().toISOString().split('T')[0];
   return OPD_RECORDS.some(function(r) {
-    var rKey = _opdEntryKey(r.patient_id || r.op_no, r.department);
-    return rKey === key;
+    var rDate = (r.timestamp || '').split('T')[0] || '';
+    if (rDate !== today) return false;
+    if (patientId) {
+      var key = _opdEntryKey(patientId, department, today);
+      var rKey = _opdEntryKey(r.patient_id || r.op_no, r.department, today);
+      if (rKey === key) return true;
+    }
+    if (name && contact) {
+      var ncKey = _opdNameContactKey(name, contact);
+      var rNcKey = _opdNameContactKey(r.name, r.contact);
+      if (ncKey === rNcKey && String(r.department || '').toLowerCase().trim() === String(department || '').toLowerCase().trim()) return true;
+    }
+    return false;
   });
 }
 
@@ -454,7 +473,7 @@ function submitOpdAssign() {
     timestamp: now.toISOString()
   };
 
-  if (isDuplicateOpdEntry(record.patient_id, record.department)) {
+  if (isDuplicateOpdEntry(record.patient_id, record.department, record.name, record.contact)) {
     if (btn) { btn.disabled = false; btn.innerHTML = '<span class="material-icons-round" style="font-size:14px;">how_to_reg</span> Add to OPD'; }
     closeModal(null, 'opdAssignModal');
     toast(record.name + ' is already in ' + record.department + ' OPD', 'info');
@@ -475,6 +494,18 @@ function submitOpdAssign() {
     type: isSkin ? 'Skin OPD' : isOrtho ? 'Ortho OPD' : 'OPD',
     status: 'waiting',
     reason: ''
+  }).then(function(resp) {
+    if (resp && !resp.success && resp.error === 'duplicate') {
+      var idx = OPD_RECORDS.indexOf(record);
+      if (idx > -1) OPD_RECORDS.splice(idx, 1);
+      if (filteredOpdRecords) {
+        var fidx = filteredOpdRecords.indexOf(record);
+        if (fidx > -1) filteredOpdRecords.splice(fidx, 1);
+      }
+      renderOpdRecords();
+      updateStats();
+      toast(record.name + ' is already registered in ' + record.department + ' OPD today', 'info');
+    }
   }).catch(function (e) {
     addConsoleLog('WARN', 'Could not save OPD record: ' + e.message);
   });
@@ -570,10 +601,16 @@ async function loadOpdRecords() {
         };
       });
     var seen = {};
+    var seenNc = {};
     OPD_RECORDS = OPD_RECORDS.filter(function(r) {
-      var key = _opdEntryKey(r.patient_id || r.op_no, r.department);
-      if (!key || seen[key]) return false;
-      seen[key] = true;
+      var rDate = (r.timestamp || '').split('T')[0] || '';
+      var key = _opdEntryKey(r.patient_id || r.op_no, r.department, rDate);
+      var dept = String(r.department || '').toLowerCase().trim();
+      var ncKey = _opdNameContactKey(r.name, r.contact) + '::' + dept + '::' + rDate;
+      if (key && seen[key]) return false;
+      if (ncKey && seenNc[ncKey]) return false;
+      if (key) seen[key] = true;
+      if (ncKey) seenNc[ncKey] = true;
       return true;
     });
   } catch (e) {
