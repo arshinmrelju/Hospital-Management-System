@@ -39,6 +39,30 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ===============================================================
+    // Reviews collection — User product feedback / ratings
+    // ===============================================================
+    // Collection: reviews
+    // Document ID: auto-generated
+    // Fields:
+    //   - name:       string   - Reviewer name (or "Anonymous")
+    //   - rating:     number   - 1 to 5
+    //   - category:   string   - "praise" | "suggestion" | "bug" | "issue" | "general"
+    //   - message:    string   - Feedback text
+    //   - createdAt:  timestamp - Server timestamp
+    // ===============================================================
+
+    match /reviews/{reviewId} {
+      allow create: if true
+        && request.resource.data.keys().hasAll(['name', 'rating', 'category', 'message', 'createdAt'])
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5;
+
+      allow read: if true;
+
+      allow delete: if false;
+    }
+
     // Deny everything else by default
     match /{document=**} {
       allow read, write: if false;

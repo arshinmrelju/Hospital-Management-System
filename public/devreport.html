@@ -514,6 +514,10 @@
         <span class="material-icons-round">bar_chart</span>
         <span class="nav-label">Code Metrics</span>
       </a>
+      <a href="#" class="nav-item" id="nav-reviews" onclick="switchDrTab('tab-reviews', this);return false">
+        <span class="material-icons-round">reviews</span>
+        <span class="nav-label">User Reviews</span>
+      </a>
       <a href="report.html" class="nav-item" onclick="return true">
         <span class="material-icons-round">description</span>
         <span class="nav-label">Owner Report</span>
@@ -1225,6 +1229,69 @@
         </div>
       </div>
 
+      <!-- ═══ USER REVIEWS ═══ -->
+      <div class="dr-tab-pane" id="tab-reviews">
+        <div class="dr-page-header">
+          <h1><span class="material-icons-round">reviews</span> User Reviews &amp; Feedback</h1>
+          <span style="font-size:0.78rem;color:var(--outline);">Completed works — user validation</span>
+        </div>
+
+        <div class="dr-stats" id="drReviewStats">
+          <div class="dr-stat-card">
+            <div class="dr-big-number" style="padding:0">
+              <div class="value" id="drReviewAvg">—</div>
+              <div class="label">Average Rating</div>
+              <div class="sub">Out of 5.0</div>
+            </div>
+          </div>
+          <div class="dr-stat-card">
+            <div class="dr-stat-value teal" id="drReviewTotal">—</div>
+            <div class="dr-stat-label">Total Reviews</div>
+          </div>
+          <div class="dr-stat-card">
+            <div class="dr-stat-value green" id="drReviewPositive">—</div>
+            <div class="dr-stat-label">Positive Rate</div>
+          </div>
+          <div class="dr-stat-card">
+            <div class="dr-stat-value blue" id="drReviewReviewers">—</div>
+            <div class="dr-stat-label">Reviewers</div>
+          </div>
+          <div class="dr-stat-card">
+            <div class="dr-stat-value amber" id="drReviewTopCat">—</div>
+            <div class="dr-stat-label">Top Category</div>
+          </div>
+        </div>
+
+        <div class="dr-grid">
+          <div class="widget glass-card">
+            <div class="dr-section-header">
+              <h3><span class="material-icons-round">star</span> Rating Distribution</h3>
+            </div>
+            <div id="drReviewDist">
+              <div class="dr-empty"><span class="material-icons-round">bar_chart</span>No reviews yet</div>
+            </div>
+          </div>
+          <div class="widget glass-card">
+            <div class="dr-section-header">
+              <h3><span class="material-icons-round">pie_chart</span> Category Breakdown</h3>
+            </div>
+            <div id="drReviewCats">
+              <div class="dr-empty"><span class="material-icons-round">category</span>No reviews yet</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="widget glass-card">
+          <div class="dr-section-header">
+            <h3><span class="material-icons-round">rate_review</span> Recent Feedback</h3>
+            <span style="font-size:0.78rem;color:var(--outline);" id="drReviewLatestCount"></span>
+          </div>
+          <div id="drReviewList">
+            <div class="dr-empty"><span class="material-icons-round">reviews</span>No reviews yet. Share the review page via QR code to collect feedback.</div>
+          </div>
+        </div>
+      </div>
+
     </main>
   </div>
 
@@ -1245,6 +1312,10 @@
     <button class="bottom-nav-item" onclick="switchDrTab('tab-metrics',this);return false" data-tab="tab-metrics">
       <span class="material-icons-round">bar_chart</span>
       <span class="bottom-nav-label">Metrics</span>
+    </button>
+    <button class="bottom-nav-item" onclick="switchDrTab('tab-reviews',this);return false" data-tab="tab-reviews">
+      <span class="material-icons-round">reviews</span>
+      <span class="bottom-nav-label">Reviews</span>
     </button>
   </nav>
 
@@ -1453,6 +1524,127 @@
       }).catch(function() {
         el('drMetricSessions', '—');
       });
+
+      // Load user reviews for the Reviews tab
+      loadReviews();
+    }
+
+    function getStarsHtml(count) {
+      var html = '<span class="fb-stars" style="display:inline-flex;gap:2px">';
+      for (var i = 1; i <= 5; i++) {
+        html += '<span class="material-icons-round" style="font-size:18px;color:' + (i <= count ? '#F59E0B' : '#d4e0de') + '">star</span>';
+      }
+      html += '</span>';
+      return html;
+    }
+
+    function getCategoryBadge(cat) {
+      if (!cat) cat = 'general';
+      var labels = { praise: 'Praise', suggestion: 'Suggestion', bug: 'Bug', issue: 'Issue', general: 'General' };
+      var colors = { praise: '#059669', suggestion: '#2563EB', bug: '#DC2626', issue: '#D97706', general: '#6B7280' };
+      return '<span style="display:inline-block;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:2px 8px;border-radius:100px;background:' + colors[cat] + '15;color:' + colors[cat] + '">' + (labels[cat] || cat) + '</span>';
+    }
+
+    function loadReviews() {
+      window.FIREBASE_READY.then(function(db) {
+        var localReviews = [];
+        try { var raw = localStorage.getItem('hms_local_feedback'); if (raw) localReviews = JSON.parse(raw); } catch(e) {}
+
+        if (!db) {
+          renderReviews(localReviews);
+          return;
+        }
+        db.collection('reviews').orderBy('createdAt', 'desc').get().then(function(snap) {
+          var items = [];
+          snap.forEach(function(doc) {
+            var d = doc.data();
+            d.id = doc.id;
+            d.createdAt = d.createdAt ? d.createdAt.toDate().toISOString() : '';
+            items.push(d);
+          });
+          renderReviews(items.concat(localReviews));
+        }).catch(function() {
+          renderReviews(localReviews);
+        });
+      });
+    }
+
+    function renderReviews(reviews) {
+      var r = reviews || [];
+      var total = r.length;
+      var el = function(id, val) { var e = document.getElementById(id); if (e) e.textContent = val; };
+
+      if (total === 0) {
+        el('drReviewAvg', '—');
+        el('drReviewTotal', 0);
+        el('drReviewPositive', '—');
+        el('drReviewReviewers', '—');
+        el('drReviewTopCat', '—');
+        return;
+      }
+
+      var sum = r.reduce(function(s, x) { return s + (parseInt(x.rating) || 0); }, 0);
+      var avg = (sum / total).toFixed(1);
+      el('drReviewAvg', avg);
+      el('drReviewTotal', total);
+
+      var positive = r.filter(function(x) { return parseInt(x.rating) >= 4; }).length;
+      el('drReviewPositive', Math.round((positive / total) * 100) + '%');
+
+      var reviewers = {};
+      r.forEach(function(x) { if (x.name && x.name !== 'Anonymous') reviewers[x.name] = true; });
+      el('drReviewReviewers', Object.keys(reviewers).length || '—');
+
+      var cats = {};
+      r.forEach(function(x) { var c = x.category || 'general'; cats[c] = (cats[c] || 0) + 1; });
+      var topCat = Object.keys(cats).length > 0 ? Object.keys(cats).reduce(function(a, b) { return cats[a] >= cats[b] ? a : b; }) : '—';
+      var catLabels = { praise: 'Praise', suggestion: 'Suggestion', bug: 'Bug', issue: 'Issue', general: 'General' };
+      el('drReviewTopCat', (catLabels[topCat] || topCat));
+
+      // Rating distribution
+      var distEl = document.getElementById('drReviewDist');
+      if (distEl) {
+        var dist = {5:0, 4:0, 3:0, 2:0, 1:0};
+        r.forEach(function(x) { var s = parseInt(x.rating) || 0; if (s >= 1 && s <= 5) dist[s]++; });
+        var maxDist = Math.max(dist[5], dist[4], dist[3], dist[2], dist[1], 1);
+        distEl.innerHTML = [5,4,3,2,1].map(function(s) {
+          var pct = Math.round((dist[s] / maxDist) * 100);
+          return '<div class="dr-row"><span class="dr-row-label">' + getStarsHtml(s) + '</span><span class="dr-row-value">' + dist[s] + '</span></div><div class="dr-bar"><div class="dr-bar-fill" style="width:' + pct + '%"></div></div>';
+        }).join('');
+      }
+
+      // Category breakdown
+      var catEl = document.getElementById('drReviewCats');
+      if (catEl) {
+        var catKeys = Object.keys(cats);
+        if (catKeys.length === 0) {
+          catEl.innerHTML = '<div class="dr-empty"><span class="material-icons-round">category</span>No reviews yet</div>';
+        } else {
+          var maxCat = Math.max.apply(null, catKeys.map(function(k) { return cats[k]; }));
+          catEl.innerHTML = catKeys.map(function(c) {
+            var labels = { praise: 'Praise', suggestion: 'Suggestion', bug: 'Bug', issue: 'Issue', general: 'General' };
+            var pct = Math.round((cats[c] / maxCat) * 100);
+            return '<div class="dr-row"><span class="dr-row-label">' + getCategoryBadge(c) + '</span><span class="dr-row-value">' + cats[c] + '</span></div><div class="dr-bar"><div class="dr-bar-fill" style="width:' + pct + '%"></div></div>';
+          }).join('');
+        }
+      }
+
+      // Recent feedback list
+      var listEl = document.getElementById('drReviewList');
+      var countEl = document.getElementById('drReviewLatestCount');
+      if (listEl) {
+        if (total === 0) {
+          listEl.innerHTML = '<div class="dr-empty"><span class="material-icons-round">reviews</span>No reviews yet. Share the review page via QR code to collect feedback.</div>';
+        } else {
+          if (countEl) countEl.textContent = 'Latest ' + Math.min(total, 10) + ' of ' + total;
+          var sorted = r.slice().sort(function(a, b) { return (b.createdAt || '').localeCompare(a.createdAt || ''); }).slice(0, 10);
+          listEl.innerHTML = sorted.map(function(rv) {
+            var dateStr = rv.createdAt ? new Date(rv.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+            var msg = (rv.message || '').length > 120 ? esc(rv.message.slice(0, 120)) + '...' : esc(rv.message || '');
+            return '<div class="dr-row"><div style="display:flex;flex-direction:column;gap:2px"><div style="display:flex;align-items:center;gap:8px">' + getStarsHtml(rv.rating) + ' <strong style="font-size:0.85rem">' + esc(rv.name || 'Anonymous') + '</strong> ' + getCategoryBadge(rv.category) + '</div><div style="font-size:0.82rem;color:var(--on-surface-var);line-height:1.5">' + msg + '</div></div><span style="font-size:0.7rem;color:var(--outline);flex-shrink:0">' + dateStr + '</span></div>';
+          }).join('');
+        }
+      }
     }
 
     window.handleLogout = function() {

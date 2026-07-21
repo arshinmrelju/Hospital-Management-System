@@ -112,6 +112,73 @@
       opacity: 0.5;
       flex-shrink: 0;
     }
+    /* --- Bible Verses --- */
+    .bible-section {
+      max-width: 720px;
+      margin-top: 32px;
+    }
+    .bible-section h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--on-surface);
+      margin: 0 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .bible-section h2::before {
+      content: '📖';
+      font-size: 1.2rem;
+    }
+    .bible-card {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: var(--glass-border);
+      border-radius: var(--radius-md);
+      padding: 24px 28px;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+    }
+    .bible-card .verse-text {
+      font-size: 1.05rem;
+      font-weight: 500;
+      color: var(--on-surface);
+      line-height: 1.7;
+      margin: 0 0 8px;
+    }
+    .bible-card .verse-ref {
+      font-size: 0.85rem;
+      color: var(--primary-light);
+      font-weight: 600;
+    }
+    .bible-card .bible-nav {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .bible-card .bible-nav button {
+      background: rgba(13,148,136,0.1);
+      border: none;
+      color: var(--primary-light);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-size: 18px;
+    }
+    .bible-card .bible-nav button:hover {
+      background: rgba(13,148,136,0.22);
+    }
+    .bible-card .bible-nav .bible-counter {
+      font-size: 0.82rem;
+      color: var(--on-surface-var);
+    }
     .help-viewer-top {
       margin-bottom: 14px;
     }
@@ -1145,6 +1212,20 @@
             <p class="help-guide-desc">Step-by-step guide to registering patients specifically for OPD in WellnessPLPY</p>
           </div>
           <span class="material-icons-round help-guide-arrow">chevron_right</span>
+        </div>
+      </div>
+
+      <!-- Bible Verses -->
+      <div class="bible-section">
+        <h2 id="bibleCategory">Hope &amp; Future</h2>
+        <div class="bible-card">
+          <p class="verse-text" id="bibleVerseText">For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future.</p>
+          <div class="verse-ref" id="bibleVerseRef">— Jeremiah 29:11</div>
+          <div class="bible-nav">
+            <button onclick="prevBibleVerse()" title="Previous">◀</button>
+            <button onclick="nextBibleVerse()" title="Next">▶</button>
+            <span class="bible-counter" id="bibleCounter">1 / 20</span>
+          </div>
         </div>
       </div>
 
