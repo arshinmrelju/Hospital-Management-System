@@ -81,6 +81,11 @@
   min-height: var(--touch-target);
 }
 .nav-item .material-icons-round { font-size: 20px; flex-shrink: 0; }
+.sidebar-divider {
+  height: 1px;
+  background: var(--surface-mid);
+  margin: 6px 14px;
+}
 .nav-item:hover {
   background: var(--surface-low);
   color: var(--primary-light);
