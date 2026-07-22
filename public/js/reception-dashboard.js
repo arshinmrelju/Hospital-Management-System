@@ -625,7 +625,9 @@ async function ensurePatientsLoaded() {
   try {
     var result = await window.API.getPatients();
     if (result && result.data) {
-      window.allPatients = result.data;
+      window.allPatients = typeof normalizePatients === 'function'
+        ? normalizePatients(result.data)
+        : result.data;
     }
   } catch (e) {
     console.warn('Could not load patients:', e);
