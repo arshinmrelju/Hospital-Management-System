@@ -664,55 +664,7 @@ window.switchPage = function(page) {
   }
   if (page === 'help') {
     closeHelpGuide();
-    if (typeof updateBibleVerse === 'function') updateBibleVerse();
   }
-};
-
-/* --- Bible Verses --- */
-var BIBLE_VERSES = [
-  { text: 'For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future.', ref: '— Jeremiah 29:11', cat: 'Hope & Future' },
-  { text: 'I can do all things through him who strengthens me.', ref: '— Philippians 4:13', cat: 'Strength' },
-  { text: 'The Lord is my shepherd; I shall not want.', ref: '— Psalm 23:1', cat: 'Provision' },
-  { text: 'Be strong and courageous. Do not be frightened, and do not be dismayed, for the Lord your God is with you wherever you go.', ref: '— Joshua 1:9', cat: 'Courage' },
-  { text: 'Trust in the Lord with all your heart, and do not lean on your own understanding. In all your ways acknowledge him, and he will make straight your paths.', ref: '— Proverbs 3:5-6', cat: 'Trust' },
-  { text: 'Fear not, for I am with you; be not dismayed, for I am your God; I will strengthen you, I will help you, I will uphold you with my righteous right hand.', ref: '— Isaiah 41:10', cat: "God's Presence" },
-  { text: 'And we know that for those who love God all things work together for good, for those who are called according to his purpose.', ref: '— Romans 8:28', cat: 'Purpose' },
-  { text: 'He heals the brokenhearted and binds up their wounds.', ref: '— Psalm 147:3', cat: 'Healing' },
-  { text: 'Come to me, all who labor and are heavy laden, and I will give you rest.', ref: '— Matthew 11:28', cat: 'Rest' },
-  { text: 'The peace of God, which surpasses all understanding, will guard your hearts and your minds in Christ Jesus.', ref: '— Philippians 4:7', cat: 'Peace' },
-  { text: 'God is our refuge and strength, a very present help in trouble.', ref: '— Psalm 46:1', cat: 'Refuge' },
-  { text: 'Be still, and know that I am God.', ref: '— Psalm 46:10', cat: 'Stillness' },
-  { text: 'The Lord is my light and my salvation; whom shall I fear?', ref: '— Psalm 27:1', cat: 'Salvation' },
-  { text: 'But they who wait for the Lord shall renew their strength; they shall mount up with wings like eagles.', ref: '— Isaiah 40:31', cat: 'Renewal' },
-  { text: 'Cast all your anxieties on him, because he cares for you.', ref: '— 1 Peter 5:7', cat: 'Care' },
-  { text: 'Delight yourself in the Lord, and he will give you the desires of your heart.', ref: '— Psalm 37:4', cat: 'Delight' },
-  { text: 'The Lord bless you and keep you; the Lord make his face shine upon you and be gracious to you.', ref: '— Numbers 6:24-25', cat: 'Blessing' },
-  { text: 'Jesus Christ is the same yesterday and today and forever.', ref: '— Hebrews 13:8', cat: 'Faithfulness' },
-  { text: 'Let all that you do be done in love.', ref: '— 1 Corinthians 16:14', cat: 'Love' },
-  { text: 'Your word is a lamp to my feet and a light to my path.', ref: '— Psalm 119:105', cat: 'Guidance' }
-];
-var currentBibleIndex = 0;
-
-window.updateBibleVerse = function() {
-  var el = document.getElementById('bibleVerseText');
-  var refEl = document.getElementById('bibleVerseRef');
-  var counterEl = document.getElementById('bibleCounter');
-  var catEl = document.getElementById('bibleCategory');
-  if (!el || !refEl) return;
-  el.textContent = BIBLE_VERSES[currentBibleIndex].text;
-  refEl.textContent = BIBLE_VERSES[currentBibleIndex].ref;
-  if (catEl) catEl.textContent = BIBLE_VERSES[currentBibleIndex].cat;
-  if (counterEl) counterEl.textContent = (currentBibleIndex + 1) + ' / ' + BIBLE_VERSES.length;
-};
-
-window.nextBibleVerse = function() {
-  currentBibleIndex = (currentBibleIndex + 1) % BIBLE_VERSES.length;
-  updateBibleVerse();
-};
-
-window.prevBibleVerse = function() {
-  currentBibleIndex = (currentBibleIndex - 1 + BIBLE_VERSES.length) % BIBLE_VERSES.length;
-  updateBibleVerse();
 };
 
 /* --- Help Guide Viewer --- */
@@ -729,8 +681,32 @@ window.closeHelpGuide = function() {
   document.getElementById('helpIframe').src = '';
 };
 
+/* --- Sidebar Bible Verse Rotation --- */
+var SIDE_VERSES = [
+  { text: '"I can do all things through Him who strengthens me."', ref: '— Philippians 4:13' },
+  { text: '"For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future."', ref: '— Jeremiah 29:11' },
+  { text: '"The Lord is my shepherd; I shall not want."', ref: '— Psalm 23:1' },
+  { text: '"Be strong and courageous. Do not be frightened, and do not be dismayed, for the Lord your God is with you wherever you go."', ref: '— Joshua 1:9' },
+  { text: '"Trust in the Lord with all your heart, and do not lean on your own understanding."', ref: '— Proverbs 3:5' },
+  { text: '"Fear not, for I am with you; be not dismayed, for I am your God."', ref: '— Isaiah 41:10' },
+  { text: '"The peace of God, which surpasses all understanding, will guard your hearts and your minds in Christ Jesus."', ref: '— Philippians 4:7' },
+  { text: '"God is our refuge and strength, a very present help in trouble."', ref: '— Psalm 46:1' },
+  { text: '"Be still, and know that I am God."', ref: '— Psalm 46:10' },
+  { text: '"He heals the brokenhearted and binds up their wounds."', ref: '— Psalm 147:3' }
+];
+var sideVerseIndex = 0;
+
+function rotateSideVerse() {
+  var t = document.getElementById('sideVerseText');
+  var r = document.getElementById('sideVerseRef');
+  if (!t || !r) return;
+  sideVerseIndex = (sideVerseIndex + 1) % SIDE_VERSES.length;
+  t.textContent = SIDE_VERSES[sideVerseIndex].text;
+  r.textContent = SIDE_VERSES[sideVerseIndex].ref;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-  if (typeof updateBibleVerse === 'function') updateBibleVerse();
+  setInterval(rotateSideVerse, 180000);
   var params = new URLSearchParams(window.location.search);
   var searchQ = params.get('search');
   if (searchQ) {
