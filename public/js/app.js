@@ -683,16 +683,21 @@ window.closeHelpGuide = function() {
 
 /* --- Sidebar Bible Verse Rotation --- */
 var SIDE_VERSES = [
-  { text: '"I can do all things through Him who strengthens me."', ref: '— Philippians 4:13' },
-  { text: '"For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future."', ref: '— Jeremiah 29:11' },
-  { text: '"The Lord is my shepherd; I shall not want."', ref: '— Psalm 23:1' },
-  { text: '"Be strong and courageous. Do not be frightened, and do not be dismayed, for the Lord your God is with you wherever you go."', ref: '— Joshua 1:9' },
-  { text: '"Trust in the Lord with all your heart, and do not lean on your own understanding."', ref: '— Proverbs 3:5' },
-  { text: '"Fear not, for I am with you; be not dismayed, for I am your God."', ref: '— Isaiah 41:10' },
-  { text: '"The peace of God, which surpasses all understanding, will guard your hearts and your minds in Christ Jesus."', ref: '— Philippians 4:7' },
-  { text: '"God is our refuge and strength, a very present help in trouble."', ref: '— Psalm 46:1' },
+  { text: '"I can do all things through Him."', ref: '— Philippians 4:13' },
+  { text: '"The Lord is my shepherd."', ref: '— Psalm 23:1' },
+  { text: '"Be strong and courageous."', ref: '— Joshua 1:9' },
+  { text: '"Trust in the Lord with all your heart."', ref: '— Proverbs 3:5' },
+  { text: '"Fear not, for I am with you."', ref: '— Isaiah 41:10' },
+  { text: '"God is our refuge and strength."', ref: '— Psalm 46:1' },
   { text: '"Be still, and know that I am God."', ref: '— Psalm 46:10' },
-  { text: '"He heals the brokenhearted and binds up their wounds."', ref: '— Psalm 147:3' }
+  { text: '"He heals the brokenhearted."', ref: '— Psalm 147:3' },
+  { text: '"The Lord is my light and my salvation."', ref: '— Psalm 27:1' },
+  { text: '"His peace surpasses all understanding."', ref: '— Philippians 4:7' },
+  { text: '"Cast your anxieties on Him."', ref: '— 1 Peter 5:7' },
+  { text: '"Your word is a lamp to my feet."', ref: '— Psalm 119:105' },
+  { text: '"Let all you do be done in love."', ref: '— 1 Corinthians 16:14' },
+  { text: '"Jesus Christ is the same yesterday and forever."', ref: '— Hebrews 13:8' },
+  { text: '"Delight yourself in the Lord."', ref: '— Psalm 37:4' }
 ];
 var sideVerseIndex = 0;
 
