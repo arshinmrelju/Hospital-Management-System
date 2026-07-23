@@ -1172,7 +1172,7 @@
         try { localStorage.removeItem(key); } catch(e) {}
       }
     }
-    window.location.reload();
+    clearAllCaches().then(function() { window.location.reload(); });
   };
 
   document.addEventListener('DOMContentLoaded', function() {

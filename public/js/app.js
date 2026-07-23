@@ -829,3 +829,12 @@ window.setButtonIdle = function(btn) {
   btn.innerHTML = btn.getAttribute('data-original-html') || 'Submit';
 };
 
+window.clearAllCaches = function() {
+  if ('caches' in window) {
+    return caches.keys().then(function(names) {
+      return Promise.all(names.map(function(name) { return caches.delete(name); }));
+    });
+  }
+  return Promise.resolve();
+};
+

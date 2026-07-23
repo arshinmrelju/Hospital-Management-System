@@ -335,7 +335,7 @@
             <span class="nav-label">Help</span>
           </a>
           <div class="sidebar-divider"></div>
-          <a href="#" class="nav-item" onclick="location.reload(true);return false" title="Hard Refresh">
+          <a href="#" class="nav-item" onclick="clearAllCaches().then(function(){location.reload()});return false" title="Hard Refresh">
             <span class="material-icons-round">refresh</span>
             <span class="nav-label">Hard Refresh</span>
           </a>
@@ -1529,7 +1529,7 @@
     window.name = 'wellness_reception';
     try {
       var bc = new BroadcastChannel('hms_reload');
-      bc.onmessage = function() { location.reload(); };
+      bc.onmessage = function() { clearAllCaches().then(function(){ location.reload(); }); };
     } catch(e) {}
   </script>
 </body>

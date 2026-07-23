@@ -778,6 +778,11 @@
       }
     }
     updateCacheBadge();
+    if ('caches' in window) {
+      caches.keys().then(function(names) {
+        return Promise.all(names.map(function(name) { return caches.delete(name); }));
+      });
+    }
     var refreshed = false;
     try {
       var bc = new BroadcastChannel('hms_reload');
