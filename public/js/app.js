@@ -718,7 +718,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var gs = document.getElementById('globalSearch');
     if (gs) gs.value = searchQ;
     var patientSearch = document.getElementById('patientSearch');
-    if (patientSearch) { patientSearch.value = searchQ; patientSearch.dispatchEvent(new Event('input')); }
+    if (patientSearch) { patientSearch.value = searchQ; }
   }
 });
 

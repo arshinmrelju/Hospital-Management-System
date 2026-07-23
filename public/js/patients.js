@@ -36,6 +36,7 @@ const ROWS_PER_PAGE = 10;
 let activeFilter = 'all';
 let sortCol = null, sortDir = 1;
 var _patientsInitialized = false;
+var _patientsDataLoading = true;
 
 
 function renderTable() {
@@ -205,6 +206,7 @@ function clearAdvancedFilters() {
 window.clearAdvancedFilters = clearAdvancedFilters;
 
 function applyFilters() {
+  if (_patientsDataLoading && !allPatients.length) return;
   const search = (document.getElementById('patientSearch')?.value || '').toLowerCase();
   const patientId = (document.getElementById('patientIdSearch')?.value || '').toLowerCase();
   const dept = document.getElementById('deptFilter')?.value || '';
@@ -224,7 +226,7 @@ function applyFilters() {
 
   filteredPatients = allPatients.filter(p => {
     // 1. Global Search
-    const name = `${p.fname} ${p.lname} ${p.op_no || p.id} ${p.contact} ${p.doctor || ''}`.toLowerCase();
+    const name = `${p.fname || ''} ${p.lname || ''} ${p.name || ''} ${p.Name || ''} ${p.patient_name || ''} ${p.op_no || p.id || ''} ${p.contact || ''} ${p.doctor || ''}`.toLowerCase();
     if (search && !name.includes(search)) return false;
 
     // 1b. Patient ID specific search
@@ -577,6 +579,7 @@ window.refreshPatients = refreshPatients;
 
 async function loadPatients(skipCache) {
   skipCache = skipCache || false;
+  _patientsDataLoading = true;
 
   const tbody = document.getElementById('patientTableBody');
   var hasRenderedCache = false;
@@ -631,10 +634,12 @@ async function loadPatients(skipCache) {
     window.allPatients = allPatients;
     PatientCache.set(allPatients);
     if (typeof updateExportBadge === 'function') updateExportBadge();
+    _patientsDataLoading = false;
     applyFilters();
     setAddPatientEnabled(true);
   } catch (e) {
     console.error('Failed to load patients:', e);
+    _patientsDataLoading = false;
     const errMsg = e && e.message ? e.message : String(e);
     if (!hasRenderedCache) {
       if (typeof toast === 'function') toast('Could not load patients: ' + errMsg, 'error');

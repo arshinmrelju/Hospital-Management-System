@@ -625,9 +625,15 @@ async function ensurePatientsLoaded() {
   try {
     var result = await window.API.getPatients();
     if (result && result.data) {
-      window.allPatients = typeof normalizePatients === 'function'
+      var data = typeof normalizePatients === 'function'
         ? normalizePatients(result.data)
         : result.data;
+      if (Array.isArray(window.allPatients)) {
+        window.allPatients.length = 0;
+        data.forEach(function(item) { window.allPatients.push(item); });
+      } else {
+        window.allPatients = data;
+      }
     }
   } catch (e) {
     console.warn('Could not load patients:', e);

@@ -36,6 +36,7 @@ const SKIN_ROWS_PER_PAGE = 10;
 let skinSortCol = null, skinSortDir = 1;
 let skinActiveFilter = 'all';
 var _skinInitialized = false;
+var _skinLoading = false;
 
 function skinFormatDate(d) {
   return d ? new Date(d).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '';
@@ -104,6 +105,7 @@ function validateSkinInput(data) {
 }
 
 function applySkinFilters() {
+  if (_skinLoading && !allSkinPatients.length) return;
   const search = (document.getElementById('skinSearch')?.value || '').toLowerCase();
   const patientId = (document.getElementById('skinPatientIdSearch')?.value || '').toLowerCase();
   const dept = document.getElementById('skinDeptFilter')?.value || '';
@@ -122,7 +124,7 @@ function applySkinFilters() {
 
   filteredSkinPatients = allSkinPatients.filter(p => {
     const pid = p.skin_id || p.id || '';
-    const name = p.patient_name || '';
+    const name = p.patient_name || p.name || p.Name || '';
     const haystack = (pid + ' ' + name + ' ' + (p.contact || '')).toLowerCase();
     if (search && !haystack.includes(search)) return false;
 
@@ -419,6 +421,7 @@ window.refreshSkinPatients = refreshSkinPatients;
 
 async function loadSkinPatients(skipCache) {
   skipCache = skipCache || false;
+  _skinLoading = true;
   const tbody = document.getElementById('skinTableBody');
   var hasRenderedCache = false;
 
@@ -427,13 +430,13 @@ async function loadSkinPatients(skipCache) {
     if (cached && cached.length > 0) {
       allSkinPatients = cached;
       window.allSkinPatients = allSkinPatients;
-      if (_skinInitialized) applySkinFilters();
+      applySkinFilters();
       hasRenderedCache = true;
       setAddSkinEnabled(true);
     }
   }
 
-  if (!hasRenderedCache && tbody && _skinInitialized) {
+  if (!hasRenderedCache && tbody) {
     var skeletonHTML = '';
     for (var i = 0; i < 5; i++) {
       skeletonHTML += '<tr class="skeleton-row">' +
@@ -458,11 +461,13 @@ async function loadSkinPatients(skipCache) {
     allSkinPatients = result.data || [];
     window.allSkinPatients = allSkinPatients;
     SkinCache.set(allSkinPatients);
-    if (_skinInitialized) applySkinFilters();
+    _skinLoading = false;
+    applySkinFilters();
     setAddSkinEnabled(true);
   } catch (e) {
     console.error('Failed to load skin patients:', e);
-    if (!hasRenderedCache && _skinInitialized) {
+    _skinLoading = false;
+    if (!hasRenderedCache) {
       if (typeof toast === 'function') toast('Could not load skin patients: ' + (e.message || e), 'error');
       if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--error,#ef4444)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px">error_outline</span>Failed to load<br><button class="btn-secondary" style="margin-top:12px" onclick="loadSkinPatients()">Retry</button></td></tr>';
       allSkinPatients = [];
@@ -576,8 +581,7 @@ async function submitAddSkin(e) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  var isSPA = !!document.getElementById('page-skin');
-  if (!isSPA) _skinInitialized = true;
+  _skinInitialized = true;
   await loadSkinPatients();
   if (typeof window.populateSkinDropdowns === 'function') window.populateSkinDropdowns();
 });

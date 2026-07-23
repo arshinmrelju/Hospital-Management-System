@@ -36,6 +36,7 @@ const ORTHO_ROWS_PER_PAGE = 10;
 let orthoSortCol = null, orthoSortDir = 1;
 let orthoActiveFilter = 'all';
 var _orthoInitialized = false;
+var _orthoLoading = false;
 
 function getConditionTypeLabel(val) {
   var labels = {
@@ -103,6 +104,7 @@ function validateOrthoInput(data) {
 }
 
 function applyOrthoFilters() {
+  if (_orthoLoading && !allOrthoPatients.length) return;
   const search = (document.getElementById('orthoSearch')?.value || '').toLowerCase();
   const patientId = (document.getElementById('orthoPatientIdSearch')?.value || '').toLowerCase();
   const dept = document.getElementById('orthoDeptFilter')?.value || '';
@@ -121,7 +123,7 @@ function applyOrthoFilters() {
 
   filteredOrthoPatients = allOrthoPatients.filter(p => {
     const pid = p.ortho_id || p.id || '';
-    const name = p.patient_name || '';
+    const name = p.patient_name || p.name || p.Name || '';
     const haystack = (pid + ' ' + name + ' ' + (p.contact || '')).toLowerCase();
     if (search && !haystack.includes(search)) return false;
 
@@ -429,6 +431,7 @@ window.refreshOrthoPatients = refreshOrthoPatients;
 
 async function loadOrthoPatients(skipCache) {
   skipCache = skipCache || false;
+  _orthoLoading = true;
   const tbody = document.getElementById('orthoTableBody');
   var hasRenderedCache = false;
 
@@ -437,13 +440,13 @@ async function loadOrthoPatients(skipCache) {
     if (cached && cached.length > 0) {
       allOrthoPatients = cached;
       window.allOrthoPatients = allOrthoPatients;
-      if (_orthoInitialized) applyOrthoFilters();
+      applyOrthoFilters();
       hasRenderedCache = true;
       setAddOrthoEnabled(true);
     }
   }
 
-  if (!hasRenderedCache && tbody && _orthoInitialized) {
+  if (!hasRenderedCache && tbody) {
     var skeletonHTML = '';
     for (var i = 0; i < 5; i++) {
       skeletonHTML += '<tr class="skeleton-row">' +
@@ -468,11 +471,13 @@ async function loadOrthoPatients(skipCache) {
     allOrthoPatients = result.data || [];
     window.allOrthoPatients = allOrthoPatients;
     OrthoCache.set(allOrthoPatients);
-    if (_orthoInitialized) applyOrthoFilters();
+    _orthoLoading = false;
+    applyOrthoFilters();
     setAddOrthoEnabled(true);
   } catch (e) {
     console.error('Failed to load orthopedic patients:', e);
-    if (!hasRenderedCache && _orthoInitialized) {
+    _orthoLoading = false;
+    if (!hasRenderedCache) {
       if (typeof toast === 'function') toast('Could not load orthopedic patients: ' + (e.message || e), 'error');
       if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--error,#ef4444)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px">error_outline</span>Failed to load<br><button class="btn-secondary" style="margin-top:12px" onclick="loadOrthoPatients()">Retry</button></td></tr>';
       allOrthoPatients = [];
@@ -567,7 +572,6 @@ async function submitAddOrtho(e) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  var isSPA = !!document.getElementById('page-ortho');
-  if (!isSPA) _orthoInitialized = true;
+  _orthoInitialized = true;
   await loadOrthoPatients();
 });
