@@ -3,73 +3,114 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Offline – Wellness Medicals</title>
+  <title>Offline Mode – Wellness Medicals</title>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #d5f5f0 0%, #f0fdfa 50%, #ccfbf1 100%);
+      background: linear-gradient(135deg, #004840 0%, #0D9488 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 24px;
+      color: #191c1e;
     }
     .card {
-      background: rgba(255,255,255,0.85);
-      backdrop-filter: blur(14px);
-      border: 1px solid rgba(255,255,255,0.7);
-      border-radius: 24px;
-      box-shadow: 0 12px 40px rgba(0,80,70,0.08);
-      padding: 48px;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.6);
+      border-radius: 28px;
+      box-shadow: 0 20px 50px rgba(0,60,50,0.3);
+      padding: 40px 32px;
       text-align: center;
-      max-width: 420px;
+      max-width: 440px;
       width: 100%;
     }
-    .icon {
-      width: 72px; height: 72px;
+    .icon-ring {
+      width: 80px; height: 80px;
       border-radius: 50%;
-      background: rgba(13,148,136,0.10);
+      background: #fef3c7;
+      border: 3px solid #f59e0b;
       display: flex; align-items: center; justify-content: center;
       margin: 0 auto 20px;
+      box-shadow: 0 8px 24px rgba(245,158,11,0.25);
     }
-    .icon .material-icons-round { font-size: 36px; color: #0D9488; }
+    .icon-ring .material-icons-round { font-size: 40px; color: #b45309; }
     h1 {
       font-family: 'Manrope', sans-serif;
-      font-size: 1.3rem;
+      font-size: 1.4rem;
       font-weight: 800;
-      color: #191c1e;
+      color: #0f172a;
       margin-bottom: 8px;
     }
     p {
-      color: #3d4947;
+      color: #475569;
       font-size: 0.88rem;
       line-height: 1.6;
       margin-bottom: 24px;
     }
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
     .btn {
-      display: inline-flex; align-items: center; gap: 6px;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
       background: #0D9488; color: #fff; border: none;
-      border-radius: 12px; padding: 12px 24px;
-      font-family: 'Inter', sans-serif; font-weight: 600; font-size: 0.88rem;
+      border-radius: 14px; padding: 14px 24px;
+      font-family: 'Inter', sans-serif; font-weight: 700; font-size: 0.92rem;
       cursor: pointer; transition: all 0.2s;
-      box-shadow: 0 2px 12px rgba(13,148,136,0.30);
+      box-shadow: 0 4px 16px rgba(13,148,136,0.30);
       text-decoration: none;
     }
     .btn:hover { background: #00685f; transform: translateY(-1px); }
-    .btn .material-icons-round { font-size: 18px; }
+    .btn-secondary {
+      background: #f1f5f9; color: #334155;
+      box-shadow: none; border: 1.5px solid #cbd5e1;
+    }
+    .btn-secondary:hover { background: #e2e8f0; color: #0f172a; }
+    .btn .material-icons-round { font-size: 20px; }
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #fef3c7; color: #b45309;
+      font-size: 0.78rem; font-weight: 700;
+      padding: 6px 14px; border-radius: 20px;
+      margin-bottom: 16px;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; }
   </style>
 </head>
 <body>
   <div class="card">
-    <div class="icon"><span class="material-icons-round">wifi_off</span></div>
-    <h1>You're Offline</h1>
-    <p>Wellness Medicals Admin is running in offline mode.<br/>Some features may be limited until your connection is restored.</p>
-    <button class="btn" onclick="window.location.reload()">
-      <span class="material-icons-round">refresh</span> Try Again
-    </button>
+    <div class="status-pill">
+      <div class="dot"></div> Offline Mode Active
+    </div>
+    <div class="icon-ring">
+      <span class="material-icons-round">wifi_off</span>
+    </div>
+    <h1>WiFi Disconnected</h1>
+    <p>Don't worry! Wellness Medicals HMS works offline. All cached patients, OPD records, and registries remain fully accessible.</p>
+    
+    <div class="actions">
+      <a href="/index.html" class="btn">
+        <span class="material-icons-round">space_dashboard</span> Open Reception Console
+      </a>
+      <a href="/patients.html" class="btn btn-secondary">
+        <span class="material-icons-round">groups</span> Patient Registry
+      </a>
+      <button class="btn btn-secondary" onclick="window.location.reload()">
+        <span class="material-icons-round">refresh</span> Retry Connection
+      </button>
+    </div>
   </div>
+
+  <script>
+    window.addEventListener('online', function() {
+      window.location.href = '/index.html';
+    });
+  </script>
 </body>
 </html>

@@ -124,6 +124,12 @@ function sheetsFetch(params, callback) {
     });
   }
 
+  // Intercept write operations if offline -> queue them in OfflineSync
+  if (window.OfflineSync && window.OfflineSync.interceptWrite(params)) {
+    callback({ success: true, offlineQueued: true });
+    return;
+  }
+
   var callbackName = 'scb' + String(Math.random()).slice(2);
   
   // Google Apps Script cold starts can take 30+ seconds — allow 45s
@@ -133,7 +139,17 @@ function sheetsFetch(params, callback) {
       delete window[callbackName];
       var s = document.getElementById(callbackName);
       if (s) s.parentNode.removeChild(s);
-      callback({ success: false, error: 'Request timed out' });
+      
+      if (window.OfflineSync && window.OfflineSync.fallbackRead) {
+        window.OfflineSync.fallbackRead(params.action).then(function(fb) {
+          if (fb) { callback(fb); }
+          else { callback({ success: false, error: 'Request timed out' }); }
+        }).catch(function() {
+          callback({ success: false, error: 'Request timed out' });
+        });
+      } else {
+        callback({ success: false, error: 'Request timed out' });
+      }
     }
   }, 45000);
 
@@ -142,6 +158,10 @@ function sheetsFetch(params, callback) {
     delete window[callbackName];
     var s = document.getElementById(callbackName);
     if (s) s.parentNode.removeChild(s);
+
+    if (data && data.success && data.data && window.OfflineSync && window.OfflineSync.persistFetch) {
+      window.OfflineSync.persistFetch(params.action, data.data);
+    }
     callback(data);
   };
 
@@ -160,10 +180,62 @@ function sheetsFetch(params, callback) {
     delete window[callbackName];
     var s = document.getElementById(callbackName);
     if (s) s.parentNode.removeChild(s);
-    callback({ success: false, error: 'Network error loading data' });
+
+    if (window.OfflineSync && window.OfflineSync.fallbackRead) {
+      window.OfflineSync.fallbackRead(params.action).then(function(fb) {
+        if (fb) { callback(fb); }
+        else { callback({ success: false, error: 'Network error loading data' }); }
+      }).catch(function() {
+        callback({ success: false, error: 'Network error loading data' });
+      });
+    } else {
+      callback({ success: false, error: 'Network error loading data' });
+    }
   };
   document.head.appendChild(script);
 }
+
+// Expose direct fetch for OfflineSync replay queue without interception
+window.sheetsFetchDirect = function(params) {
+  return new Promise(function(resolve) {
+    var callbackName = 'scb' + String(Math.random()).slice(2);
+    var timeoutId = setTimeout(function() {
+      if (window[callbackName]) {
+        delete window[callbackName];
+        var s = document.getElementById(callbackName);
+        if (s) s.parentNode.removeChild(s);
+        resolve({ success: false, error: 'Request timed out' });
+      }
+    }, 45000);
+
+    window[callbackName] = function(data) {
+      clearTimeout(timeoutId);
+      delete window[callbackName];
+      var s = document.getElementById(callbackName);
+      if (s) s.parentNode.removeChild(s);
+      resolve(data);
+    };
+
+    var url = SHEETS_API_URL + '?callback=' + callbackName;
+    for (var key in params) {
+      if (params.hasOwnProperty(key)) {
+        url += '&' + encodeURIComponent(key) + '=' + encodeURIComponent(String(params[key]));
+      }
+    }
+
+    var script = document.createElement('script');
+    script.id = callbackName;
+    script.src = url;
+    script.onerror = function() {
+      clearTimeout(timeoutId);
+      delete window[callbackName];
+      var s = document.getElementById(callbackName);
+      if (s) s.parentNode.removeChild(s);
+      resolve({ success: false, error: 'Network error' });
+    };
+    document.head.appendChild(script);
+  });
+};
 
 function isValidOpNo(val) {
   if (!val) return false;
@@ -200,7 +272,7 @@ function normalizePatient(p) {
 }
 
 function fallbackPatients(params) {
-  console.warn('Using LocalStorage patients fallback.');
+  console.warn('Using LocalStorage/IndexedDB patients fallback.');
   var local = getLocalData('patients') || seedLocalPatients();
   if (params && params.search) {
     var search = params.search.toLowerCase();
