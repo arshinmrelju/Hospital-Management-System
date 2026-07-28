@@ -400,7 +400,11 @@ window.API = {
       if (data[k]) q[k] = data[k];
     });
     return sheetsFetch(q).then(function(resp) {
+      var opNo = data.op_no || String(Date.now());
       if (resp.success) {
+        if (!resp.data) {
+          resp.data = { id: opNo, op_no: opNo };
+        }
         return resp;
       } else {
         var local = getLocalData('patients') || seedLocalPatients();
@@ -450,6 +454,9 @@ window.API = {
     }
     return sheetsFetch(q).then(function(resp) {
       if (resp.success) {
+        if (!resp.data) {
+          resp.data = Object.assign({ id: id, op_no: id }, data);
+        }
         return resp;
       } else {
         var local = getLocalData('patients') || seedLocalPatients();
@@ -462,7 +469,7 @@ window.API = {
         }
         if (idx >= 0) {
           for (var key in data) {
-            if (data.hasOwnProperty(key) && key !== 'id') {
+            if (data.hasOwnProperty(key)) {
               local[idx][key] = data[key];
             }
           }
@@ -524,6 +531,9 @@ window.API = {
     });
     return sheetsFetch(q).then(function(resp) {
       if (resp.success) {
+        if (!resp.data) {
+          resp.data = { id: 'A' + String(Date.now()).slice(-8), token: 1 };
+        }
         return resp;
       } else if (resp.error === 'duplicate') {
         return resp;
@@ -564,6 +574,9 @@ window.API = {
     }
     return sheetsFetch(q).then(function(resp) {
       if (resp.success) {
+        if (!resp.data) {
+          resp.data = Object.assign({ id: id }, data);
+        }
         return resp;
       } else {
         var local = getLocalData('appointments') || seedLocalAppointments();
@@ -777,13 +790,16 @@ window.API = {
       if (data[k]) q[k] = data[k];
     });
     return sheetsFetch(q).then(function(resp) {
+      var skinId = data.skin_id || String(Date.now());
       if (resp.success) {
+        if (!resp.data) {
+          resp.data = { id: skinId, skin_id: skinId };
+        }
         return resp;
       }
       var local = getLocalData('skinPatients') || [];
       var now = new Date();
-      var skinId = data.skin_id || '';
-      if (!skinId) {
+      if (!data.skin_id) {
         var nextId = parseInt(localStorage.getItem('hms_skin_next_id') || '3801', 10);
         if (isNaN(nextId) || nextId < 3801) nextId = 3801;
         localStorage.setItem('hms_skin_next_id', String(nextId + 1));
@@ -813,6 +829,9 @@ window.API = {
     }
     return sheetsFetch(q).then(function(resp) {
       if (resp.success) {
+        if (!resp.data) {
+          resp.data = Object.assign({ id: id, skin_id: id }, data);
+        }
         return resp;
       }
       var local = getLocalData('skinPatients') || [];
@@ -909,7 +928,11 @@ window.API = {
       if (data[k]) q[k] = data[k];
     });
     return sheetsFetch(q).then(function(resp) {
+      var orthoId = data.ortho_id || String(Date.now());
       if (resp.success) {
+        if (!resp.data) {
+          resp.data = { id: orthoId, ortho_id: orthoId };
+        }
         return resp;
       }
       var local = getLocalData('orthopedicPatients') || [];
@@ -942,6 +965,9 @@ window.API = {
     }
     return sheetsFetch(q).then(function(resp) {
       if (resp.success) {
+        if (!resp.data) {
+          resp.data = Object.assign({ id: id, ortho_id: id }, data);
+        }
         return resp;
       }
       var local = getLocalData('orthopedicPatients') || [];

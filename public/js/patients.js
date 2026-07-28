@@ -510,7 +510,7 @@ async function submitEditPatient(e) {
     const result = await window.API.updatePatient(id, raw);
     const idx = allPatients.findIndex(p => p.id == id);
     if (idx !== -1) {
-      allPatients[idx] = result.data;
+      allPatients[idx] = Object.assign({}, allPatients[idx], raw, result.data || {});
       window.allPatients = allPatients;
       PatientCache.clear();
     }
@@ -715,9 +715,11 @@ async function submitAddPatient(e) {
   setButtonLoading(submitBtn, 'Registering...');
   try {
     const result = await window.API.createPatient(raw);
+    const resData = (result && result.data) || {};
+    const createdId = resData.id || resData.op_no || raw.op_no;
     const newP = normalizePatient({
-      id: result.data.id,
-      op_no: result.data.op_no,
+      id: createdId,
+      op_no: createdId,
       fname: raw.fname,
       lname: raw.lname,
       contact: raw.contact || '',
