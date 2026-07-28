@@ -206,7 +206,13 @@ function clearAdvancedFilters() {
 window.clearAdvancedFilters = clearAdvancedFilters;
 
 function applyFilters() {
-  if (_patientsDataLoading && !allPatients.length) return;
+  if (_patientsDataLoading && !allPatients.length) {
+    const tbody = document.getElementById('patientTableBody');
+    if (tbody && !tbody.querySelector('.skeleton-row')) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--on-surface-var)"><span class="material-icons-round" style="display:block;font-size:40px;margin-bottom:8px;color:var(--primary-light)">sync</span>Loading patients…</td></tr>';
+    }
+    return;
+  }
   const search = (document.getElementById('patientSearch')?.value || '').toLowerCase();
   const patientId = (document.getElementById('patientIdSearch')?.value || '').toLowerCase();
   const dept = document.getElementById('deptFilter')?.value || '';
@@ -355,8 +361,10 @@ function clearPatientSearch() {
 }
 window.clearPatientSearch = clearPatientSearch;
 
+var _filterDebounceTimer = null;
 function filterPatients() {
-  applyFilters();
+  clearTimeout(_filterDebounceTimer);
+  _filterDebounceTimer = setTimeout(applyFilters, 200);
 }
 window.filterPatients = filterPatients;
 
@@ -559,7 +567,7 @@ function normalizePatients(rawList) {
                   (validOp(p['ID. NO']) && p['ID. NO']) ||
                   (validOp(p['ID']) && p['ID']) ||
                   (validOp(p.op) && p.op) || '';
-    const doctor = p.doctor || p.Doctor || p.doctor_name || p.assigned_doctor || p['Assigned Doctor'] || '';
+    const doctor = p.doctor || p.Doctor || p.doctor_name || p.assigned_doctor || p['Assigned Doctor'] || p.assignedDoctor || '';
     const address = p.address || p.Address || p.place || p.Place || p['Address'] || '';
     return { ...p, fname, lname, contact, department, blood_group, patient_type, status, last_visit, age, gender, op_no, doctor, address };
   });
@@ -652,9 +660,19 @@ async function loadPatients(skipCache) {
 window.loadPatients = loadPatients;
 
 function initPatientsPage() {
-  if (_patientsInitialized) return;
+  if (_patientsInitialized) {
+    // Re-apply filters every time the tab is revisited
+    // so that search typed while loading still works
+    applyFilters();
+    return;
+  }
   _patientsInitialized = true;
-  applyFilters();
+  // If data is not yet loaded and not currently loading, kick off load
+  if (!allPatients.length && !_patientsDataLoading) {
+    loadPatients();
+  } else {
+    applyFilters();
+  }
 }
 
 
