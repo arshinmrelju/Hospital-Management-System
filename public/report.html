@@ -20,13 +20,23 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="description" content="Executive Mobile App for Wellness Medicals HMS." />
+  <!-- Open Graph / Social sharing -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Wellness Executive – Wellness Medicals HMS" />
+  <meta property="og:description" content="Live clinic pulse, patient registry & executive analytics for Wellness Medicals." />
+  <meta property="og:image" content="assets/hms-logo.jpg" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Wellness Executive – Wellness Medicals HMS" />
+  <meta name="twitter:description" content="Live clinic pulse, patient registry & executive analytics for Wellness Medicals." />
+  <!-- Security -->
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
     href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
-  <link rel="stylesheet" href="css/owner-mobile.css" />
+  <link rel="stylesheet" href="css/owner-mobile.css?v=24" />
   <style>
     @media print {
 
@@ -162,14 +172,14 @@
       <div class="owner-kpi-grid">
         <div class="owner-kpi-card" onclick="switchOwnerTab('tab-patients')">
           <div class="owner-kpi-header">
-            <div class="owner-kpi-icon" style="background:rgba(13,148,136,0.12);color:#0D9488;">
-              <span class="material-icons-round">person_add</span>
+            <div class="owner-kpi-icon" style="background:rgba(0,104,95,0.12);color:#00685f;">
+              <span class="material-icons-round">groups</span>
             </div>
             <span class="owner-kpi-trend">+Today</span>
           </div>
           <div>
             <div class="owner-kpi-val" id="kpiTodayPatients">0</div>
-            <div class="owner-kpi-label">Registered Today</div>
+            <div class="owner-kpi-label">OPD Patients Today</div>
           </div>
         </div>
 
@@ -188,14 +198,14 @@
 
         <div class="owner-kpi-card" onclick="switchOwnerTab('tab-patients')">
           <div class="owner-kpi-header">
-            <div class="owner-kpi-icon" style="background:rgba(2,132,199,0.12);color:#0284c7;">
-              <span class="material-icons-round">calendar_today</span>
+            <div class="owner-kpi-icon" style="background:rgba(13,148,136,0.12);color:#0D9488;">
+              <span class="material-icons-round">person_add</span>
             </div>
-            <span class="owner-kpi-trend" style="background:rgba(2,132,199,0.1);color:#0284c7;">OPD</span>
+            <span class="owner-kpi-trend" style="background:rgba(13,148,136,0.1);color:#0D9488;">Today</span>
           </div>
           <div>
             <div class="owner-kpi-val" id="kpiTodayOpd">0</div>
-            <div class="owner-kpi-label">New Registrations</div>
+            <div class="owner-kpi-label">New Registrations Today</div>
           </div>
         </div>
 
@@ -435,7 +445,7 @@
     <div class="owner-pin-header">
       <img src="assets/hms-logo.jpg" alt="Wellness Medicals" class="owner-pin-logo" />
       <h2 class="owner-pin-title">Wellness Executive</h2>
-      <p class="owner-pin-subtitle">Enter PIN (e.g. 1234 or 0000)</p>
+      <p class="owner-pin-subtitle">Enter your secure access PIN</p>
     </div>
 
     <div>
@@ -489,14 +499,75 @@
   <!-- Toast Notification -->
   <div class="owner-toast" id="ownerToast"></div>
 
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!-- PERCENTAGE LOADING OVERLAY                                     -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <div id="ownerLoadingOverlay" style="display:none;">
+    <div class="owner-loader-inner">
+      <img src="assets/hms-logo.jpg" alt="Wellness Medicals" class="owner-loader-logo" />
+      <div class="owner-loader-ring">
+        <svg viewBox="0 0 100 100" class="owner-loader-svg">
+          <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8"/>
+          <circle id="ownerLoaderArc" cx="50" cy="50" r="44" fill="none" stroke="#fff" stroke-width="8"
+            stroke-linecap="round" stroke-dasharray="276.46" stroke-dashoffset="276.46"
+            transform="rotate(-90 50 50)"/>
+        </svg>
+        <div class="owner-loader-pct" id="ownerLoaderPct">0%</div>
+      </div>
+      <div class="owner-loader-title">Wellness Executive</div>
+      <div class="owner-loader-step" id="ownerLoaderStep">Initialising...</div>
+    </div>
+  </div>
+  <style>
+    #ownerLoadingOverlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: linear-gradient(145deg, #004d46 0%, #00695c 60%, #00897b 100%);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column;
+      transition: opacity 0.5s ease;
+    }
+    #ownerLoadingOverlay.fade-out { opacity: 0; pointer-events: none; }
+    .owner-loader-inner {
+      display: flex; flex-direction: column; align-items: center; gap: 18px;
+      padding: 32px 24px;
+    }
+    .owner-loader-logo {
+      width: 64px; height: 64px; border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      animation: ownerLogoPulse 2s ease-in-out infinite;
+    }
+    @keyframes ownerLogoPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.06); }
+    }
+    .owner-loader-ring { position: relative; width: 120px; height: 120px; }
+    .owner-loader-svg { width: 120px; height: 120px; }
+    .owner-loader-pct {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Manrope', sans-serif; font-size: 1.5rem; font-weight: 800;
+      color: #fff; letter-spacing: -0.5px;
+    }
+    .owner-loader-title {
+      font-family: 'Manrope', sans-serif; font-size: 1.15rem; font-weight: 700;
+      color: rgba(255,255,255,0.95); letter-spacing: 0.2px;
+    }
+    .owner-loader-step {
+      font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 500;
+      color: rgba(255,255,255,0.65); letter-spacing: 0.3px;
+      min-height: 18px; text-align: center;
+      transition: opacity 0.25s ease;
+    }
+  </style>
+
   <!-- Core Scripts -->
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
-  <script src="js/sheets-api.js?v=20"></script>
-  <script src="js/firebase-init.js?v=20"></script>
-  <script src="js/pwa.js?v=20"></script>
-  <script src="js/owner-mobile.js?v=23"></script>
+  <script src="js/sheets-api.js?v=25"></script>
+  <script src="js/firebase-init.js?v=25"></script>
+  <script src="js/pwa.js?v=25"></script>
+  <script src="js/owner-mobile.js?v=31"></script>
   <script>
     (function() {
       var secInstallBtn = document.getElementById('pwaSecurityInstallBtn');
