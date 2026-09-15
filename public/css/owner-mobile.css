@@ -1190,3 +1190,41 @@ body.owner-app-body {
   background: rgba(13, 148, 136, 0.08);
   box-shadow: 0 2px 8px rgba(13,148,136,0.12);
 }
+
+/* ── Mobile Haptic & Tactile Press Micro-Interactions ── */
+.owner-nav-btn,
+.owner-chip,
+.owner-opd-chip,
+.owner-kpi-card,
+.owner-action-card,
+.owner-key-btn,
+.owner-opd-loadmore-btn,
+.owner-doc-card,
+.owner-patient-card,
+.owner-action-icon-btn,
+.owner-avatar-pill,
+.owner-sheet-close {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.owner-nav-btn:active,
+.owner-chip:active,
+.owner-opd-chip:active,
+.owner-key-btn:active,
+.owner-opd-loadmore-btn:active,
+.owner-action-icon-btn:active,
+.owner-sheet-close:active {
+  transform: scale(0.93);
+  transition: transform 0.08s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.owner-kpi-card:active,
+.owner-action-card:active,
+.owner-doc-card:active,
+.owner-patient-card:active {
+  transform: scale(0.975);
+  transition: transform 0.08s cubic-bezier(0.4, 0, 0.2, 1);
+}

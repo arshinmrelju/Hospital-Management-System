@@ -23,11 +23,13 @@
   <!-- Open Graph / Social sharing -->
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Wellness Executive – Wellness Medicals HMS" />
-  <meta property="og:description" content="Live clinic pulse, patient registry & executive analytics for Wellness Medicals." />
+  <meta property="og:description"
+    content="Live clinic pulse, patient registry & executive analytics for Wellness Medicals." />
   <meta property="og:image" content="assets/hms-logo.jpg" />
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="Wellness Executive – Wellness Medicals HMS" />
-  <meta name="twitter:description" content="Live clinic pulse, patient registry & executive analytics for Wellness Medicals." />
+  <meta name="twitter:description"
+    content="Live clinic pulse, patient registry & executive analytics for Wellness Medicals." />
   <!-- Security -->
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -36,7 +38,7 @@
     href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
-  <link rel="stylesheet" href="css/owner-mobile.css?v=27" />
+  <link rel="stylesheet" href="css/owner-mobile.css?v=28" />
   <style>
     @media print {
 
@@ -278,26 +280,30 @@
           <button class="owner-opd-chip" data-range="all" onclick="setOwnerOpdRange('all')">All</button>
         </div>
         <div class="owner-opd-chips" style="margin-top:6px;">
-          <button class="owner-opd-chip owner-opd-dim active" data-dim="all" onclick="setOwnerOpdDimension('all')">All</button>
-          <button class="owner-opd-chip owner-opd-dim" data-dim="General" onclick="setOwnerOpdDimension('General')">General</button>
-          <button class="owner-opd-chip owner-opd-dim" data-dim="Skin" onclick="setOwnerOpdDimension('Skin')">Skin</button>
-          <button class="owner-opd-chip owner-opd-dim" data-dim="Ortho" onclick="setOwnerOpdDimension('Ortho')">Ortho</button>
+          <button class="owner-opd-chip owner-opd-dim active" data-dim="all"
+            onclick="setOwnerOpdDimension('all')">All</button>
+          <button class="owner-opd-chip owner-opd-dim" data-dim="General"
+            onclick="setOwnerOpdDimension('General')">General</button>
+          <button class="owner-opd-chip owner-opd-dim" data-dim="Skin"
+            onclick="setOwnerOpdDimension('Skin')">Skin</button>
+          <button class="owner-opd-chip owner-opd-dim" data-dim="Ortho"
+            onclick="setOwnerOpdDimension('Ortho')">Ortho</button>
         </div>
 
         <!-- OPD Search Bar -->
         <div class="owner-opd-search-wrap">
           <span class="material-icons-round owner-opd-search-icon">search</span>
           <input type="text" id="ownerOpdSearch" class="owner-opd-search-input"
-            placeholder="Search by name or OP number…"
-            oninput="filterOwnerOpdSearch(this.value)" />
-          <button class="owner-opd-search-clear" id="ownerOpdSearchClear"
-            onclick="clearOwnerOpdSearch()" title="Clear search" style="display:none;">
+            placeholder="Search by name or OP number…" oninput="filterOwnerOpdSearch(this.value)" />
+          <button class="owner-opd-search-clear" id="ownerOpdSearchClear" onclick="clearOwnerOpdSearch()"
+            title="Clear search" style="display:none;">
             <span class="material-icons-round" style="font-size:16px;">close</span>
           </button>
         </div>
 
         <div class="owner-opd-list" id="ownerOpdList">
-          <div style="text-align:center;padding:16px;color:var(--owner-muted);font-size:0.8rem;">Loading OPD records...</div>
+          <div style="text-align:center;padding:16px;color:var(--owner-muted);font-size:0.8rem;">Loading OPD records...
+          </div>
         </div>
       </div>
 
@@ -531,11 +537,10 @@
       <div class="vital-loader-ring-wrap">
         <svg viewBox="0 0 100 100" class="vital-loader-svg">
           <!-- Background track -->
-          <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(0, 104, 95, 0.09)" stroke-width="7"/>
+          <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(0, 104, 95, 0.09)" stroke-width="7" />
           <!-- Active teal progress arc -->
           <circle id="ownerLoaderArc" cx="50" cy="50" r="44" fill="none" stroke="#00685f" stroke-width="7"
-            stroke-linecap="round" stroke-dasharray="276.46" stroke-dashoffset="276.46"
-            transform="rotate(-90 50 50)"/>
+            stroke-linecap="round" stroke-dasharray="276.46" stroke-dashoffset="276.46" transform="rotate(-90 50 50)" />
         </svg>
         <div class="vital-loader-pct" id="ownerLoaderPct">0%</div>
       </div>
@@ -543,7 +548,8 @@
       <!-- Signature VitalGlass Heartbeat Wave -->
       <div class="vital-loader-heartbeat">
         <svg width="120" height="22" viewBox="0 0 120 22" fill="none">
-          <path class="vital-heartbeat-path" d="M0 11h35l5-7 6 14 6-11 4 5 5-1h59" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path class="vital-heartbeat-path" d="M0 11h35l5-7 6 14 6-11 4 5 5-1h59" stroke="#0D9488" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round" />
         </svg>
       </div>
 
@@ -580,6 +586,7 @@
       opacity: 1;
       transform: scale(1);
     }
+
     #ownerLoadingOverlay.fade-out {
       opacity: 0;
       transform: scale(0.98);
@@ -603,9 +610,17 @@
       max-width: 380px;
       animation: vitalCardIn 0.3s cubic-bezier(0.34, 1.3, 0.64, 1);
     }
+
     @keyframes vitalCardIn {
-      from { opacity: 0; transform: scale(0.92) translateY(16px); }
-      to { opacity: 1; transform: scale(1) translateY(0); }
+      from {
+        opacity: 0;
+        transform: scale(0.92) translateY(16px);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
     }
 
     /* Logo Breathing Ring */
@@ -613,6 +628,7 @@
       position: relative;
       margin-bottom: 16px;
     }
+
     .vital-loader-logo-ring {
       width: 84px;
       height: 84px;
@@ -625,6 +641,7 @@
       box-shadow: 0 0 0 8px rgba(13, 148, 136, 0.04), 0 0 0 16px rgba(13, 148, 136, 0.02);
       animation: vitalPulse 2.4s ease-in-out infinite;
     }
+
     .vital-loader-logo-ring img {
       width: 60px;
       height: 60px;
@@ -632,9 +649,19 @@
       object-fit: cover;
       box-shadow: 0 4px 12px rgba(0, 60, 50, 0.12);
     }
+
     @keyframes vitalPulse {
-      0%, 100% { transform: scale(1); box-shadow: 0 0 0 8px rgba(13, 148, 136, 0.04), 0 0 0 16px rgba(13, 148, 136, 0.02); }
-      50% { transform: scale(1.04); box-shadow: 0 0 0 12px rgba(13, 148, 136, 0.07), 0 0 0 22px rgba(13, 148, 136, 0.03); }
+
+      0%,
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 8px rgba(13, 148, 136, 0.04), 0 0 0 16px rgba(13, 148, 136, 0.02);
+      }
+
+      50% {
+        transform: scale(1.04);
+        box-shadow: 0 0 0 12px rgba(13, 148, 136, 0.07), 0 0 0 22px rgba(13, 148, 136, 0.03);
+      }
     }
 
     /* Typography */
@@ -646,6 +673,7 @@
       letter-spacing: -0.01em;
       margin: 0 0 4px 0;
     }
+
     .vital-loader-subtitle {
       color: #3d4947;
       font-family: 'Inter', sans-serif;
@@ -662,10 +690,12 @@
       height: 110px;
       margin-bottom: 14px;
     }
+
     .vital-loader-svg {
       width: 110px;
       height: 110px;
     }
+
     .vital-loader-pct {
       position: absolute;
       inset: 0;
@@ -686,19 +716,33 @@
       margin-bottom: 16px;
       opacity: 0.85;
     }
+
     .vital-loader-heartbeat svg {
       overflow: visible;
     }
+
     .vital-heartbeat-path {
       stroke-dasharray: 260;
       stroke-dashoffset: 260;
       animation: vitalHeartDraw 2s ease-in-out infinite;
       stroke: #0D9488;
     }
+
     @keyframes vitalHeartDraw {
-      0% { stroke-dashoffset: 260; opacity: 0.3; }
-      50% { stroke-dashoffset: 0; opacity: 1; }
-      100% { stroke-dashoffset: -260; opacity: 0.3; }
+      0% {
+        stroke-dashoffset: 260;
+        opacity: 0.3;
+      }
+
+      50% {
+        stroke-dashoffset: 0;
+        opacity: 1;
+      }
+
+      100% {
+        stroke-dashoffset: -260;
+        opacity: 0.3;
+      }
     }
 
     /* Status Pill */
@@ -714,15 +758,23 @@
       margin-bottom: 14px;
       max-width: 100%;
     }
+
     .vital-spin-icon {
       font-size: 16px;
       color: #0D9488;
       animation: vitalSpin 1.4s linear infinite;
     }
+
     @keyframes vitalSpin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
     }
+
     .vital-loader-step {
       font-family: 'Inter', sans-serif;
       font-size: 0.78rem;
@@ -739,6 +791,7 @@
       display: flex;
       gap: 6px;
     }
+
     .vital-dot {
       width: 6px;
       height: 6px;
@@ -747,11 +800,28 @@
       opacity: 0.4;
       animation: vitalDotBounce 1.4s ease-in-out infinite;
     }
-    .vital-dot:nth-child(2) { animation-delay: 0.2s; }
-    .vital-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    .vital-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .vital-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
     @keyframes vitalDotBounce {
-      0%, 80%, 100% { transform: scale(0.7); opacity: 0.3; }
-      40% { transform: scale(1.15); opacity: 1; }
+
+      0%,
+      80%,
+      100% {
+        transform: scale(0.7);
+        opacity: 0.3;
+      }
+
+      40% {
+        transform: scale(1.15);
+        opacity: 1;
+      }
     }
   </style>
 
@@ -766,16 +836,16 @@
   <script src="js/sheets-api.js?v=26"></script>
   <script src="js/firebase-init.js?v=26"></script>
   <script src="js/pwa.js?v=26"></script>
-  <script src="js/owner-mobile.js?v=37"></script>
+  <script src="js/owner-mobile.js?v=38"></script>
   <script>
-    (function() {
+    (function () {
       var secInstallBtn = document.getElementById('pwaSecurityInstallBtn');
       if (!secInstallBtn) return;
       var _secDeferredPrompt = null;
 
       function isStandalone() {
         return window.matchMedia('(display-mode: standalone)').matches ||
-               window.navigator.standalone === true;
+          window.navigator.standalone === true;
       }
       function isIOS() {
         return /iPhone|iPad|iPod/.test(navigator.userAgent);
@@ -785,7 +855,7 @@
         if (!t) return;
         t.innerHTML = '<span class="material-icons-round" style="font-size:18px">install_mobile</span><span>' + msg + '</span>';
         t.classList.add('show');
-        setTimeout(function() { t.classList.remove('show'); }, 3000);
+        setTimeout(function () { t.classList.remove('show'); }, 3000);
       }
       function hideIfInstalled() {
         if (isStandalone() || localStorage.getItem('pwa_installed') === 'true') {
@@ -795,26 +865,26 @@
 
       hideIfInstalled();
 
-      window.addEventListener('beforeinstallprompt', function(e) {
+      window.addEventListener('beforeinstallprompt', function (e) {
         e.preventDefault();
         _secDeferredPrompt = e;
         secInstallBtn.style.display = '';
       });
 
-      window.addEventListener('appinstalled', function() {
+      window.addEventListener('appinstalled', function () {
         _secDeferredPrompt = null;
         secInstallBtn.style.display = 'none';
         secToast('App installed successfully!');
       });
 
-      secInstallBtn.addEventListener('click', function() {
+      secInstallBtn.addEventListener('click', function () {
         if (isStandalone()) {
           secToast('Already installed on your device');
           return;
         }
         if (_secDeferredPrompt) {
           _secDeferredPrompt.prompt();
-          _secDeferredPrompt.userChoice.then(function(choice) {
+          _secDeferredPrompt.userChoice.then(function (choice) {
             if (choice.outcome === 'accepted') {
               localStorage.setItem('pwa_installed', 'true');
             }

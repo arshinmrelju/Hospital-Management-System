@@ -27,6 +27,37 @@
   var _opdRange = 0;
 
   // ──────────────────────────────────────────────
+  // HAPTIC FEEDBACK UTILITY
+  // ──────────────────────────────────────────────
+  /**
+   * haptic(type)
+   * Plays a vibration pattern using the Web Vibration API.
+   * Gracefully no-ops on unsupported devices (iOS Safari < 13, desktop).
+   *
+   * Types:
+   *   'light'   — 8ms  quick tap (nav chips, filter buttons)
+   *   'medium'  — 20ms tap (row tap, sheet open)
+   *   'heavy'   — 40ms tap (pull-to-refresh trigger, share)
+   *   'success' — [12, 60, 20]  double tap (auth granted)
+   *   'error'   — [80, 40, 80] error shake (wrong PIN)
+   *   'select'  — [6, 30, 6]   subtle double (tab switch)
+   */
+  function haptic(type) {
+    if (!navigator.vibrate) return;
+    switch (type) {
+      case 'light':   navigator.vibrate(8);            break;
+      case 'medium':  navigator.vibrate(20);           break;
+      case 'heavy':   navigator.vibrate(40);           break;
+      case 'success': navigator.vibrate([12, 60, 20]); break;
+      case 'error':   navigator.vibrate([80, 40, 80]); break;
+      case 'select':  navigator.vibrate([6, 30, 6]);   break;
+      default:        navigator.vibrate(10);           break;
+    }
+  }
+  // expose so inline onclick in HTML can call it
+  window.haptic = haptic;
+
+  // ──────────────────────────────────────────────
   // LOADING OVERLAY (VitalGlass percentage)
   // ──────────────────────────────────────────────
   var _loaderPct = 0;
@@ -285,6 +316,7 @@
         role: 'Report',
         timestamp: Date.now()
       }));
+      haptic('success');
       showToast('Welcome, Executive Access Granted', 'verified_user');
       setTimeout(function () {
         var pinModal = document.getElementById('ownerPinModal');
@@ -294,11 +326,14 @@
       }, 300);
     } else if (_pinBuffer.length >= 4 && validPins.indexOf(_pinBuffer) === -1 && validPins.indexOf(cleanPin) === -1) {
       if (errorEl) errorEl.textContent = 'Incorrect PIN. Please try again.';
-      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+      haptic('error');
       setTimeout(function () {
         _pinBuffer = '';
         dots.forEach(function (d) { d.classList.remove('filled'); });
       }, 500);
+    } else {
+      // Each valid key press — light tick
+      haptic('light');
     }
   };
 
@@ -306,6 +341,7 @@
   // TAB NAVIGATION
   // ──────────────────────────────────────────────
   window.switchOwnerTab = function (tabId, btn) {
+    haptic('select');
     _currentTab = tabId;
     document.querySelectorAll('.owner-tab-view').forEach(function (t) {
       t.style.display = 'none';
@@ -364,6 +400,7 @@
       isPulling = false;
       var diff = currentY - startY;
       if (diff > 60 && !_isRefreshing) {
+        haptic('heavy');   // confirm pull-to-refresh threshold reached
         _isRefreshing = true;
         refreshAppData().finally(function () {
           setTimeout(function () {
@@ -756,6 +793,7 @@
   }
 
   window.ownerOpdShowAll = function () {
+    haptic('light');
     _opdShowAll = true;
     renderOpdRegister();
   };
@@ -768,7 +806,10 @@
     renderOpdRegister();
   };
 
+  window.hapticLight = function () { haptic('light'); };
+
   window.clearOwnerOpdSearch = function () {
+    haptic('light');
     _opdSearch = '';
     _opdShowAll = false;
     var inp = document.getElementById('ownerOpdSearch');
@@ -779,6 +820,7 @@
   };
 
   function setOwnerOpdRange(range) {
+    haptic('light');
     _opdRange = range;
     _opdShowAll = false;
     document.querySelectorAll('#tab-overview .owner-opd-chip[data-range]').forEach(function (c) {
@@ -788,6 +830,7 @@
   }
 
   function setOwnerOpdDimension(dim) {
+    haptic('light');
     _opdDim = dim;
     _opdShowAll = false;
     document.querySelectorAll('#tab-overview .owner-opd-dim').forEach(function (c) {
@@ -1267,6 +1310,7 @@
   // BOTTOM SHEETS
   // ──────────────────────────────────────────────
   window.openPatientSheet = function (target) {
+    haptic('medium');
     var allList = getAllPatientsList();
     var pt = null;
     var targetStr = String(target !== undefined && target !== null ? target : '').trim();
@@ -1331,6 +1375,7 @@
   };
 
   window.openDoctorSheet = function (docId) {
+    haptic('medium');
     var docIdStr = String(docId || '').toLowerCase();
     var doc = _data.doctors.find(function (d, idx) {
       return String(d.id || '').toLowerCase() === docIdStr ||
@@ -1359,6 +1404,7 @@
   };
 
   window.closeOwnerBottomSheet = function () {
+    haptic('light');
     var overlay = document.getElementById('ownerSheetOverlay');
     if (overlay) overlay.classList.remove('active');
   };
@@ -1367,6 +1413,7 @@
   // SMART ACTIONS (WHATSAPP & PDF)
   // ──────────────────────────────────────────────
   window.shareWhatsAppSummary = function () {
+    haptic('heavy');
     var today = new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
     var totalPts = document.getElementById('heroTotalPatients').textContent || '0';
     var todayPts = document.getElementById('kpiTodayPatients').textContent || '0';
@@ -1389,6 +1436,7 @@
   };
 
   window.exportOwnerPdf = function () {
+    haptic('medium');
     showToast('Preparing executive summary...', 'picture_as_pdf');
     setTimeout(function () {
       window.print();
