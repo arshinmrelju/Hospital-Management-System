@@ -458,12 +458,18 @@
   // which is the only reliable source when we only have the latest 150 patients
   // locally (name-based matching inflates the count against a partial list).
   function computeNewRegistrationsToday(appointments, todayOPD) {
-    // 1. Highest priority: explicit _isNew flags set by front desk (deduped)
-    var explicitNew = 0;
+    // 1. Primary: server count from getTodayCount (GAS scans full patient sheet)
+    //    This is the authoritative number matching Front Desk (index.html)
+    if (_data.serverTodayCount !== undefined && _data.serverTodayCount !== null && _data.serverTodayCount >= 0) {
+      return _data.serverTodayCount;
+    }
+
+    // 2. Count explicit _isNew flags from TODAY's OPD visits only (deduped by patient id / name)
     var seenExp = {};
-    (appointments || []).forEach(function (a) {
+    var explicitNew = 0;
+    (todayOPD || []).forEach(function (a) {
       if (a._isNew === true) {
-        var id = String(a.patient_id || a.op_no || a.id || a.patient_name || '').trim().toLowerCase();
+        var id = String(a.patient_id || a.op_no || a.id || a.name || a.patient_name || '').trim().toLowerCase();
         if (id && !seenExp[id]) {
           seenExp[id] = true;
           explicitNew++;
@@ -471,12 +477,6 @@
       }
     });
     if (explicitNew > 0) return explicitNew;
-
-    // 2. Primary: server count from getTodayCount (GAS scans full patient sheet)
-    //    This is the same number the front desk sees because both read the sheet directly.
-    if (_data.serverTodayCount !== undefined && _data.serverTodayCount !== null && _data.serverTodayCount >= 0) {
-      return _data.serverTodayCount;
-    }
 
     // 3. Fallback: match today's OPD visits against patient registry by ID ONLY.
     //    Name/contact matching is intentionally excluded here because we only load
@@ -658,39 +658,93 @@
     var generalCount = _data.generalTotal !== undefined ? _data.generalTotal : ((allPatients && allPatients.length) || 16680);
     if (allPatients && allPatients.length > generalCount) generalCount = allPatients.length;
 
+    var patientLookup = (allPatients || []).concat(skin || []).concat(ortho || []);
+
     // Normalize appointments into OPD records and deduplicate per patient + dept + day
+    // Exactly mirrors reception-dashboard.js logic
     var opdRecords = (appointments || [])
       .filter(function (a) {
         return a.type === 'OPD' || a.type === 'OPD Consultation' || a.type === 'Skin OPD' || a.type === 'Ortho OPD';
       })
       .map(function (a, i) {
+        var name = a.patient_name || a.patientName || a.name || '';
+        var age = a.patient_age || a.patientAge || a.age || '';
+        var doctor = a.doctor || a.doctor_name || a.doctor_id || '';
+        var pid = a.patient_id || a.op_no || '';
+
+        var match = null;
+        if (patientLookup.length > 0) {
+          if (pid) {
+            match = patientLookup.find(function (p) {
+              return String(p.id || p.op_no || p.skin_id || p.ortho_id || '').toLowerCase() === String(pid).toLowerCase();
+            });
+          }
+          if (!match && name) {
+            match = patientLookup.find(function (p) {
+              return _ptFullName(p).toLowerCase() === name.toLowerCase();
+            });
+          }
+          if (!match && (a.phone || a.contact)) {
+            var rawC = String(a.phone || a.contact).replace(/\s/g, '');
+            match = patientLookup.find(function (p) {
+              return _ptContact(p).replace(/\s/g, '') === rawC;
+            });
+          }
+        }
+
+        if (match) {
+          if (!name) name = _ptFullName(match);
+          if (!age) age = match.age || match.patient_age || 'N/A';
+          if (!doctor) doctor = match.doctor || match.doctor_name || '';
+        }
+        if (!name) name = 'Unknown Patient';
+        if (!age) age = 'N/A';
+        if (!doctor) doctor = 'Unassigned';
+
+        var resolvedId = pid || (match ? (match.id || match.op_no || match.skin_id || match.ortho_id || '') : '');
+        var resolvedContact = (match ? _ptContact(match) : '') || a.phone || a.contact || '';
+        var resolvedOpNo = a.op_no || (match ? (match.op_no || match.id || '') : '') || pid;
+        var rawDate = a.createdAt || a.appointment_date || a['Appointment Date'] || a['Created At'] || a.date || a.timestamp || '';
+
         return {
           id: a.id || 'OPD-' + i,
-          patient_id: a.patient_id || a.op_no || '',
-          name: a.patient_name || a.patientName || a.name || 'Unknown Patient',
-          contact: a.phone || a.contact || '',
-          op_no: a.op_no || a.patient_id || '',
-          doctor: a.doctor || a.doctor_name || a.doctor_id || 'Unassigned',
+          patient_id: resolvedId,
+          name: name,
+          age: age,
+          gender: (match ? (match.gender || match.sex || '') : '') || a.gender || a.sex || '',
+          contact: resolvedContact,
+          op_no: resolvedOpNo,
+          doctor: doctor,
           department: a.type === 'Skin OPD' ? 'Skin' : a.type === 'Ortho OPD' ? 'Ortho' : (a.type === 'OPD Consultation' ? 'Consultation' : 'General'),
-          timestamp: a.createdAt || a.appointment_date || new Date().toISOString()
+          status: a.status || '',
+          complaint: a.reason || a.complaint || '—',
+          time: a.appointment_time || a.time || '—',
+          timestamp: rawDate,
+          _isNew: Boolean(a._isNew || a.isNew || (match && (match._isNew || isToday(match.created_on || match['Created On'])))),
+          created_on: (match ? (match.created_on || match['Created On'] || match.createdAt) : a.created_on) || ''
         };
       });
 
-
-
     var seenOpdKeys = {};
     var seenOpdNc = {};
+    var seenNameDept = {};
     var dedupedOpd = opdRecords.filter(function (r) {
       var rDate = (r.timestamp || '').split('T')[0] || '';
       var pid = String(r.patient_id || r.op_no || '').toLowerCase().trim();
-      var key = pid ? (pid + '::' + String(r.department || '').toLowerCase().trim() + '::' + rDate) : '';
       var dept = String(r.department || '').toLowerCase().trim();
-      // Deduplicate by name + contact + department + date (mirrors reception-dashboard.js line 596)
-      var ncKey = String(r.name || '').toLowerCase().trim() + '::' + String(r.contact || '').toLowerCase().trim() + '::' + dept + '::' + rDate;
+      var key = pid ? (pid + '::' + dept + '::' + rDate) : '';
+      var cleanContact = String(r.contact || '').replace(/\s/g, '').toLowerCase().trim();
+      var ncKey = String(r.name || '').toLowerCase().trim() + '::' + cleanContact + '::' + dept + '::' + rDate;
+      var cleanName = String(r.name || '').toLowerCase().trim();
+      var nameDeptKey = (cleanName && cleanName !== 'unknown patient') ? (cleanName + '::' + dept + '::' + rDate) : '';
+
       if (key && seenOpdKeys[key]) return false;
       if (ncKey && seenOpdNc[ncKey]) return false;
+      if (nameDeptKey && seenNameDept[nameDeptKey]) return false;
+
       if (key) seenOpdKeys[key] = true;
       if (ncKey) seenOpdNc[ncKey] = true;
+      if (nameDeptKey) seenNameDept[nameDeptKey] = true;
       return true;
     });
 
