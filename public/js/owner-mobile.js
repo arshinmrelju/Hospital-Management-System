@@ -132,6 +132,16 @@
     return 'Patient';
   }
 
+  function _ptFullName(p) {
+    if (!p) return '';
+    return getPatientDisplayName(p);
+  }
+
+  function _ptContact(p) {
+    if (!p) return '';
+    return String(p.contact || p.Phone || p.phone || p.mobile || p.Mobile || p.Contact || '').trim();
+  }
+
   function getPatientOpNo(p) {
     if (!p) return '';
     var raw = p.op_no || p['OP No'] || p['Hosp. OP No'] || p['ID. NO'] || p['ID'] || p['UHID'] || p.uhid || p.op || p.id || p.patient_id || '';
