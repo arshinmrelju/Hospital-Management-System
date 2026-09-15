@@ -284,6 +284,18 @@
           <button class="owner-opd-chip owner-opd-dim" data-dim="Ortho" onclick="setOwnerOpdDimension('Ortho')">Ortho</button>
         </div>
 
+        <!-- OPD Search Bar -->
+        <div class="owner-opd-search-wrap">
+          <span class="material-icons-round owner-opd-search-icon">search</span>
+          <input type="text" id="ownerOpdSearch" class="owner-opd-search-input"
+            placeholder="Search by name or OP number…"
+            oninput="filterOwnerOpdSearch(this.value)" />
+          <button class="owner-opd-search-clear" id="ownerOpdSearchClear"
+            onclick="clearOwnerOpdSearch()" title="Clear search" style="display:none;">
+            <span class="material-icons-round" style="font-size:16px;">close</span>
+          </button>
+        </div>
+
         <div class="owner-opd-list" id="ownerOpdList">
           <div style="text-align:center;padding:16px;color:var(--owner-muted);font-size:0.8rem;">Loading OPD records...</div>
         </div>

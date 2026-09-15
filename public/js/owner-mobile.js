@@ -644,6 +644,12 @@
     return ts >= start;
   }
 
+
+  // ── OPD search state ──
+  var _opdSearch = '';
+  var _opdShowAll = false;
+  var OPD_PAGE_SIZE = 50;
+
   function renderOpdRegister() {
     var container = document.getElementById('ownerOpdList');
     if (!container) return;
@@ -651,6 +657,12 @@
     var data = _opdRecords.filter(function (r) {
       if (!_withinRange(r.tsVal, _opdRange)) return false;
       if (_opdDim !== 'all' && r.dept !== _opdDim) return false;
+      if (_opdSearch) {
+        var q = _opdSearch.toLowerCase();
+        var nameMatch = String(r.name || '').toLowerCase().indexOf(q) !== -1;
+        var opMatch  = String(r.op_no || '').toLowerCase().indexOf(q) !== -1;
+        if (!nameMatch && !opMatch) return false;
+      }
       return true;
     });
 
@@ -658,24 +670,25 @@
     if (countEl) countEl.textContent = data.length + ' record' + (data.length !== 1 ? 's' : '');
 
     if (data.length === 0) {
-      container.innerHTML = '<div style="text-align:center;padding:18px;color:var(--owner-muted);font-size:0.8rem;">No OPD records in this range.</div>';
+      container.innerHTML = '<div class="owner-opd-empty"><span class="material-icons-round" style="font-size:32px;color:var(--owner-border);">search_off</span><div>' + (_opdSearch ? 'No results for "' + esc(_opdSearch) + '"' : 'No OPD records in this range.') + '</div></div>';
       return;
     }
 
     var patientLookup = (_data.patients && _data.patients.length) ? _data.patients : (_data.fullPatients || []);
+    var pageLimit = _opdShowAll ? data.length : Math.min(data.length, OPD_PAGE_SIZE);
+    var hasMore = !_opdShowAll && data.length > OPD_PAGE_SIZE;
 
-    var rows = data.slice(0, 100).map(function (r) {
-      var timeStr = r.time ? '<div style="font-size:0.68rem;color:var(--owner-muted);margin-top:2px;">' + esc(r.time) + '</div>' : '';
+    var rows = data.slice(0, pageLimit).map(function (r, idx) {
+      var timeStr = r.time
+        ? '<div class="owner-opd-time">' + esc(r.time) + '</div>'
+        : '';
 
-      // Check if patient was newly registered today
+      // NEW badge check
       var isNew = (r._isNew === true);
-
-      if (!isNew && r.created_on && isToday(r.created_on)) {
-        isNew = true;
-      }
+      if (!isNew && r.created_on && isToday(r.created_on)) isNew = true;
 
       if (!isNew && patientLookup.length > 0) {
-        var recId = String(r.op_no || r.patient_id || r.id || '').trim().toLowerCase();
+        var recId   = String(r.op_no || r.patient_id || r.id || '').trim().toLowerCase();
         var recName = String(r.name || '').trim().toLowerCase();
         var matched = patientLookup.find(function (pt) {
           var ptId = String(pt.op_no || pt.id || '').trim().toLowerCase();
@@ -683,7 +696,6 @@
           if (recName && getPatientDisplayName(pt).toLowerCase() === recName) return true;
           return false;
         });
-
         if (matched) {
           var cOn = matched.created_on || matched['Created On'] || matched.createdAt || '';
           if (isToday(cOn)) isNew = true;
@@ -692,36 +704,83 @@
         }
       }
 
-      // OP sequence check: newly registered OP numbers for today (142750+)
       if (!isNew) {
         var opNum = parseInt(r.op_no || r.patient_id || r.id, 10);
-        if (!isNaN(opNum) && opNum >= 142750 && isToday(r.tsVal)) {
-          isNew = true;
-        }
+        if (!isNaN(opNum) && opNum >= 142750 && isToday(r.tsVal)) isNew = true;
       }
 
       var newTag = isNew
         ? '<span class="opd-new-tag" title="Newly registered today">NEW</span>'
         : '';
 
-      return '<tr' + (isNew ? ' class="opd-new-row"' : '') + '>' +
-        '<td>' + esc(r.op_no) + '</td>' +
-        '<td><div class="owner-opd-name" style="display:inline-flex;align-items:center;flex-wrap:wrap;gap:4px;">' + esc(r.name) + newTag + '</div>' + timeStr + '</td>' +
+      // Doctor display — show "Unassigned" greyed out
+      var doctorStr = r.doctor && r.doctor !== 'Dr. On Duty' && r.doctor !== 'Unassigned'
+        ? esc(r.doctor)
+        : '<span class="owner-opd-unassigned">Unassigned</span>';
+
+      // Dept badge label
+      var deptLabel = r.dept === 'Gen' ? 'General' : (r.dept || 'General');
+      var deptClass = r.dept === 'Gen' ? 'Gen' : (r.dept || 'Gen');
+
+      // Row tap: open patient sheet by name or op_no
+      var tapTarget = r.op_no && r.op_no !== '—' ? esc(r.op_no) : esc(r.name);
+      var trClick = 'onclick="openPatientSheet(\'' + tapTarget + '\')" style="cursor:pointer;"';
+
+      return '<tr class="owner-opd-row' + (isNew ? ' opd-new-row' : '') + '" ' + trClick + '>' +
+        '<td class="owner-opd-si">' + (idx + 1) + '</td>' +
+        '<td class="owner-opd-opno">' + esc(r.op_no) + '</td>' +
+        '<td><div class="owner-opd-name-wrap"><span class="owner-opd-name">' + esc(r.name) + '</span>' + newTag + '</div>' + timeStr + '</td>' +
         '<td>' + esc(r.age) + '</td>' +
         '<td>' + esc(r.gender) + '</td>' +
-        '<td>' + esc(r.doctor) + '</td>' +
-        '<td><span class="owner-opd-dept-badge ' + r.dept + '">' + (r.dept === 'Gen' ? 'General' : r.dept) + '</span></td>' +
+        '<td class="owner-opd-doctor-cell">' + doctorStr + '</td>' +
+        '<td><span class="owner-opd-dept-badge ' + deptClass + '">' + deptLabel + '</span></td>' +
       '</tr>';
     }).join('');
 
+    var loadMoreBtn = hasMore
+      ? '<tr><td colspan="7" class="owner-opd-loadmore-cell"><button class="owner-opd-loadmore-btn" onclick="ownerOpdShowAll()"><span class="material-icons-round" style="font-size:14px;vertical-align:middle;">expand_more</span> Show all ' + data.length + ' records</button></td></tr>'
+      : '';
+
     container.innerHTML = '<table class="owner-opd-table">' +
-      '<thead><tr><th>OP #</th><th>Patient</th><th>Age</th><th>Sex</th><th>Doctor</th><th>Dept</th></tr></thead><tbody>' +
-      rows +
-      '</tbody></table>';
+      '<thead><tr>' +
+        '<th style="width:32px;">#</th>' +
+        '<th>OP #</th>' +
+        '<th>Patient</th>' +
+        '<th>Age</th>' +
+        '<th>Sex</th>' +
+        '<th>Doctor</th>' +
+        '<th>Dept</th>' +
+      '</tr></thead>' +
+      '<tbody>' + rows + loadMoreBtn + '</tbody>' +
+    '</table>';
   }
+
+  window.ownerOpdShowAll = function () {
+    _opdShowAll = true;
+    renderOpdRegister();
+  };
+
+  window.filterOwnerOpdSearch = function (val) {
+    _opdSearch = (val || '').trim();
+    _opdShowAll = false;
+    var clearBtn = document.getElementById('ownerOpdSearchClear');
+    if (clearBtn) clearBtn.style.display = _opdSearch ? 'flex' : 'none';
+    renderOpdRegister();
+  };
+
+  window.clearOwnerOpdSearch = function () {
+    _opdSearch = '';
+    _opdShowAll = false;
+    var inp = document.getElementById('ownerOpdSearch');
+    if (inp) inp.value = '';
+    var clearBtn = document.getElementById('ownerOpdSearchClear');
+    if (clearBtn) clearBtn.style.display = 'none';
+    renderOpdRegister();
+  };
 
   function setOwnerOpdRange(range) {
     _opdRange = range;
+    _opdShowAll = false;
     document.querySelectorAll('#tab-overview .owner-opd-chip[data-range]').forEach(function (c) {
       c.classList.toggle('active', String(c.getAttribute('data-range')) === String(range));
     });
@@ -730,6 +789,7 @@
 
   function setOwnerOpdDimension(dim) {
     _opdDim = dim;
+    _opdShowAll = false;
     document.querySelectorAll('#tab-overview .owner-opd-dim').forEach(function (c) {
       c.classList.toggle('active', c.getAttribute('data-dim') === dim);
     });
@@ -738,6 +798,7 @@
 
   window.setOwnerOpdRange = setOwnerOpdRange;
   window.setOwnerOpdDimension = setOwnerOpdDimension;
+
 
   function renderAllViews() {
     var allPatients = _data.patients;
