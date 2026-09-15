@@ -2,7 +2,7 @@
   "name": "Wellness Medicals HMS - Admin",
   "short_name": "Wellness Admin",
   "description": "Admin management portal for Wellness Medicals Hospital Management System. Manage doctors, departments, and monitor system activity.",
-  "start_url": "/admin.html",
+  "start_url": "/admin",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone"],
   "background_color": "#f7f9fb",
@@ -11,28 +11,28 @@
   "scope": "/",
   "categories": ["medical", "business", "productivity"],
   "lang": "en",
-  "id": "/admin.html",
+  "id": "/admin",
   "screenshots": [],
   "shortcuts": [
     {
       "name": "Owner Executive",
       "short_name": "Executive",
       "description": "Owner executive summary & clinic live pulse",
-      "url": "/report.html",
+      "url": "/report",
       "icons": [{ "src": "/assets/hms-logo.jpg", "sizes": "192x192", "type": "image/jpeg" }]
     },
     {
       "name": "Doctors",
       "short_name": "Doctors",
       "description": "Manage doctor profiles",
-      "url": "/admin.html#doctors",
+      "url": "/admin#doctors",
       "icons": [{ "src": "/assets/hms-logo.jpg", "sizes": "192x192", "type": "image/jpeg" }]
     },
     {
       "name": "Departments",
       "short_name": "Depts",
       "description": "Manage departments",
-      "url": "/admin.html#departments",
+      "url": "/admin#departments",
       "icons": [{ "src": "/assets/hms-logo.jpg", "sizes": "192x192", "type": "image/jpeg" }]
     }
   ],

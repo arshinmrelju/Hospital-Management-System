@@ -2,7 +2,7 @@
   "name": "Wellness Medicals - Executive Owner",
   "short_name": "Wellness Owner",
   "description": "Executive Mobile App for Wellness Medicals HMS Owners and Leadership.",
-  "start_url": "/report.html",
+  "start_url": "/report",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone"],
   "background_color": "#004d46",
@@ -11,21 +11,21 @@
   "scope": "/",
   "categories": ["medical", "business", "productivity"],
   "lang": "en",
-  "id": "/report.html",
+  "id": "/report",
   "screenshots": [],
   "shortcuts": [
     {
       "name": "Live Pulse",
       "short_name": "Pulse",
       "description": "Live hospital database and footfall",
-      "url": "/report.html",
+      "url": "/report",
       "icons": [{ "src": "/assets/hms-logo.jpg", "sizes": "192x192", "type": "image/jpeg" }]
     },
     {
       "name": "Patients",
       "short_name": "Patients",
       "description": "Patient lookup & registries",
-      "url": "/report.html#patients",
+      "url": "/report#patients",
       "icons": [{ "src": "/assets/hms-logo.jpg", "sizes": "192x192", "type": "image/jpeg" }]
     }
   ],
