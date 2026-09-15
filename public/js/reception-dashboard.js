@@ -971,40 +971,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (typeof window.setLoaderPct === 'function') window.setLoaderPct(30);
     });
 
-    // Real Step 3: Patient Registry (awaits patients.js load and syncs latest 100 newly registered patients)
-    var pLatest = (window.API && window.API.getPatients)
-      ? window.API.getPatients({ limit: 100, latest: true }).then(function(res) {
-          if (res && res.data && res.data.length > 0) {
-            var latest = (typeof normalizePatients === 'function') ? normalizePatients(res.data) : res.data;
-            window.latestPatients = latest;
-            if (!window.allPatients) window.allPatients = [];
-            var existingMap = {};
-            window.allPatients.forEach(function(p) { existingMap[String(p.id || p.op_no)] = true; });
-            latest.forEach(function(p) {
-              var k = String(p.id || p.op_no);
-              if (!existingMap[k]) {
-                window.allPatients.unshift(p);
-                existingMap[k] = true;
-              }
-            });
-          }
-        }).catch(function() {})
-      : Promise.resolve();
-
-    var pPatients = Promise.all([
-      (window._patientsLoadPromise || (typeof loadPatients === 'function' ? loadPatients() : ensurePatientsLoaded())),
-      pLatest
-    ]).then(function() {
-      if (typeof applyFilters === 'function') applyFilters();
-      if (typeof updateExportBadge === 'function') updateExportBadge();
-      if (typeof window.setLoaderPct === 'function') {
-        window.setLoaderPct(60, 'Patient registry synchronized...');
-      }
-    }).catch(function(e) {
-      console.warn('[Reception] Patients load error:', e);
-      if (typeof applyFilters === 'function') applyFilters();
-      if (typeof window.setLoaderPct === 'function') window.setLoaderPct(60);
-    });
+    // Real Step 3: Patient Registry — wait for the FULL patient load from patients.js.
+    // NOTE: We do NOT call getPatients({ limit:100 }) here because the API dedup
+    // (_patientsLoading) would cause that limit:100 call to win the race against
+    // the unlimited full-load, leaving the registry showing only 100 patients.
+    var pPatients = (window._patientsLoadPromise || (typeof loadPatients === 'function' ? loadPatients() : ensurePatientsLoaded()))
+      .then(function() {
+        if (typeof applyFilters === 'function') applyFilters();
+        if (typeof updateExportBadge === 'function') updateExportBadge();
+        if (typeof window.setLoaderPct === 'function') {
+          window.setLoaderPct(60, 'Patient registry synchronized...');
+        }
+      }).catch(function(e) {
+        console.warn('[Reception] Patients load error:', e);
+        if (typeof applyFilters === 'function') applyFilters();
+        if (typeof window.setLoaderPct === 'function') window.setLoaderPct(60);
+      });
 
     // Real Step 4: OPD Consultations
     var pOpd = loadOpdRecords().then(function() {
