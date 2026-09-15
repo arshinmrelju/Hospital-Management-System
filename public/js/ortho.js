@@ -573,5 +573,7 @@ async function submitAddOrtho(e) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   _orthoInitialized = true;
-  await loadOrthoPatients();
+  window._orthoLoadPromise = loadOrthoPatients();
+  await window._orthoLoadPromise;
 });
+

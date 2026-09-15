@@ -984,3 +984,37 @@ body.owner-app-body {
   background: rgba(147, 51, 234, 0.15);
   color: #9333ea;
 }
+
+/* --- OPD New Registration Tag --- */
+.opd-new-tag,
+.owner-opd-new-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #0D9488, #059669);
+  color: #ffffff;
+  box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.5);
+  animation: opd-new-pulse 2s infinite;
+  vertical-align: middle;
+  margin-left: 5px;
+  position: relative;
+  top: -1px;
+  cursor: default;
+  user-select: none;
+}
+
+@keyframes opd-new-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.55); }
+  70%  { box-shadow: 0 0 0 6px rgba(13, 148, 136, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0); }
+}
+
+.owner-opd-table tr.opd-new-row td {
+  background: rgba(13, 148, 136, 0.04);
+}
+

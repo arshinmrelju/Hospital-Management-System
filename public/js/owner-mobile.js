@@ -27,7 +27,7 @@
   var _opdRange = 0;
 
   // ──────────────────────────────────────────────
-  // LOADING OVERLAY (percentage)
+  // LOADING OVERLAY (VitalGlass percentage)
   // ──────────────────────────────────────────────
   var _loaderPct = 0;
   var _loaderTarget = 0;
@@ -78,8 +78,8 @@
       var el = document.getElementById('ownerLoadingOverlay');
       if (!el) return;
       el.classList.add('fade-out');
-      setTimeout(function () { el.style.display = 'none'; }, 520);
-    }, 400);
+      setTimeout(function () { el.style.display = 'none'; }, 400);
+    }, 350);
   }
 
   // Wraps any promise with a max-wait timeout so hung API calls never block the loader
@@ -530,7 +530,9 @@
         dept: (a.department === 'Skin' || a.department === 'Ortho') ? a.department : (getOpdDepartment ? getOpdDepartment(a) : (a.dept || 'Gen')),
         time: a.time || a.appointment_time || '',
         ts: d,
-        tsVal: d.getTime()
+        tsVal: d.getTime(),
+        _isNew: Boolean(a._isNew || a.isNew),
+        created_on: a.created_on || a['Created On'] || ''
       };
     });
     list.sort(function (a, b) { return b.tsVal - a.tsVal; });
@@ -568,11 +570,51 @@
       return;
     }
 
+    var patientLookup = (_data.patients && _data.patients.length) ? _data.patients : (_data.fullPatients || []);
+
     var rows = data.slice(0, 100).map(function (r) {
       var timeStr = r.time ? '<div style="font-size:0.68rem;color:var(--owner-muted);margin-top:2px;">' + esc(r.time) + '</div>' : '';
-      return '<tr>' +
+
+      // Check if patient was newly registered today
+      var isNew = (r._isNew === true);
+
+      if (!isNew && r.created_on && isToday(r.created_on)) {
+        isNew = true;
+      }
+
+      if (!isNew && patientLookup.length > 0) {
+        var recId = String(r.op_no || r.patient_id || r.id || '').trim().toLowerCase();
+        var recName = String(r.name || '').trim().toLowerCase();
+        var matched = patientLookup.find(function (pt) {
+          var ptId = String(pt.op_no || pt.id || '').trim().toLowerCase();
+          if (ptId && recId && ptId === recId) return true;
+          if (recName && getPatientDisplayName(pt).toLowerCase() === recName) return true;
+          return false;
+        });
+
+        if (matched) {
+          var cOn = matched.created_on || matched['Created On'] || matched.createdAt || '';
+          if (isToday(cOn)) isNew = true;
+          if ((!r.age || r.age === '—') && matched.age) r.age = matched.age;
+          if ((!r.gender || r.gender === '—') && (matched.gender || matched.sex)) r.gender = matched.gender || matched.sex;
+        }
+      }
+
+      // OP sequence check: newly registered OP numbers for today (142750+)
+      if (!isNew) {
+        var opNum = parseInt(r.op_no || r.patient_id || r.id, 10);
+        if (!isNaN(opNum) && opNum >= 142750 && isToday(r.tsVal)) {
+          isNew = true;
+        }
+      }
+
+      var newTag = isNew
+        ? '<span class="opd-new-tag" title="Newly registered today">NEW</span>'
+        : '';
+
+      return '<tr' + (isNew ? ' class="opd-new-row"' : '') + '>' +
         '<td>' + esc(r.op_no) + '</td>' +
-        '<td><div class="owner-opd-name">' + esc(r.name) + '</div>' + timeStr + '</td>' +
+        '<td><div class="owner-opd-name" style="display:inline-flex;align-items:center;flex-wrap:wrap;gap:4px;">' + esc(r.name) + newTag + '</div>' + timeStr + '</td>' +
         '<td>' + esc(r.age) + '</td>' +
         '<td>' + esc(r.gender) + '</td>' +
         '<td>' + esc(r.doctor) + '</td>' +

@@ -10,7 +10,7 @@
    - All app shell pages are pre-cached on install
    ================================================================ */
 
-const CACHE = 'wellness-v20-offline';
+const CACHE = 'wellness-v21-offline';
 
 const STATIC_ASSETS = [
   /* ─── App Shell Pages ─── */

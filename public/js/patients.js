@@ -645,6 +645,7 @@ async function loadPatients(skipCache) {
     _patientsDataLoading = false;
     applyFilters();
     setAddPatientEnabled(true);
+    return allPatients;
   } catch (e) {
     console.error('Failed to load patients:', e);
     _patientsDataLoading = false;
@@ -655,6 +656,7 @@ async function loadPatients(skipCache) {
       allPatients = [];
       window.allPatients = allPatients;
     }
+    return allPatients;
   }
 }
 window.loadPatients = loadPatients;
@@ -784,6 +786,10 @@ async function submitAddPatient(e) {
       console.warn('Auto-add to OPD failed:', _e);
     }
 
+    // Increment today's registration count and refresh dashboard KPI
+    if (typeof window._serverTodayCount === 'number') window._serverTodayCount++;
+    if (typeof updateStats === 'function') updateStats();
+
     closeModal(null, 'addPatientModal');
     document.getElementById('addPatientForm').reset();
     toast(`Patient ${raw.fname} ${raw.lname} registered! OP No: ${newP.op_no || newP.id}`, 'success');
@@ -796,7 +802,9 @@ async function submitAddPatient(e) {
 document.addEventListener('DOMContentLoaded', async () => {
   var isSPA = !!document.getElementById('page-patients');
   if (!isSPA) _patientsInitialized = true;
-  await loadPatients();
-  if (typeof window.hideLoader === 'function') window.hideLoader();
+  window._patientsLoadPromise = loadPatients();
+  await window._patientsLoadPromise;
+  // Only hide loader if no other controller has claimed ownership (e.g. reception-dashboard)
+  if (!window._loaderOwned && typeof window.hideLoader === 'function') window.hideLoader();
   if (typeof window.populateAllDropdowns === 'function') window.populateAllDropdowns();
 });

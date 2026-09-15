@@ -582,6 +582,8 @@ async function submitAddSkin(e) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   _skinInitialized = true;
-  await loadSkinPatients();
+  window._skinLoadPromise = loadSkinPatients();
+  await window._skinLoadPromise;
   if (typeof window.populateSkinDropdowns === 'function') window.populateSkinDropdowns();
 });
+

@@ -36,7 +36,7 @@
     href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
-  <link rel="stylesheet" href="css/owner-mobile.css?v=24" />
+  <link rel="stylesheet" href="css/owner-mobile.css?v=26" />
   <style>
     @media print {
 
@@ -500,63 +500,246 @@
   <div class="owner-toast" id="ownerToast"></div>
 
   <!-- ══════════════════════════════════════════════════════════════ -->
-  <!-- PERCENTAGE LOADING OVERLAY                                     -->
+  <!-- VITALGLASS SYSTEM LOADING OVERLAY                                -->
   <!-- ══════════════════════════════════════════════════════════════ -->
   <div id="ownerLoadingOverlay" style="display:none;">
-    <div class="owner-loader-inner">
-      <img src="assets/hms-logo.jpg" alt="Wellness Medicals" class="owner-loader-logo" />
-      <div class="owner-loader-ring">
-        <svg viewBox="0 0 100 100" class="owner-loader-svg">
-          <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8"/>
-          <circle id="ownerLoaderArc" cx="50" cy="50" r="44" fill="none" stroke="#fff" stroke-width="8"
+    <div class="vital-loader-glass">
+      <!-- Logo container with system breathing pulse ring -->
+      <div class="vital-loader-logo-wrap">
+        <div class="vital-loader-logo-ring">
+          <img src="assets/hms-logo.jpg" alt="Wellness Medicals" />
+        </div>
+      </div>
+
+      <!-- Title & Subtitle following system typography -->
+      <h2 class="vital-loader-title">Wellness Executive</h2>
+      <p class="vital-loader-subtitle">Live Clinic Pulse &amp; Analytics</p>
+
+      <!-- Circular Progress Ring (Clean VitalGlass Theme) -->
+      <div class="vital-loader-ring-wrap">
+        <svg viewBox="0 0 100 100" class="vital-loader-svg">
+          <!-- Background track -->
+          <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(0, 104, 95, 0.09)" stroke-width="7"/>
+          <!-- Active teal progress arc -->
+          <circle id="ownerLoaderArc" cx="50" cy="50" r="44" fill="none" stroke="#00685f" stroke-width="7"
             stroke-linecap="round" stroke-dasharray="276.46" stroke-dashoffset="276.46"
             transform="rotate(-90 50 50)"/>
         </svg>
-        <div class="owner-loader-pct" id="ownerLoaderPct">0%</div>
+        <div class="vital-loader-pct" id="ownerLoaderPct">0%</div>
       </div>
-      <div class="owner-loader-title">Wellness Executive</div>
-      <div class="owner-loader-step" id="ownerLoaderStep">Initialising...</div>
+
+      <!-- Signature VitalGlass Heartbeat Wave -->
+      <div class="vital-loader-heartbeat">
+        <svg width="120" height="22" viewBox="0 0 120 22" fill="none">
+          <path class="vital-heartbeat-path" d="M0 11h35l5-7 6 14 6-11 4 5 5-1h59" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+      <!-- Real-time Status Pill -->
+      <div class="vital-loader-status-pill">
+        <span class="material-icons-round vital-spin-icon">sync</span>
+        <span class="vital-loader-step" id="ownerLoaderStep">Connecting to clinic database...</span>
+      </div>
+
+      <!-- Three Animated System Dots -->
+      <div class="vital-loader-dots">
+        <span class="vital-dot"></span>
+        <span class="vital-dot"></span>
+        <span class="vital-dot"></span>
+      </div>
     </div>
   </div>
+
   <style>
+    /* ══════════════════════════════════════════════════════════════
+       VITALGLASS EXECUTIVE LOADER (Matches System Design)
+       ══════════════════════════════════════════════════════════════ */
     #ownerLoadingOverlay {
-      position: fixed; inset: 0; z-index: 9999;
-      background: linear-gradient(145deg, #004d46 0%, #00695c 60%, #00897b 100%);
-      display: flex; align-items: center; justify-content: center;
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      display: flex;
       flex-direction: column;
-      transition: opacity 0.5s ease;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: linear-gradient(135deg, #d5f5f0 0%, #f0fdfa 50%, #ccfbf1 100%);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      opacity: 1;
+      transform: scale(1);
     }
-    #ownerLoadingOverlay.fade-out { opacity: 0; pointer-events: none; }
-    .owner-loader-inner {
-      display: flex; flex-direction: column; align-items: center; gap: 18px;
-      padding: 32px 24px;
+    #ownerLoadingOverlay.fade-out {
+      opacity: 0;
+      transform: scale(0.98);
+      pointer-events: none;
     }
-    .owner-loader-logo {
-      width: 64px; height: 64px; border-radius: 18px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-      animation: ownerLogoPulse 2s ease-in-out infinite;
+
+    /* System Glass Card */
+    .vital-loader-glass {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1.5px solid rgba(255, 255, 255, 0.95);
+      border-radius: 28px;
+      box-shadow: 0 16px 48px rgba(0, 100, 90, 0.09), 0 2px 6px rgba(0, 0, 0, 0.04);
+      padding: 34px 36px 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      width: 100%;
+      max-width: 380px;
+      animation: vitalCardIn 0.3s cubic-bezier(0.34, 1.3, 0.64, 1);
     }
-    @keyframes ownerLogoPulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.06); }
+    @keyframes vitalCardIn {
+      from { opacity: 0; transform: scale(0.92) translateY(16px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
     }
-    .owner-loader-ring { position: relative; width: 120px; height: 120px; }
-    .owner-loader-svg { width: 120px; height: 120px; }
-    .owner-loader-pct {
-      position: absolute; inset: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'Manrope', sans-serif; font-size: 1.5rem; font-weight: 800;
-      color: #fff; letter-spacing: -0.5px;
+
+    /* Logo Breathing Ring */
+    .vital-loader-logo-wrap {
+      position: relative;
+      margin-bottom: 16px;
     }
-    .owner-loader-title {
-      font-family: 'Manrope', sans-serif; font-size: 1.15rem; font-weight: 700;
-      color: rgba(255,255,255,0.95); letter-spacing: 0.2px;
+    .vital-loader-logo-ring {
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      background: rgba(13, 148, 136, 0.08);
+      border: 2px solid rgba(13, 148, 136, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 0 8px rgba(13, 148, 136, 0.04), 0 0 0 16px rgba(13, 148, 136, 0.02);
+      animation: vitalPulse 2.4s ease-in-out infinite;
     }
-    .owner-loader-step {
-      font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 500;
-      color: rgba(255,255,255,0.65); letter-spacing: 0.3px;
-      min-height: 18px; text-align: center;
-      transition: opacity 0.25s ease;
+    .vital-loader-logo-ring img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 4px 12px rgba(0, 60, 50, 0.12);
+    }
+    @keyframes vitalPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 8px rgba(13, 148, 136, 0.04), 0 0 0 16px rgba(13, 148, 136, 0.02); }
+      50% { transform: scale(1.04); box-shadow: 0 0 0 12px rgba(13, 148, 136, 0.07), 0 0 0 22px rgba(13, 148, 136, 0.03); }
+    }
+
+    /* Typography */
+    .vital-loader-title {
+      color: #004d46;
+      font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin: 0 0 4px 0;
+    }
+    .vital-loader-subtitle {
+      color: #3d4947;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 500;
+      margin: 0 0 18px 0;
+      opacity: 0.8;
+    }
+
+    /* Progress Ring */
+    .vital-loader-ring-wrap {
+      position: relative;
+      width: 110px;
+      height: 110px;
+      margin-bottom: 14px;
+    }
+    .vital-loader-svg {
+      width: 110px;
+      height: 110px;
+    }
+    .vital-loader-pct {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Manrope', sans-serif;
+      font-size: 1.55rem;
+      font-weight: 800;
+      color: #004d46;
+      letter-spacing: -0.5px;
+      font-feature-settings: "tnum";
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Signature ECG Heartbeat Animation */
+    .vital-loader-heartbeat {
+      margin-bottom: 16px;
+      opacity: 0.85;
+    }
+    .vital-loader-heartbeat svg {
+      overflow: visible;
+    }
+    .vital-heartbeat-path {
+      stroke-dasharray: 260;
+      stroke-dashoffset: 260;
+      animation: vitalHeartDraw 2s ease-in-out infinite;
+      stroke: #0D9488;
+    }
+    @keyframes vitalHeartDraw {
+      0% { stroke-dashoffset: 260; opacity: 0.3; }
+      50% { stroke-dashoffset: 0; opacity: 1; }
+      100% { stroke-dashoffset: -260; opacity: 0.3; }
+    }
+
+    /* Status Pill */
+    .vital-loader-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(13, 148, 136, 0.08);
+      border: 1px solid rgba(13, 148, 136, 0.16);
+      color: #00685f;
+      margin-bottom: 14px;
+      max-width: 100%;
+    }
+    .vital-spin-icon {
+      font-size: 16px;
+      color: #0D9488;
+      animation: vitalSpin 1.4s linear infinite;
+    }
+    @keyframes vitalSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .vital-loader-step {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #00685f;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 240px;
+    }
+
+    /* Three Animated Dots */
+    .vital-loader-dots {
+      display: flex;
+      gap: 6px;
+    }
+    .vital-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #0D9488;
+      opacity: 0.4;
+      animation: vitalDotBounce 1.4s ease-in-out infinite;
+    }
+    .vital-dot:nth-child(2) { animation-delay: 0.2s; }
+    .vital-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes vitalDotBounce {
+      0%, 80%, 100% { transform: scale(0.7); opacity: 0.3; }
+      40% { transform: scale(1.15); opacity: 1; }
     }
   </style>
 
@@ -567,7 +750,7 @@
   <script src="js/sheets-api.js?v=25"></script>
   <script src="js/firebase-init.js?v=25"></script>
   <script src="js/pwa.js?v=25"></script>
-  <script src="js/owner-mobile.js?v=31"></script>
+  <script src="js/owner-mobile.js?v=35"></script>
   <script>
     (function() {
       var secInstallBtn = document.getElementById('pwaSecurityInstallBtn');

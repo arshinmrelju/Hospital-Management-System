@@ -471,8 +471,16 @@ document.addEventListener('DOMContentLoaded', () => {
   initGreeting();
   animateCounters();
   initMobileSearch();
-  setTimeout(labelDynamicTables, 100);
-  window.hideLoader();
+  // For portals with async data loaders (Reception, Patients, Admin),
+  // let the portal controller dismiss the loader once records are synced.
+  if (!document.getElementById('opdList') && !document.getElementById('patientsTableBody') && !document.getElementById('adminStatCard')) {
+    window.hideLoader();
+  } else {
+    // Safety failsafe: ensure loader always dismisses within 6s even on network delay
+    setTimeout(function() {
+      if (typeof window.hideLoader === 'function') window.hideLoader();
+    }, 6000);
+  }
 });
 
 /* --- Global Search --- */
@@ -820,6 +828,41 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  // --- Percentage Ring & Progress Engine ---
+  var CIRCUMFERENCE = 276.46; // 2 * π * 44
+  var _currentPct = 0;
+  var _targetPct = 0;
+  var _animTimer = null;
+
+  function updateArc(val) {
+    var arc = document.getElementById('pageLoaderArc');
+    var pctLabel = document.getElementById('pageLoaderPct');
+    if (arc) {
+      arc.style.strokeDashoffset = (CIRCUMFERENCE * (1 - val / 100)).toFixed(2);
+    }
+    if (pctLabel) {
+      pctLabel.textContent = Math.round(val) + '%';
+    }
+  }
+
+  window.setLoaderPct = function(pct, label) {
+    _targetPct = Math.max(0, Math.min(100, Number(pct) || 0));
+    if (label) {
+      setMsg(label);
+      stopRotation(); // pin the message while a specific step label is provided
+    }
+    if (_animTimer) return;
+    _animTimer = setInterval(function() {
+      if (_currentPct < _targetPct) {
+        _currentPct = Math.min(_currentPct + 2, _targetPct);
+        updateArc(_currentPct);
+      } else if (_currentPct >= 100) {
+        clearInterval(_animTimer);
+        _animTimer = null;
+      }
+    }, 16);
+  };
+
   window.showLoader = function() {
     var loader = document.getElementById('pageLoader');
     if (loader) {
@@ -827,26 +870,61 @@ document.addEventListener('DOMContentLoaded', function() {
       msgIndex = 0;
       startRotation();
     }
+    _currentPct = 0;
+    _targetPct = 0;
+    updateArc(0);
   };
 
   window.hideLoader = function() {
     var loader = document.getElementById('pageLoader');
-    if (loader) {
-      stopRotation();
-      loader.classList.add('hidden');
+    if (!loader) return;
+    stopRotation();
+    _targetPct = 100;
+    _currentPct = 100;
+    updateArc(100);
+    setMsg('Ready!');
+    var icon = document.getElementById('pageLoaderIcon');
+    if (icon) {
+      icon.textContent = 'check_circle';
+      icon.style.animation = 'none';
+      icon.style.color = '#10B981';
     }
+    setTimeout(function() {
+      loader.classList.add('hidden');
+      setTimeout(function() {
+        _currentPct = 0;
+        _targetPct = 0;
+        updateArc(0);
+        if (icon) {
+          icon.textContent = 'sync';
+          icon.style.animation = '';
+          icon.style.color = '';
+        }
+      }, 400);
+    }, 480);
   };
 
   // Start on load
   var loader = document.getElementById('pageLoader');
   if (loader && !loader.classList.contains('hidden')) {
+    _currentPct = 0;
+    _targetPct = 0;
+    updateArc(0);
     startRotation();
-    // If not hidden within 3s, show network status update
+    // At 5s: update network status message if still at 0%
     setTimeout(function() {
-      if (!loader.classList.contains('hidden')) {
+      if (!loader.classList.contains('hidden') && _targetPct <= 10) {
         showNetworkStatus();
       }
-    }, 3000);
+    }, 5000);
+    // Safe emergency fallback: only trigger after 35s of complete silence
+    setTimeout(function() {
+      if (!loader.classList.contains('hidden')) {
+        console.warn('[Loader] Emergency fallback triggered after 35s');
+        window._loaderOwned = false;
+        window.hideLoader();
+      }
+    }, 35000);
   }
 })();
 

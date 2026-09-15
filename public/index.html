@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null" />
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" media="print" onload="this.media='all';this.onload=null" />
-  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/main.css?v=27" />
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/portals.css" />
   <link rel="stylesheet" href="css/staff-theme.css" />
@@ -222,22 +222,36 @@
 
 <body class="app-body portal-reception">
 
-  <!-- Glassmorphism Loader -->
+  <!-- VitalGlass Reception Loader -->
   <div id="pageLoader">
     <div class="loader-glass">
       <div class="loader-logo-wrap">
         <div class="loader-logo-ring">
           <img src="assets/hms-logo.jpg" alt="Wellness Medicals" />
         </div>
-      </div>
-      <div class="loader-heartbeat">
-        <svg width="120" height="40" viewBox="0 0 120 40" fill="none">
-          <path class="heartbeat-path" d="M0 20 H40 L45 10 L50 30 L55 15 L60 25 L65 20 H120" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <div class="loader-orbit-ring"></div>
       </div>
       <h2 class="loader-title">Wellness Medicals</h2>
-      <p class="loader-subtitle">Hospital Management System</p>
-      <p class="loader-msg" id="loaderMsg">Initializing system...</p>
+      <p class="loader-subtitle">Hospital Management System &bull; Reception</p>
+      <div class="loader-heartbeat">
+        <svg width="120" height="24" viewBox="0 0 120 24" fill="none">
+          <path class="heartbeat-path" d="M0 12h35l5-7 6 14 6-11 4 5 5-1h59" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <!-- Circular Percentage Ring -->
+      <div class="loader-pct-ring-wrap">
+        <svg viewBox="0 0 100 100" class="loader-pct-svg">
+          <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(0,104,95,0.09)" stroke-width="7"/>
+          <circle id="pageLoaderArc" cx="50" cy="50" r="44" fill="none" stroke="#00685f" stroke-width="7"
+            stroke-linecap="round" stroke-dasharray="276.46" stroke-dashoffset="276.46"
+            transform="rotate(-90 50 50)"/>
+        </svg>
+        <div class="loader-pct-label" id="pageLoaderPct">0%</div>
+      </div>
+      <div class="loader-status-pill">
+        <span class="material-icons-round loader-spin-icon" id="pageLoaderIcon">sync</span>
+        <p class="loader-msg" id="loaderMsg">Initializing system...</p>
+      </div>
       <div class="loader-dots">
         <div class="loader-dot"></div>
         <div class="loader-dot"></div>
@@ -616,7 +630,10 @@
 
             <div class="table-scroll" style="margin-top:12px;">
               <div id="opdList">
-                <p style="text-align:center;padding:20px;color:var(--outline);font-size:0.85rem">Loading OPD records...</p>
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 16px;gap:10px;">
+                  <span class="material-icons-round loader-spin-icon" style="font-size:28px;color:var(--primary-light);">sync</span>
+                  <span style="font-size:0.85rem;font-weight:600;color:var(--primary);">Syncing live OPD records...</span>
+                </div>
               </div>
             </div>
           </div>
@@ -1526,11 +1543,11 @@
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
   <script src="js/firebase-init.js?v=3"></script>
-  <script src="js/app.js?v=3"></script>
-  <script src="js/reception-dashboard.js?v=8"></script>
-  <script src="js/patients.js?v=3"></script>
-  <script src="js/skin.js?v=10"></script>
-  <script src="js/ortho.js?v=1"></script>
+  <script src="js/app.js?v=5"></script>
+  <script src="js/reception-dashboard.js?v=12"></script>
+  <script src="js/patients.js?v=5"></script>
+  <script src="js/skin.js?v=11"></script>
+  <script src="js/ortho.js?v=2"></script>
   <script src="js/pwa.js?v=2"></script>
   <script>
     window.name = 'wellness_reception';
