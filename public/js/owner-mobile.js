@@ -41,13 +41,13 @@
     el.style.display = 'flex';
     el.classList.remove('fade-out');
     setLoaderPct(0, 'Connecting to clinic database...');
-    // Global failsafe: force-complete after 18 seconds no matter what
+    // Global failsafe: force-complete after 35 seconds no matter what
     if (_loaderFailsafe) clearTimeout(_loaderFailsafe);
     _loaderFailsafe = setTimeout(function () {
       _loaderFailsafe = null;
       renderAllViews();
       hideLoader();
-    }, 18000);
+    }, 35000);
   }
 
   function setLoaderPct(pct, label) {
@@ -85,7 +85,7 @@
   // Wraps any promise with a max-wait timeout so hung API calls never block the loader
   function withTimeout(promise, ms) {
     var timeout = new Promise(function (resolve) {
-      setTimeout(resolve, ms || 12000);
+      setTimeout(function () { resolve(null); }, ms || 30000);
     });
     return Promise.race([promise, timeout]);
   }
@@ -134,7 +134,20 @@
 
   function _ptFullName(p) {
     if (!p) return '';
-    return getPatientDisplayName(p);
+    var name = getPatientDisplayName(p);
+    if (!name || name === 'Patient') {
+      var f = String(p.fname || p.FirstName || p.Name || p.name || '').trim();
+      var l = String(p.lname || p.LastName || '').trim();
+      if (!f && !l) {
+        var raw = p.Name || p.name || '';
+        var parts = String(raw).trim().split(/\s+/);
+        f = parts[0] || '';
+        l = parts.slice(1).join(' ');
+      }
+      var combined = (f + ' ' + l).trim();
+      if (combined) return combined;
+    }
+    return String(name || '').trim();
   }
 
   function _ptContact(p) {
@@ -375,18 +388,32 @@
 
     var pPatients = api.getPatients ? withTimeout(api.getPatients({ limit: 150, latest: true })).then(function (r) {
       var list = (r && r.data) || [];
-      _data.patients = list.map(function (p, idx) {
-        p._idx = idx;
-        return p;
-      });
+      if (list.length > 0) {
+        _data.patients = list.map(function (p, idx) {
+          p._idx = idx;
+          return p;
+        });
+        try { localStorage.setItem('hms_owner_pts_cache', JSON.stringify(list)); } catch (e) {}
+      } else if (!_data.patients || _data.patients.length === 0) {
+        try {
+          var cp = JSON.parse(localStorage.getItem('hms_owner_pts_cache') || '[]');
+          if (cp && cp.length) _data.patients = cp;
+        } catch (e) {}
+      }
       if (r && r.total !== undefined && r.total > 0) {
         _data.generalTotal = r.total;
+        try { localStorage.setItem('hms_patients_total', String(r.total)); } catch (e) {}
       } else if (typeof _data.generalTotal !== 'number' || !_data.generalTotal) {
         _data.generalTotal = parseInt(localStorage.getItem('hms_patients_total') || '0', 10) || 17191;
       }
       setLoaderPct(35, 'Patient registry synced...');
     }).catch(function () {
-      _data.patients = [];
+      if (!_data.patients || _data.patients.length === 0) {
+        try {
+          var cp = JSON.parse(localStorage.getItem('hms_owner_pts_cache') || '[]');
+          if (cp && cp.length) _data.patients = cp;
+        } catch (e) {}
+      }
       if (typeof _data.generalTotal !== 'number' || !_data.generalTotal) {
         _data.generalTotal = parseInt(localStorage.getItem('hms_patients_total') || '0', 10) || 17191;
       }
@@ -399,14 +426,50 @@
     }).catch(function () { setLoaderPct(50); }) : Promise.resolve();
 
     var pAppts = api.getAppointments ? withTimeout(api.getAppointments()).then(function (r) {
-      _data.appointments = (r && r.data) || [];
+      var appts = (r && r.data) || [];
+      if (appts.length > 0) {
+        _data.appointments = appts;
+        try { localStorage.setItem('hms_owner_appts_cache', JSON.stringify(appts)); } catch (e) {}
+      } else if (!_data.appointments || _data.appointments.length === 0) {
+        try {
+          var ca = JSON.parse(localStorage.getItem('hms_owner_appts_cache') || localStorage.getItem('hms_local_appointments') || '[]');
+          if (ca && ca.length) _data.appointments = ca;
+        } catch (e) {}
+      }
       setLoaderPct(62, 'OPD appointments loaded...');
-    }).catch(function () { _data.appointments = []; setLoaderPct(62); }) : Promise.resolve();
+    }).catch(function () {
+      if (!_data.appointments || _data.appointments.length === 0) {
+        try {
+          var ca = JSON.parse(localStorage.getItem('hms_owner_appts_cache') || localStorage.getItem('hms_local_appointments') || '[]');
+          if (ca && ca.length) _data.appointments = ca;
+        } catch (e) {}
+      }
+      setLoaderPct(62);
+    }) : Promise.resolve();
 
     var pDoctors = api.getDoctors ? withTimeout(api.getDoctors()).then(function (r) {
-      _data.doctors = (r && r.data) || [];
+      var docs = (r && r.data) || [];
+      if (docs.length > 0) {
+        _data.doctors = docs;
+        try { localStorage.setItem('hms_owner_docs_cache', JSON.stringify(docs)); } catch (e) {}
+      } else if (!_data.doctors || _data.doctors.length === 0) {
+        try {
+          var cd = JSON.parse(localStorage.getItem('hms_owner_docs_cache') || localStorage.getItem('hms_doctors_cache') || '[]');
+          var cdArr = Array.isArray(cd) ? cd : (cd.data || []);
+          if (cdArr && cdArr.length) _data.doctors = cdArr;
+        } catch (e) {}
+      }
       setLoaderPct(72, 'Medical staff loaded...');
-    }).catch(function () { _data.doctors = []; setLoaderPct(72); }) : Promise.resolve();
+    }).catch(function () {
+      if (!_data.doctors || _data.doctors.length === 0) {
+        try {
+          var cd = JSON.parse(localStorage.getItem('hms_owner_docs_cache') || localStorage.getItem('hms_doctors_cache') || '[]');
+          var cdArr = Array.isArray(cd) ? cd : (cd.data || []);
+          if (cdArr && cdArr.length) _data.doctors = cdArr;
+        } catch (e) {}
+      }
+      setLoaderPct(72);
+    }) : Promise.resolve();
 
     var pDepts = api.getDepartments ? withTimeout(api.getDepartments()).then(function (r) {
       _data.departments = (r && r.data) || [];
@@ -414,14 +477,48 @@
     }).catch(function () { _data.departments = []; setLoaderPct(80); }) : Promise.resolve();
 
     var pSkin = api.getSkinPatients ? withTimeout(api.getSkinPatients()).then(function (r) {
-      _data.skinPatients = (r && r.data) || [];
+      var skin = (r && r.data) || [];
+      if (skin.length > 0) {
+        _data.skinPatients = skin;
+        try { localStorage.setItem('hms_owner_skin_cache', JSON.stringify(skin)); } catch (e) {}
+      } else if (!_data.skinPatients || _data.skinPatients.length === 0) {
+        try {
+          var cs = JSON.parse(localStorage.getItem('hms_owner_skin_cache') || '[]');
+          if (cs && cs.length) _data.skinPatients = cs;
+        } catch (e) {}
+      }
       setLoaderPct(88, 'Skin clinic data loaded...');
-    }).catch(function () { _data.skinPatients = []; setLoaderPct(88); }) : Promise.resolve();
+    }).catch(function () {
+      if (!_data.skinPatients || _data.skinPatients.length === 0) {
+        try {
+          var cs = JSON.parse(localStorage.getItem('hms_owner_skin_cache') || '[]');
+          if (cs && cs.length) _data.skinPatients = cs;
+        } catch (e) {}
+      }
+      setLoaderPct(88);
+    }) : Promise.resolve();
 
     var pOrtho = api.getOrthopedicPatients ? withTimeout(api.getOrthopedicPatients()).then(function (r) {
-      _data.orthoPatients = (r && r.data) || [];
+      var ortho = (r && r.data) || [];
+      if (ortho.length > 0) {
+        _data.orthoPatients = ortho;
+        try { localStorage.setItem('hms_owner_ortho_cache', JSON.stringify(ortho)); } catch (e) {}
+      } else if (!_data.orthoPatients || _data.orthoPatients.length === 0) {
+        try {
+          var co = JSON.parse(localStorage.getItem('hms_owner_ortho_cache') || '[]');
+          if (co && co.length) _data.orthoPatients = co;
+        } catch (e) {}
+      }
       setLoaderPct(94, 'Ortho registry loaded...');
-    }).catch(function () { _data.orthoPatients = []; setLoaderPct(94); }) : Promise.resolve();
+    }).catch(function () {
+      if (!_data.orthoPatients || _data.orthoPatients.length === 0) {
+        try {
+          var co = JSON.parse(localStorage.getItem('hms_owner_ortho_cache') || '[]');
+          if (co && co.length) _data.orthoPatients = co;
+        } catch (e) {}
+      }
+      setLoaderPct(94);
+    }) : Promise.resolve();
 
     var pMsgs = api.getMessages ? withTimeout(api.getMessages()).then(function (r) {
       _data.messages = (r && r.data) || [];
@@ -448,21 +545,6 @@
     return 'Gen';
   }
 
-  // New registrations today — mirrors index.html (Front Desk) exactly.
-  function _ptFullName(p) {
-    var f = String(p.fname || p.FirstName || p.Name || p.name || '');
-    var l = String(p.lname || p.LastName || '');
-    if (!f && !l) {
-      var raw = p.Name || p.name || '';
-      var parts = String(raw).trim().split(/\s+/);
-      f = parts[0] || '';
-      l = parts.slice(1).join(' ');
-    }
-    return (f + ' ' + l).trim();
-  }
-  function _ptContact(p) {
-    return String(p.contact || p.Phone || p.phone || p.mobile || p.Mobile || '');
-  }
   // New registrations today — uses server-authoritative count as primary source.
   // The server scans ALL rows in the Patients sheet for Created On = today,
   // which is the only reliable source when we only have the latest 150 patients
@@ -674,46 +756,50 @@
     // Exactly mirrors reception-dashboard.js logic
     var opdRecords = (appointments || [])
       .filter(function (a) {
-        return a.type === 'OPD' || a.type === 'OPD Consultation' || a.type === 'Skin OPD' || a.type === 'Ortho OPD';
+        return a && (a.type === 'OPD' || a.type === 'OPD Consultation' || a.type === 'Skin OPD' || a.type === 'Ortho OPD');
       })
       .map(function (a, i) {
-        var name = a.patient_name || a.patientName || a.name || '';
-        var age = a.patient_age || a.patientAge || a.age || '';
-        var doctor = a.doctor || a.doctor_name || a.doctor_id || '';
-        var pid = a.patient_id || a.op_no || '';
+        var name = String(a.patient_name || a.patientName || a.name || '').trim();
+        var age = String(a.patient_age || a.patientAge || a.age || '').trim();
+        var doctor = String(a.doctor || a.doctor_name || a.doctor_id || '').trim();
+        var pid = String(a.patient_id || a.op_no || '').trim();
 
         var match = null;
         if (patientLookup.length > 0) {
           if (pid) {
+            var pidLower = pid.toLowerCase();
             match = patientLookup.find(function (p) {
-              return String(p.id || p.op_no || p.skin_id || p.ortho_id || '').toLowerCase() === String(pid).toLowerCase();
+              return String(p.id || p.op_no || p.skin_id || p.ortho_id || '').toLowerCase() === pidLower;
             });
           }
-          if (!match && name) {
+          if (!match && name && name.toLowerCase() !== 'unknown patient') {
+            var nameLower = name.toLowerCase();
             match = patientLookup.find(function (p) {
-              return _ptFullName(p).toLowerCase() === name.toLowerCase();
+              return String(_ptFullName(p) || '').toLowerCase() === nameLower;
             });
           }
           if (!match && (a.phone || a.contact)) {
             var rawC = String(a.phone || a.contact).replace(/\s/g, '');
-            match = patientLookup.find(function (p) {
-              return _ptContact(p).replace(/\s/g, '') === rawC;
-            });
+            if (rawC) {
+              match = patientLookup.find(function (p) {
+                return String(_ptContact(p) || '').replace(/\s/g, '') === rawC;
+              });
+            }
           }
         }
 
         if (match) {
-          if (!name) name = _ptFullName(match);
-          if (!age) age = match.age || match.patient_age || 'N/A';
-          if (!doctor) doctor = match.doctor || match.doctor_name || '';
+          if (!name || name === 'Unknown Patient') name = _ptFullName(match);
+          if (!age || age === 'N/A') age = String(match.age || match.patient_age || 'N/A').trim();
+          if (!doctor || doctor === 'Unassigned') doctor = String(match.doctor || match.doctor_name || '').trim();
         }
         if (!name) name = 'Unknown Patient';
         if (!age) age = 'N/A';
         if (!doctor) doctor = 'Unassigned';
 
         var resolvedId = pid || (match ? (match.id || match.op_no || match.skin_id || match.ortho_id || '') : '');
-        var resolvedContact = (match ? _ptContact(match) : '') || a.phone || a.contact || '';
-        var resolvedOpNo = a.op_no || (match ? (match.op_no || match.id || '') : '') || pid;
+        var resolvedContact = (match ? _ptContact(match) : '') || String(a.phone || a.contact || '').trim();
+        var resolvedOpNo = String(a.op_no || (match ? (match.op_no || match.id || '') : '') || pid).trim();
         var rawDate = a.createdAt || a.appointment_date || a['Appointment Date'] || a['Created At'] || a.date || a.timestamp || '';
 
         return {
@@ -1255,7 +1341,29 @@
   // ──────────────────────────────────────────────
   // APP INITIALIZATION
   // ──────────────────────────────────────────────
+  function loadInitialCachedData() {
+    try {
+      var cp = JSON.parse(localStorage.getItem('hms_owner_pts_cache') || '[]');
+      if (cp && cp.length) _data.patients = cp;
+      var ca = JSON.parse(localStorage.getItem('hms_owner_appts_cache') || localStorage.getItem('hms_local_appointments') || '[]');
+      if (ca && ca.length) _data.appointments = ca;
+      var cd = JSON.parse(localStorage.getItem('hms_owner_docs_cache') || localStorage.getItem('hms_doctors_cache') || '[]');
+      var cdArr = Array.isArray(cd) ? cd : (cd.data || []);
+      if (cdArr && cdArr.length) _data.doctors = cdArr;
+      var cs = JSON.parse(localStorage.getItem('hms_owner_skin_cache') || '[]');
+      if (cs && cs.length) _data.skinPatients = cs;
+      var co = JSON.parse(localStorage.getItem('hms_owner_ortho_cache') || '[]');
+      if (co && co.length) _data.orthoPatients = co;
+      var gt = parseInt(localStorage.getItem('hms_patients_total') || '0', 10);
+      if (gt) _data.generalTotal = gt;
+      if (_data.appointments.length || _data.patients.length || _data.doctors.length) {
+        renderAllViews();
+      }
+    } catch (e) {}
+  }
+
   function initApp() {
+    loadInitialCachedData();
     showLoader();
     initPullToRefresh();
     refreshAppData();
