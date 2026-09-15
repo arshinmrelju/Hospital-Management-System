@@ -1031,27 +1031,50 @@ body.owner-app-body {
   font-size: 18px;
   color: var(--owner-muted);
   pointer-events: none;
+  z-index: 1;
+  /* keep icon vertically centred on iOS */
+  top: 50%;
+  -webkit-transform: translateY(-50%);
+  transform: translateY(-50%);
 }
 .owner-opd-search-input {
   width: 100%;
   box-sizing: border-box;
-  padding: 10px 38px 10px 38px;
+  padding: 11px 40px 11px 40px;
   border-radius: 12px;
   border: 1px solid var(--owner-border);
-  background: white;
-  font-size: 0.82rem;
+  background: #fff;
+  /* 16px prevents iOS auto-zoom on focus */
+  font-size: 16px;
   font-family: inherit;
   color: var(--owner-text);
   outline: none;
+  /* Remove iOS native styling */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  /* Remove iOS inner shadow */
+  -webkit-box-shadow: none;
+  box-shadow: none;
+  /* Smooth focus ring */
+  transition: border-color 0.18s, -webkit-box-shadow 0.18s;
   transition: border-color 0.18s, box-shadow 0.18s;
 }
 .owner-opd-search-input:focus {
   border-color: var(--owner-primary);
+  -webkit-box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
   box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
 }
+/* iOS placeholder colour */
+.owner-opd-search-input::-webkit-input-placeholder { color: var(--owner-muted); opacity: 1; }
+.owner-opd-search-input::placeholder               { color: var(--owner-muted); opacity: 1; }
 .owner-opd-search-clear {
   position: absolute;
   right: 8px;
+  /* iOS: keep vertically centred */
+  top: 50%;
+  -webkit-transform: translateY(-50%);
+  transform: translateY(-50%);
   background: none;
   border: none;
   cursor: pointer;
@@ -1059,8 +1082,10 @@ body.owner-app-body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
+  padding: 6px;
   border-radius: 50%;
+  /* tap-highlight removed on iOS */
+  -webkit-tap-highlight-color: transparent;
   transition: background 0.15s, color 0.15s;
 }
 .owner-opd-search-clear:hover {
@@ -1071,6 +1096,8 @@ body.owner-app-body {
 /* ── OPD Table Row: hover/tap effect ── */
 .owner-opd-row {
   transition: background 0.15s;
+  /* Remove blue flash on iOS tap */
+  -webkit-tap-highlight-color: transparent;
 }
 .owner-opd-row:hover {
   background: rgba(13, 148, 136, 0.07) !important;
