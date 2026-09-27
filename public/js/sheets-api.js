@@ -828,8 +828,8 @@ window.API = {
       var local = getLocalData('skinPatients') || [];
       var now = new Date();
       if (!data.skin_id) {
-        var nextId = parseInt(localStorage.getItem('hms_skin_next_id') || '3801', 10);
-        if (isNaN(nextId) || nextId < 3801) nextId = 3801;
+        var nextId = parseInt(localStorage.getItem('hms_skin_next_id') || '4050', 10);
+        if (isNaN(nextId) || nextId < 4050) nextId = 4050;
         localStorage.setItem('hms_skin_next_id', String(nextId + 1));
         skinId = String(nextId);
       }
@@ -956,7 +956,12 @@ window.API = {
       if (data[k]) q[k] = data[k];
     });
     return sheetsFetch(q).then(function (resp) {
-      var orthoId = data.ortho_id || String(Date.now());
+      var orthoId = data.ortho_id;
+      if (!orthoId) {
+        orthoId = parseInt(localStorage.getItem('hms_ortho_next_id') || '4831', 10);
+        if (isNaN(orthoId) || orthoId < 4831) orthoId = 4831;
+        orthoId = String(orthoId);
+      }
       if (resp.success) {
         if (!resp.data) {
           resp.data = { id: orthoId, ortho_id: orthoId };
@@ -965,8 +970,11 @@ window.API = {
       }
       var local = getLocalData('orthopedicPatients') || [];
       var now = new Date();
+      if (!data.ortho_id) {
+        localStorage.setItem('hms_ortho_next_id', String(parseInt(orthoId, 10) + 1));
+      }
       var newPatient = window.API.normalizeOrthopedicPatient({
-        'Ortho ID': data.ortho_id || '',
+        'Ortho ID': orthoId,
         'Patient Name': data.patient_name || '',
         'Age': data.age || '',
         'Gender': data.gender || '',

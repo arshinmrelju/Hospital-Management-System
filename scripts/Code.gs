@@ -801,7 +801,7 @@ function handleCreateSkinPatient(e) {
   var now = new Date();
   var skinId = e.parameter.skin_id || '';
   if (!skinId) {
-    var maxNum = 3800;
+    var maxNum = 4049;
     var idCol = headers.indexOf('Skin ID');
     for (var i = 1; i < allData.length; i++) {
       var val = String(allData[i][idCol] || '');
@@ -905,10 +905,22 @@ function handleGetOrthopedicPatient(e) {
 function handleCreateOrthopedicPatient(e) {
   var ss = SpreadsheetApp.openById(SHEET_ID);
   var sheet = getOrthopedicPatientsSheet(ss);
-  var headers = sheet.getDataRange().getValues()[0];
+  var allData = sheet.getDataRange().getValues();
+  var headers = allData[0];
   var now = new Date();
+  var orthoId = e.parameter.ortho_id || '';
+  if (!orthoId) {
+    var maxNum = 4830;
+    var idCol = headers.indexOf('Ortho ID');
+    for (var i = 1; i < allData.length; i++) {
+      var val = String(allData[i][idCol] || '');
+      var num = parseInt(val.replace(/[^0-9]/g, ''), 10);
+      if (!isNaN(num) && num > maxNum) maxNum = num;
+    }
+    orthoId = String(maxNum + 1);
+  }
   var patient = {
-    'Ortho ID': e.parameter.ortho_id || '',
+    'Ortho ID': orthoId,
     'Patient Name': e.parameter.patient_name || '',
     'Age': e.parameter.age || '',
     'Gender': e.parameter.gender || '',

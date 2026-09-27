@@ -629,7 +629,7 @@
         });
 
         if (matched) {
-          var createdOn = matched.created_on || matched['Created On'] || matched.createdAt || '';
+          var createdOn = matched.created_on || matched['Created On'] || '';
           if (isToday(createdOn)) {
             if (!seenIds[recId]) {
               seenIds[recId] = true;
@@ -726,24 +726,16 @@
 
       if (!isNew && patientLookup.length > 0) {
         var recId   = String(r.op_no || r.patient_id || r.id || '').trim().toLowerCase();
-        var recName = String(r.name || '').trim().toLowerCase();
-        var matched = patientLookup.find(function (pt) {
+        var matched = recId ? patientLookup.find(function (pt) {
           var ptId = String(pt.op_no || pt.id || '').trim().toLowerCase();
-          if (ptId && recId && ptId === recId) return true;
-          if (recName && getPatientDisplayName(pt).toLowerCase() === recName) return true;
-          return false;
-        });
+          return ptId && ptId === recId;
+        }) : null;
         if (matched) {
-          var cOn = matched.created_on || matched['Created On'] || matched.createdAt || '';
+          var cOn = matched.created_on || matched['Created On'] || '';
           if (isToday(cOn)) isNew = true;
           if ((!r.age || r.age === '—') && matched.age) r.age = matched.age;
           if ((!r.gender || r.gender === '—') && (matched.gender || matched.sex)) r.gender = matched.gender || matched.sex;
         }
-      }
-
-      if (!isNew) {
-        var opNum = parseInt(r.op_no || r.patient_id || r.id, 10);
-        if (!isNaN(opNum) && opNum >= 142750 && isToday(r.tsVal)) isNew = true;
       }
 
       var newTag = isNew
@@ -920,8 +912,8 @@
           complaint: a.reason || a.complaint || '—',
           time: a.appointment_time || a.time || '—',
           timestamp: rawDate,
-          _isNew: Boolean(a._isNew || a.isNew || (match && (match._isNew || isToday(match.created_on || match['Created On'])))),
-          created_on: (match ? (match.created_on || match['Created On'] || match.createdAt) : a.created_on) || ''
+          _isNew: Boolean(a._isNew || a.isNew || (match && pid && (match._isNew || isToday(match.created_on || match['Created On'])))),
+          created_on: (match ? (match.created_on || match['Created On']) : (a.created_on || a['Created On'])) || ''
         };
       });
 

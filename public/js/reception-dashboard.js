@@ -264,36 +264,24 @@ function renderOpdRecords() {
         isNew = true;
       }
 
-      // 3. Cross-check all registries with robust isToday check
+      // 3. Cross-check patient registries by exact OP number
       if (!isNew) {
-        var patientLookup = (window.latestPatients || []).concat(window.allPatients || []).concat(window.allSkinPatients || []).concat(window.allOrthoPatients || []);
         var recId = String(p.op_no || p.patient_id || p.id || '').trim().toLowerCase();
-        var recName = String(p.name || '').trim().toLowerCase();
-        var recContact = String(p.contact || '').replace(/\s/g, '');
+        if (recId) {
+          var patientLookup = (window.latestPatients || []).concat(window.allPatients || []).concat(window.allSkinPatients || []).concat(window.allOrthoPatients || []);
+          var matchedPatient = patientLookup.find(function (pt) {
+            var ptId = String(pt.op_no || pt.skin_id || pt.ortho_id || pt.id || '').trim().toLowerCase();
+            return ptId && ptId === recId;
+          });
 
-        var matchedPatient = patientLookup.find(function(pt) {
-          var ptId = String(pt.op_no || pt.skin_id || pt.ortho_id || pt.id || '').trim().toLowerCase();
-          if (ptId && recId && ptId === recId) return true;
-          if (recName && patientFullName(pt).toLowerCase() === recName) return true;
-          if (recContact && patientContact(pt).replace(/\s/g, '') === recContact) return true;
-          return false;
-        });
-
-        if (matchedPatient) {
-          var createdOn = matchedPatient.created_on || matchedPatient['Created On'] || matchedPatient.createdAt || '';
-          isNew = isToday(createdOn);
-          // Enrich missing fields if found
-          if ((!p.age || p.age === 'N/A') && matchedPatient.age) p.age = patientAge(matchedPatient);
-          if ((!p.gender || p.gender === '—') && matchedPatient.gender) p.gender = patientGender(matchedPatient);
-          if ((!p.contact || p.contact === '—') && matchedPatient.contact) p.contact = patientContact(matchedPatient);
-        }
-      }
-
-      // 4. Fallback check: newly registered OP number sequence for today (142750+)
-      if (!isNew) {
-        var opNum = parseInt(p.op_no || p.patient_id || p.id, 10);
-        if (!isNaN(opNum) && opNum >= 142750 && isToday(p.timestamp)) {
-          isNew = true;
+          if (matchedPatient) {
+            var createdOn = matchedPatient.created_on || matchedPatient['Created On'] || '';
+            isNew = isToday(createdOn);
+            // Enrich missing fields if found
+            if ((!p.age || p.age === 'N/A') && matchedPatient.age) p.age = patientAge(matchedPatient);
+            if ((!p.gender || p.gender === '—') && matchedPatient.gender) p.gender = patientGender(matchedPatient);
+            if ((!p.contact || p.contact === '—') && matchedPatient.contact) p.contact = patientContact(matchedPatient);
+          }
         }
       }
 
@@ -588,7 +576,10 @@ async function loadOpdRecords() {
         if (!name) name = 'Unknown Patient';
         if (!age) age = 'N/A';
         if (!doctor) doctor = 'Unassigned';
-        var match2 = patientLookup.find(function (p) { return patientFullName(p) === name || p.id === a.patient_id || (p.contact || '') === a.patient_id; });
+        var match2Id = patientLookup.find(function (p) {
+          return a.patient_id && (String(p.id) === String(a.patient_id) || (p.contact || '').replace(/\s/g, '') === String(a.patient_id).replace(/\s/g, ''));
+        });
+        var match2 = match2Id || patientLookup.find(function (p) { return patientFullName(p) === name; });
         return {
           id: a.id || 'OPD-' + i,
           patient_id: a.patient_id || (match2 ? (match2.id || match2.op_no || match2['Hosp. OP No'] || match2['OP No'] || '') : ''),
@@ -602,8 +593,8 @@ async function loadOpdRecords() {
           complaint: a.reason || a.complaint || '—',
           time: a.appointment_time || a.time || '—',
           timestamp: a.createdAt || a.appointment_date || new Date().toISOString(),
-          _isNew: Boolean(a._isNew || a.isNew || (match2 && (match2._isNew || isToday(match2.created_on || match2['Created On'])))),
-          created_on: (match2 ? (match2.created_on || match2['Created On'] || match2.createdAt) : a.created_on) || ''
+          _isNew: Boolean(a._isNew || a.isNew || (match2Id && (match2Id._isNew || isToday(match2Id.created_on || match2Id['Created On'])))),
+          created_on: (match2Id ? (match2Id.created_on || match2Id['Created On']) : (a.created_on || a['Created On'])) || ''
         };
       });
     var seen = {};
@@ -779,7 +770,7 @@ function updateStats() {
   var patientLookup = (window.allPatients || []).concat(window.allSkinPatients || []).concat(window.allOrthoPatients || []);
 
   patientLookup.forEach(function (pt) {
-    var createdOn = pt.created_on || pt['Created On'] || pt.createdAt || '';
+    var createdOn = pt.created_on || pt['Created On'] || '';
     if (isToday(createdOn) || pt._isNew === true) {
       var id = String(pt.op_no || pt.id || pt.skin_id || pt.ortho_id || patientFullName(pt)).trim().toLowerCase();
       if (id && !seenIds[id]) {
@@ -795,19 +786,14 @@ function updateStats() {
     var isNew = (r._isNew === true);
     if (!isNew) {
       var recId = String(r.op_no || r.patient_id || r.id || '').trim().toLowerCase();
-      var recName = String(r.name || '').trim().toLowerCase();
-      var recContact = String(r.contact || '').replace(/\s/g, '');
 
       var matchedPatient = patientLookup.find(function(pt) {
         var ptId = String(pt.op_no || pt.skin_id || pt.ortho_id || pt.id || '').trim().toLowerCase();
-        if (ptId && recId && ptId === recId) return true;
-        if (recName && patientFullName(pt).toLowerCase() === recName) return true;
-        if (recContact && patientContact(pt).replace(/\s/g, '') === recContact) return true;
-        return false;
+        return ptId && recId && ptId === recId;
       });
 
       if (matchedPatient) {
-        var createdOn = matchedPatient.created_on || matchedPatient['Created On'] || matchedPatient.createdAt || '';
+        var createdOn = matchedPatient.created_on || matchedPatient['Created On'] || '';
         isNew = isToday(createdOn);
       }
     }

@@ -89,11 +89,18 @@ function generateNextSkinId() {
   (allSkinPatients || []).forEach(function(p) {
     existing[String(p.skin_id || p.id || '')] = true;
   });
-  var next = parseInt(localStorage.getItem('hms_skin_next_id') || '3801', 10);
-  if (isNaN(next) || next < 3801) next = 3801;
+  var next = parseInt(localStorage.getItem('hms_skin_next_id') || '4050', 10);
+  if (isNaN(next) || next < 4050) next = 4050;
   while (existing[String(next)]) next++;
-  localStorage.setItem('hms_skin_next_id', String(next + 1));
   return String(next);
+}
+
+function commitNextSkinId(id) {
+  var n = parseInt(id, 10);
+  if (isNaN(n)) return;
+  var stored = parseInt(localStorage.getItem('hms_skin_next_id') || '4050', 10);
+  if (isNaN(stored) || stored < 4050) stored = 4050;
+  if (n + 1 > stored) localStorage.setItem('hms_skin_next_id', String(n + 1));
 }
 
 function validateSkinInput(data) {
@@ -486,6 +493,7 @@ function initSkinPage() {
 }
 
 function openAddSkinModal() {
+  document.getElementById('addSkinForm').reset();
   try {
     document.getElementById('addSkinIdDisplay').textContent = generateNextSkinId();
   } catch(e) {
@@ -529,6 +537,7 @@ async function submitAddSkin(e) {
     allSkinPatients.unshift(newP);
     window.allSkinPatients = allSkinPatients;
     SkinCache.clear();
+    commitNextSkinId(returnedId);
     applySkinFilters();
     closeModal(null, 'addSkinModal');
     document.getElementById('addSkinForm').reset();

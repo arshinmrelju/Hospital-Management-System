@@ -500,11 +500,18 @@ function generateNextOrthoId() {
   (allOrthoPatients || []).forEach(function(p) {
     existing[String(p.ortho_id || p.id || '')] = true;
   });
-  var next = parseInt(localStorage.getItem('hms_ortho_next_id') || '4801', 10);
-  if (isNaN(next) || next < 4801) next = 4801;
+  var next = parseInt(localStorage.getItem('hms_ortho_next_id') || '4831', 10);
+  if (isNaN(next) || next < 4831) next = 4831;
   while (existing[String(next)]) next++;
-  localStorage.setItem('hms_ortho_next_id', String(next + 1));
   return String(next);
+}
+
+function commitNextOrthoId(id) {
+  var n = parseInt(id, 10);
+  if (isNaN(n)) return;
+  var stored = parseInt(localStorage.getItem('hms_ortho_next_id') || '4831', 10);
+  if (isNaN(stored) || stored < 4831) stored = 4831;
+  if (n + 1 > stored) localStorage.setItem('hms_ortho_next_id', String(n + 1));
 }
 
 function openAddOrthoModal() {
@@ -561,6 +568,7 @@ async function submitAddOrtho(e) {
     allOrthoPatients.unshift(newP);
     window.allOrthoPatients = allOrthoPatients;
     OrthoCache.clear();
+    commitNextOrthoId(raw.ortho_id);
     applyOrthoFilters();
     closeModal(null, 'addOrthoModal');
     document.getElementById('addOrthoForm').reset();
