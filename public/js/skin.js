@@ -133,11 +133,11 @@ function applySkinFilters() {
     const pid = p.skin_id || p.id || '';
     const name = p.patient_name || p.name || p.Name || '';
     const haystack = (pid + ' ' + name + ' ' + (p.contact || '')).toLowerCase();
-    if (search && !haystack.includes(search)) return false;
+    if (search && !window.hmsMatchQuery(haystack, search)) return false;
 
     if (patientId) {
       const pId = (p.skin_id || p.id || '').toString().toLowerCase();
-      if (!pId.includes(patientId)) return false;
+      if (!window.hmsMatchQuery(pId, patientId)) return false;
     }
 
     if (skinActiveFilter === 'admitted' && p.patient_type !== 'admitted') return false;
@@ -156,17 +156,17 @@ function applySkinFilters() {
 
     if (place) {
       const pPlace = (p.place || '').toLowerCase();
-      if (!pPlace.includes(place)) return false;
+      if (!window.hmsMatchQuery(pPlace, place)) return false;
     }
 
     if (doctor) {
       const pDoctor = (p.doctor || '').toLowerCase();
-      if (!pDoctor.includes(doctor)) return false;
+      if (!window.hmsMatchQuery(pDoctor, doctor)) return false;
     }
 
     if (op) {
       const pOp = (p.skin_id || p.id || '').toString().toLowerCase();
-      if (!pOp.includes(op)) return false;
+      if (!window.hmsMatchQuery(pOp, op)) return false;
     }
 
     if (visitFrom || visitTo) {

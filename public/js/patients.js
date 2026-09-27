@@ -233,12 +233,12 @@ function applyFilters() {
   filteredPatients = allPatients.filter(p => {
     // 1. Global Search
     const name = `${p.fname || ''} ${p.lname || ''} ${p.name || ''} ${p.Name || ''} ${p.patient_name || ''} ${p.op_no || p.id || ''} ${p.contact || ''} ${p.doctor || ''}`.toLowerCase();
-    if (search && !name.includes(search)) return false;
+    if (search && !window.hmsMatchQuery(name, search)) return false;
 
     // 1b. Patient ID specific search
     if (patientId) {
       const pId = (p.op_no || p.id || '').toString().toLowerCase();
-      if (!pId.includes(patientId)) return false;
+      if (!window.hmsMatchQuery(pId, patientId)) return false;
     }
     
     // 2. Tab chips (All, Admitted, Outpatient, Discharged)
@@ -261,19 +261,19 @@ function applyFilters() {
     // 5. Advanced Place
     if (place) {
       const pPlace = (p.place || p.address || p.Place || p.Address || '').toLowerCase();
-      if (!pPlace.includes(place)) return false;
+      if (!window.hmsMatchQuery(pPlace, place)) return false;
     }
 
     // 6. Advanced Doctor
     if (doctor) {
       const pDoctor = (p.doctor || p.Doctor || p.doctor_name || p.assignedDoctor || '').toLowerCase();
-      if (!pDoctor.includes(doctor)) return false;
+      if (!window.hmsMatchQuery(pDoctor, doctor)) return false;
     }
 
     // 7. Advanced OP Number
     if (op) {
       const pOp = (p.op_no || p.id || '').toString().toLowerCase();
-      if (!pOp.includes(op)) return false;
+      if (!window.hmsMatchQuery(pOp, op)) return false;
     }
 
     // 8. Advanced Last Visit Date Range

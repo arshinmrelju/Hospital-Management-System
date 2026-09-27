@@ -420,9 +420,11 @@ function renderDoctorOptions(sel, docs, selectedName) {
   sel.innerHTML = '<option value="">Select Doctor</option>' +
     docs.map(function(d) {
       var val = window.esc(d.name || d.id);
-      var match = selectedName && d.name && d.name.trim().toLowerCase().includes(selectedName.trim().toLowerCase().replace(/^dr\.?\s*/i, ''));
+      var match = selectedName && d.name && window.hmsMatchQuery(d.name, selectedName);
       if (!match && selectedName && d.name) {
-        match = selectedName.trim().toLowerCase().includes(d.name.trim().toLowerCase());
+        var dname = (d.name || '').toLowerCase().replace(/^dr\.?\s*/i, '');
+        var sname = selectedName.toLowerCase().replace(/^dr\.?\s*/i, '');
+        if (dname && sname && (dname.indexOf(sname) !== -1 || sname.indexOf(dname) !== -1)) match = true;
       }
       return '<option value="' + val + '"' + (match ? ' selected' : '') + '>' + window.esc(d.name) + ' (' + window.esc(d.dept) + ')</option>';
     }).join('');

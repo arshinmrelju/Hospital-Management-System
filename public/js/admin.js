@@ -275,10 +275,10 @@
 
   /* ─── Filters ─── */
   window.filterDoctors = function() {
-    var q = (document.getElementById('doctorSearch').value || '').toLowerCase();
+    var q = window.hmsNormalizeWs(document.getElementById('doctorSearch').value);
     var clearBtn = document.getElementById('doctorSearchClear');
     filteredDoctors = doctors.filter(function(d) {
-      return (d.name + ' ' + d.dept + ' ' + d.id + ' ' + (d.qualification || '')).toLowerCase().indexOf(q) !== -1;
+      return window.hmsMatchQuery(d.name + ' ' + d.dept + ' ' + d.id + ' ' + (d.qualification || ''), q);
     });
     renderDoctors();
     if (clearBtn) clearBtn.style.display = q ? 'flex' : 'none';
@@ -291,10 +291,10 @@
   };
 
   window.filterDepartments = function() {
-    var q = (document.getElementById('deptSearch').value || '').toLowerCase();
+    var q = window.hmsNormalizeWs(document.getElementById('deptSearch').value);
     var clearBtn = document.getElementById('deptSearchClear');
     filteredDepts = departments.filter(function(d) {
-      return (d.name + ' ' + (d.description || '') + ' ' + d.id).toLowerCase().indexOf(q) !== -1;
+      return window.hmsMatchQuery(d.name + ' ' + (d.description || '') + ' ' + d.id, q);
     });
     renderDepartments();
     if (clearBtn) clearBtn.style.display = q ? 'flex' : 'none';
@@ -662,12 +662,12 @@
   }
 
   window.filterLoginHistory = function() {
-    var q = (document.getElementById('loginSearch').value || '').toLowerCase();
+    var q = window.hmsNormalizeWs(document.getElementById('loginSearch').value);
     var roleFilter = document.getElementById('loginRoleFilter').value;
     var statusFilter = document.getElementById('loginStatusFilter').value;
 
     var filtered = allLoginSessions.filter(function(s) {
-      if (q && (s.user || '').toLowerCase().indexOf(q) === -1 && (s.deviceInfo || '').toLowerCase().indexOf(q) === -1) return false;
+      if (q && !window.hmsMatchQuery((s.user || '') + ' ' + (s.deviceInfo || ''), q)) return false;
       if (roleFilter && s.role !== roleFilter) return false;
       if (statusFilter && s.status !== statusFilter) return false;
       return true;

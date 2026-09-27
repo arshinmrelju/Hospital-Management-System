@@ -7,6 +7,23 @@ window.esc = function(s) {
   return div.innerHTML;
 };
 
+window.hmsNormalizeWs = function (s) {
+  return String(s == null ? '' : s).toLowerCase().replace(/\s+/g, ' ').trim();
+};
+
+window.hmsMatchQuery = function (haystack, query) {
+  var q = window.hmsNormalizeWs(query);
+  if (!q) return true;
+  var hay = window.hmsNormalizeWs(haystack);
+  if (!hay) return false;
+  if (hay.indexOf(q) !== -1) return true;
+  var parts = q.split(' ');
+  for (var i = 0; i < parts.length; i++) {
+    if (hay.indexOf(parts[i]) === -1) return false;
+  }
+  return true;
+};
+
 var AUTH_DURATION_MS = 12 * 60 * 60 * 1000;
 
 window.HMS = {
@@ -551,13 +568,13 @@ window.SEARCH_PAGES = [
 
   function setupInput(inputEl, dropEl) {
     inputEl.addEventListener('input', function() {
-      var q = (this.value || '').toLowerCase();
-      var matches = q ? window.SEARCH_PAGES.filter(function(p) { return p.label.toLowerCase().includes(q) || p.id.includes(q); }) : window.SEARCH_PAGES;
+      var q = (this.value || '').toLowerCase().replace(/\s+/g, ' ').trim();
+      var matches = q ? window.SEARCH_PAGES.filter(function(p) { return window.hmsMatchQuery(p.label + ' ' + p.id, q); }) : window.SEARCH_PAGES;
       renderItems(matches, dropEl);
     });
     inputEl.addEventListener('focus', function() {
-      var q = (this.value || '').toLowerCase();
-      var matches = q ? window.SEARCH_PAGES.filter(function(p) { return p.label.toLowerCase().includes(q) || p.id.includes(q); }) : window.SEARCH_PAGES;
+      var q = (this.value || '').toLowerCase().replace(/\s+/g, ' ').trim();
+      var matches = q ? window.SEARCH_PAGES.filter(function(p) { return window.hmsMatchQuery(p.label + ' ' + p.id, q); }) : window.SEARCH_PAGES;
       renderItems(matches, dropEl);
     });
     inputEl.addEventListener('keydown', function(e) {

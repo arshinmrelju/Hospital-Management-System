@@ -695,10 +695,20 @@
       if (!_withinRange(r.tsVal, _opdRange)) return false;
       if (_opdDim !== 'all' && r.dept !== _opdDim) return false;
       if (_opdSearch) {
-        var q = _opdSearch.toLowerCase();
-        var nameMatch = String(r.name || '').toLowerCase().indexOf(q) !== -1;
-        var opMatch  = String(r.op_no || '').toLowerCase().indexOf(q) !== -1;
-        if (!nameMatch && !opMatch) return false;
+        var q = _opdSearch.toLowerCase().replace(/\s+/g, ' ').trim();
+        if (q) {
+          var hay = (String(r.name || '') + ' ' + String(r.op_no || '') + ' ' + String(r.contact || '')).toLowerCase().replace(/\s+/g, ' ').trim();
+          var nameMatch = hay.indexOf(q) !== -1;
+          if (!nameMatch) {
+            var opMatch = String(r.op_no || '').toLowerCase().replace(/\s+/g, '').indexOf(q.replace(/\s+/g, '')) !== -1;
+            if (!opMatch) {
+              var toks = q.split(' ');
+              for (var ti = 0; ti < toks.length; ti++) {
+                if (hay.indexOf(toks[ti]) === -1) return false;
+              }
+            }
+          }
+        }
       }
       return true;
     });
