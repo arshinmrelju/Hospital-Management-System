@@ -1,6 +1,6 @@
 'use strict';
 
-var SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbzyWYn8o1YCA5cGN8YoQcCTOMb271ClriIUGv8M242u_K4TnhIbj6Xsi8ZYmMq-a0av3g/exec';
+var SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbw0KyFeZIH3Gowr-PYILabJH5QFNDMlGdfdz9p5m7zKX1Njq9jSmiOLeO-7kjssRCNlIg/exec';
 
 var _patientsCache = null;
 var _appointmentsCache = null;

@@ -508,6 +508,9 @@ async function submitEditPatient(e) {
   setButtonLoading(submitBtn, 'Saving...');
   try {
     const result = await window.API.updatePatient(id, raw);
+    if (!result || result.success === false) {
+      throw new Error((result && result.error) || 'Update rejected');
+    }
     const idx = allPatients.findIndex(p => p.id == id);
     if (idx !== -1) {
       allPatients[idx] = Object.assign({}, allPatients[idx], raw, result.data || {});
@@ -516,7 +519,13 @@ async function submitEditPatient(e) {
     }
     closeModal(null, 'editPatientModal');
     applyFilters();
-    toast(`Patient updated!`, 'success');
+    if (result.offlineQueued) {
+      toast('Offline — change queued, will sync when back online', 'warning');
+    } else if (result.fallback) {
+      toast('Saved to this device only — not synced to the server yet', 'warning');
+    } else {
+      toast(`Patient updated!`, 'success');
+    }
   } catch (err) {
     toast('Failed to update: ' + err.message, 'error');
   }
