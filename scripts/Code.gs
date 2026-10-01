@@ -57,30 +57,65 @@ function isValidOpNo(val) {
   return Number.isInteger(n) && n > 0 && n < 1000000;
 }
 
+/* The Patients sheet keeps the hospital OP number in its own column
+   ("Hosp. OP No"); the ID column holds an opaque record key. Resolve
+   which column carries the OP number so reads and writes agree. */
+function opNoColumn(headers) {
+  var labels = ['Hosp. OP No', 'OP No', 'OP No.', 'OP', 'Op No'];
+  for (var i = 0; i < labels.length; i++) {
+    var c = headers.indexOf(labels[i]);
+    if (c >= 0) return c;
+  }
+  return -1;
+}
+
+/* Resolve the OP number for one sheet row. The dedicated OP column wins;
+   otherwise fall back to the "OP No: n" note, then ID, then UHID. */
+function resolveOpNo(row, headers, idCol, notesCol, uhidCol) {
+  var opCol = opNoColumn(headers);
+  if (opCol >= 0) {
+    var v = row[opCol];
+    if (isValidOpNo(v)) return String(v).trim();
+  }
+  var fromNotes = notesCol >= 0 ? extractOpFromNotes(String(row[notesCol] || '')) : '';
+  if (fromNotes) return fromNotes;
+  if (idCol >= 0 && isValidOpNo(row[idCol])) return String(row[idCol]).trim();
+  if (uhidCol >= 0 && isValidOpNo(row[uhidCol])) return String(row[uhidCol]).trim();
+  return '';
+}
+
+function sameId(a, b) {
+  if (a === undefined || a === null) return false;
+  if (b === undefined || b === null || b === '') return false;
+  return String(a).trim() === String(b).trim();
+}
+
 function generateNextOpNo(rows, headers) {
   var idCol = headers.indexOf('ID');
   var notesCol = headers.indexOf('Notes');
+  var uhidCol = headers.indexOf('UHID');
   var existing = {};
   for (var i = 1; i < rows.length; i++) {
-    if (idCol >= 0) {
-      var idVal = rows[i][idCol];
-      if (isValidOpNo(idVal)) existing[Number(idVal)] = true;
-    }
-    if (notesCol >= 0) {
-      var op = extractOpFromNotes(String(rows[i][notesCol] || ''));
-      if (isValidOpNo(op)) existing[Number(op)] = true;
-    }
+    var seen = resolveOpNo(rows[i], headers, idCol, notesCol, uhidCol);
+    if (isValidOpNo(seen)) existing[Number(seen)] = true;
   }
   var next = 141587;
   while (existing[next]) next++;
   return String(next);
 }
 
+/* Match on every identifier the client might send: the OP column, the ID
+   column, UHID, and the "OP No: n" note. */
 function findPatientRow(id, rows, headers) {
   var idCol = headers.indexOf('ID');
   var notesCol = headers.indexOf('Notes');
+  var uhidCol = headers.indexOf('UHID');
+  var opCol = opNoColumn(headers);
+  if (id === undefined || id === null || String(id).trim() === '') return -1;
   for (var i = 1; i < rows.length; i++) {
-    if (idCol >= 0 && String(rows[i][idCol]) === String(id)) return i;
+    if (opCol >= 0 && sameId(rows[i][opCol], id)) return i;
+    if (idCol >= 0 && sameId(rows[i][idCol], id)) return i;
+    if (uhidCol >= 0 && sameId(rows[i][uhidCol], id)) return i;
     if (notesCol >= 0) {
       var notes = String(rows[i][notesCol] || '');
       var op = extractOpFromNotes(notes);
@@ -166,12 +201,8 @@ function handleGetPatients(e) {
     p.assigned_doctor = colDoctor   >= 0 ? String(r[colDoctor]   || '') : '';
     p.uhid            = colUhid     >= 0 ? String(r[colUhid]     || '') : '';
     p.notes           = colNotes    >= 0 ? String(r[colNotes]    || '') : '';
-    var rawNotes      = p.notes;
-    var rawId         = colId       >= 0 ? String(r[colId]       || '') : '';
-    var rawUhid       = p.uhid;
-    var opFromNotes   = extractOpFromNotes(rawNotes);
-    p.op_no = opFromNotes || (isValidOpNo(rawId) ? rawId : '') || (isValidOpNo(rawUhid) ? rawUhid : '') || '';
-    p.id = p.op_no;
+    p.op_no           = resolveOpNo(r, headers, colId, colNotes, colUhid);
+    p.id              = p.op_no;
     p.last_visit      = colLastVis  >= 0 ? String(r[colLastVis]  || '') : '';
     // Use Utilities.formatDate so Date cells always yield 'yyyy-MM-dd' strings
     if (colCreated >= 0) {
@@ -254,10 +285,7 @@ function handleGetPatient(e) {
     p.assigned_doctor = p['Assigned Doctor'] || '';
     p.uhid = p['UHID'] || '';
     p.notes = p['Notes'] || '';
-    var opFromNotes = extractOpFromNotes(p.notes);
-    var rawId = p['ID'] || '';
-    var rawUhid = p['UHID'] || '';
-    p.op_no = opFromNotes || (isValidOpNo(rawId) ? rawId : '') || (isValidOpNo(rawUhid) ? rawUhid : '') || '';
+    p.op_no = resolveOpNo(rows[rowIdx], headers, headers.indexOf('ID'), headers.indexOf('Notes'), headers.indexOf('UHID'));
     p.id = p.op_no;
     p.last_visit = p['Last Visit'] || '';
     p.created_on = p['Created On'] || '';
@@ -287,9 +315,11 @@ function handleCreatePatient(e) {
     opNo = generateNextOpNo(allData, headers);
   }
   notes = notes ? notes + '\nOP No: ' + opNo : 'OP No: ' + opNo;
+  var opColNew = opNoColumn(headers);
   for (var j = 0; j < headers.length; j++) {
     var h = headers[j];
     if (h === 'ID') row.push(opNo);
+    else if (j === opColNew) row.push(opNo);
     else if (h === 'First Name') row.push(e.parameter.fname || '');
     else if (h === 'Last Name') row.push(e.parameter.lname || '');
     else if (h === 'Phone') row.push(e.parameter.contact || '');
@@ -327,7 +357,8 @@ function handleUpdatePatient(e) {
       'email': 'Email', 'gender': 'Gender', 'age': 'Age', 'address': 'Address',
       'blood_group': 'Blood Group', 'department': 'Department',
       'patient_type': 'Admission Type', 'status': 'Status',
-      'assigned_doctor': 'Assigned Doctor', 'uhid': 'UHID', 'notes': 'Notes'
+      'assigned_doctor': 'Assigned Doctor', 'doctor': 'Assigned Doctor',
+      'uhid': 'UHID', 'notes': 'Notes'
     };
     for (var key in map) {
       if (e.parameter[key] !== undefined) {
@@ -352,10 +383,7 @@ function handleUpdatePatient(e) {
     p.assigned_doctor = p['Assigned Doctor'] || '';
     p.uhid = p['UHID'] || '';
     p.notes = p['Notes'] || '';
-    var opFromNotesU = extractOpFromNotes(p.notes);
-    var rawIdU = p['ID'] || '';
-    var rawUhidU = p['UHID'] || '';
-    p.op_no = opFromNotesU || (isValidOpNo(rawIdU) ? rawIdU : '') || (isValidOpNo(rawUhidU) ? rawUhidU : '') || '';
+    p.op_no = resolveOpNo(row, headers, headers.indexOf('ID'), headers.indexOf('Notes'), headers.indexOf('UHID'));
     p.id = p.op_no;
     p.last_visit = p['Last Visit'] || '';
     p.created_on = p['Created On'] || '';
