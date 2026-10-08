@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-WTGQMNEK28"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-WTGQMNEK28');
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Find My OP Number – Wellness Medicals HMS</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#0D9488" />
+  <link rel="icon" type="image/jpeg" href="assets/hms-logo.jpg">
+  <meta name="description" content="Look up your OP Number with your mobile number, then share it with the receptionist." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" media="print" onload="this.media='all';this.onload=null" />
+  <link rel="stylesheet" href="css/main.css?v=27" />
+  <link rel="stylesheet" href="css/op-finder.css?v=1" />
+</head>
+
+<body class="opf-body">
+
+  <!-- Ambient Background Orbs -->
+  <div class="opf-orbs" aria-hidden="true">
+    <span class="opf-orb opf-orb-1"></span>
+    <span class="opf-orb opf-orb-2"></span>
+  </div>
+
+  <main class="opf-page">
+    <div class="opf-shell glass-card">
+
+      <!-- Brand -->
+      <header class="opf-brand">
+        <img src="assets/hms-logo.jpg" alt="Wellness Medicals" class="opf-brand-logo" />
+        <div class="opf-brand-text">
+          <span class="opf-brand-name">Wellness Medicals</span>
+          <span class="opf-brand-sub">OP Number Finder</span>
+        </div>
+      </header>
+
+      <!-- STEP 1 — Enter mobile number -->
+      <section class="opf-view active" id="opfViewSearch">
+        <h1 class="opf-title">Find Your OP Number</h1>
+        <p class="opf-sub">Enter your mobile number</p>
+        <form id="opfForm" novalidate>
+          <label class="opf-label" for="opfPhone">Mobile Number</label>
+          <input class="opf-input" id="opfPhone" name="phone" type="tel" inputmode="numeric"
+            autocomplete="tel" maxlength="18" placeholder="98765 43210" />
+          <p class="opf-error" id="opfInputError" role="alert"></p>
+          <button class="opf-btn" id="opfSearchBtn" type="submit">
+            <span class="material-icons-round">search</span> SEARCH
+          </button>
+        </form>
+      </section>
+
+      <!-- STEP 2 — Select your name (only when several records share the number) -->
+      <section class="opf-view" id="opfViewResults">
+        <h1 class="opf-title">Select Your Name</h1>
+        <div class="opf-list" id="opfList" role="list"></div>
+        <button class="opf-btn opf-btn-ghost" id="opfBackBtn" type="button">
+          <span class="material-icons-round">refresh</span> SEARCH AGAIN
+        </button>
+      </section>
+
+      <!-- STEP 3 — Your OP number -->
+      <section class="opf-view" id="opfViewOp">
+        <h1 class="opf-title">Your OP Number</h1>
+        <p class="opf-person-confirm" id="opfPersonConfirm"></p>
+        <div class="opf-op-value" id="opfOpValue">&mdash;</div>
+        <p class="opf-note">Please tell this OP Number to the receptionist.</p>
+        <button class="opf-btn" id="opfAgainBtn" type="button">
+          <span class="material-icons-round">refresh</span> SEARCH AGAIN
+        </button>
+      </section>
+
+      <!-- No record found -->
+      <section class="opf-view" id="opfViewNone">
+        <div class="opf-msg">
+          <span class="material-icons-round opf-msg-icon">person_search</span>
+          <h1 class="opf-msg-title">No patient record found.</h1>
+          <p class="opf-msg-body">Please contact the reception desk<br />for assistance.</p>
+          <button class="opf-btn" id="opfRetryBtn" type="button">
+            <span class="material-icons-round">refresh</span> TRY AGAIN
+          </button>
+        </div>
+      </section>
+
+      <!-- Network / service error -->
+      <section class="opf-view" id="opfViewError">
+        <div class="opf-msg">
+          <span class="material-icons-round opf-msg-icon">wifi_off</span>
+          <h1 class="opf-msg-title">Cannot search right now.</h1>
+          <p class="opf-msg-body">Please check the connection<br />and try again.</p>
+          <button class="opf-btn" id="opfErrorRetryBtn" type="button">
+            <span class="material-icons-round">refresh</span> TRY AGAIN
+          </button>
+        </div>
+      </section>
+
+    </div>
+
+    <p class="opf-foot">Wellness Medicals &middot; Show this number to the receptionist</p>
+  </main>
+
+  <div id="toastContainer"></div>
+
+  <script src="js/sheets-api.js?v=3"></script>
+  <script src="js/pwa.js?v=1"></script>
+  <script src="js/op-finder.js?v=1"></script>
+</body>
+
+</html>

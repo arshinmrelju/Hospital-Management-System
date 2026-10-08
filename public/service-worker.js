@@ -22,6 +22,8 @@ const STATIC_ASSETS = [
   '/admin',
   '/report.html',
   '/report',
+  '/op-finder.html',
+  '/op-finder',
   '/offline.html',
   '/manifest.json',
   '/owner-manifest.json',
@@ -34,6 +36,7 @@ const STATIC_ASSETS = [
   '/css/patients.css',
   '/css/administration.css',
   '/css/owner-mobile.css',
+  '/css/op-finder.css',
 
   /* ─── Core JS ─── */
   '/js/app.js',
@@ -47,6 +50,7 @@ const STATIC_ASSETS = [
   '/js/offline-db.js',
   '/js/offline-sync.js',
   '/js/owner-mobile.js',
+  '/js/op-finder.js',
 
   /* ─── Assets ─── */
   '/assets/hms-logo.jpg'

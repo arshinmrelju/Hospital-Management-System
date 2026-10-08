@@ -1,0 +1,409 @@
+/* =============================================
+   FIND MY OP NUMBER — Patient-facing screen
+   Small VitalGlass extension (relies on main.css
+   design tokens: colors, radii, glass, fonts)
+   ============================================= */
+
+/* --- Page shell --- */
+body.opf-body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background:
+    radial-gradient(1100px 560px at 8% -12%, rgba(13, 148, 136, 0.18), transparent 60%),
+    radial-gradient(900px 520px at 112% 18%, rgba(0, 104, 95, 0.14), transparent 58%),
+    linear-gradient(165deg, #eefaf7 0%, #f7f9fb 48%, #e9f6f3 100%);
+}
+
+/* Decorative ambient orbs (VitalGlass background accent) */
+.opf-orbs {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.opf-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(64px);
+  opacity: 0.55;
+}
+.opf-orb-1 {
+  width: 320px;
+  height: 320px;
+  background: rgba(13, 148, 136, 0.38);
+  top: -90px;
+  left: -80px;
+}
+.opf-orb-2 {
+  width: 280px;
+  height: 280px;
+  background: rgba(0, 104, 95, 0.30);
+  bottom: -70px;
+  right: -70px;
+}
+
+.opf-page {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px calc(24px + var(--safe-bottom));
+}
+
+/* --- Glass card --- */
+.opf-shell {
+  width: 100%;
+  max-width: 480px;
+  padding: 28px 26px 30px;
+}
+
+/* --- Brand header --- */
+.opf-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.opf-brand-logo {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+.opf-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.opf-brand-name {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--primary-dark);
+}
+.opf-brand-sub {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--outline);
+}
+
+/* --- Views --- */
+.opf-view {
+  display: none;
+}
+.opf-view.active {
+  display: block;
+  animation: opfFadeIn 0.28s ease;
+}
+@keyframes opfFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* --- Text --- */
+.opf-title {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: clamp(1.5rem, 6vw, 1.75rem);
+  letter-spacing: -0.01em;
+  color: var(--primary-dark);
+  text-align: center;
+  margin: 0;
+}
+.opf-sub {
+  font-size: 1rem;
+  color: var(--on-surface-var);
+  text-align: center;
+  margin: 8px 0 22px;
+  line-height: 1.5;
+}
+
+/* --- Form --- */
+.opf-label {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--on-surface-var);
+  margin-bottom: 8px;
+}
+.opf-input {
+  width: 100%;
+  height: 60px;
+  padding: 0 18px;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--on-surface);
+  background: var(--surface-low);
+  border: 2px solid var(--outline-var);
+  border-radius: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.opf-input::placeholder {
+  color: var(--outline);
+  font-weight: 500;
+}
+.opf-input:focus {
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 4px var(--primary-soft);
+}
+.opf-error {
+  display: none;
+  color: var(--accent-red);
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 8px 2px 0;
+}
+.opf-error.visible {
+  display: block;
+}
+
+/* --- Buttons (large, elderly-friendly) --- */
+.opf-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 58px;
+  margin-top: 18px;
+  background: linear-gradient(135deg, #00685f, #0d9488);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 1.02rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  box-shadow: 0 6px 20px rgba(13, 148, 136, 0.32);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+}
+.opf-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 26px rgba(13, 148, 136, 0.4);
+}
+.opf-btn:active {
+  transform: translateY(0);
+}
+.opf-btn:disabled {
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+  cursor: default;
+}
+.opf-btn .material-icons-round {
+  font-size: 22px;
+}
+.opf-btn-ghost {
+  background: var(--primary-soft);
+  color: var(--primary-light);
+  border: 1.5px solid rgba(13, 148, 136, 0.3);
+  box-shadow: none;
+}
+.opf-btn-ghost:hover {
+  background: rgba(13, 148, 136, 0.16);
+  box-shadow: none;
+}
+
+/* Spinner inside a loading button */
+.opf-spin {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: opfSpin 0.8s linear infinite;
+}
+.opf-btn-ghost .opf-spin,
+.opf-select-btn .opf-spin {
+  border-color: rgba(13, 148, 136, 0.3);
+  border-top-color: var(--primary-light);
+}
+@keyframes opfSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Name selection list --- */
+.opf-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 4px 0 6px;
+}
+.opf-person-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1.5px solid var(--outline-var);
+  border-radius: 14px;
+  padding: 14px 14px 14px 16px;
+  box-shadow: var(--shadow-sm);
+}
+.opf-person-info {
+  min-width: 0;
+}
+.opf-person-name {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--on-surface);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.opf-person-meta {
+  font-size: 0.9rem;
+  color: var(--on-surface-var);
+  margin-top: 2px;
+}
+.opf-select-btn {
+  flex-shrink: 0;
+  min-height: 48px;
+  padding: 0 22px;
+  background: linear-gradient(135deg, #00685f, #0d9488);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  box-shadow: 0 3px 12px rgba(13, 148, 136, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.opf-select-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 16px rgba(13, 148, 136, 0.38);
+}
+.opf-select-btn:active {
+  transform: translateY(0);
+}
+
+/* --- OP number display --- */
+.opf-person-confirm {
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--on-surface-var);
+  margin: 10px 0 2px;
+}
+.opf-op-value {
+  display: block;
+  width: 100%;
+  text-align: center;
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: clamp(2.3rem, 13vw, 3.2rem);
+  letter-spacing: 0.02em;
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  border: 2px solid rgba(13, 148, 136, 0.28);
+  border-radius: 18px;
+  padding: 20px 16px;
+  margin: 10px 0 16px;
+  overflow-wrap: anywhere;
+}
+.opf-note {
+  text-align: center;
+  font-size: 1rem;
+  color: var(--on-surface-var);
+  line-height: 1.55;
+  margin: 0 0 4px;
+}
+
+/* --- Message views (no result / error) --- */
+.opf-msg {
+  text-align: center;
+  padding-top: 4px;
+}
+.opf-msg-icon {
+  font-size: 56px;
+  color: var(--outline);
+}
+.opf-msg-title {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--on-surface);
+  margin-top: 10px;
+}
+.opf-msg-body {
+  font-size: 1rem;
+  color: var(--on-surface-var);
+  line-height: 1.55;
+  margin-top: 6px;
+}
+
+/* --- Footer --- */
+.opf-foot {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: var(--outline);
+}
+
+/* --- Mobile / tablet tuning --- */
+@media (max-width: 480px) {
+  .opf-page {
+    padding: 16px 12px calc(16px + var(--safe-bottom));
+  }
+  .opf-shell {
+    padding: 24px 18px 26px;
+    border-radius: var(--radius-lg);
+  }
+  .opf-brand {
+    margin-bottom: 18px;
+  }
+  .opf-sub {
+    margin-bottom: 18px;
+  }
+  .opf-input {
+    height: 56px;
+    font-size: 1.2rem;
+    padding: 0 14px;
+  }
+  .opf-btn {
+    min-height: 56px;
+    font-size: 1rem;
+  }
+  .opf-person-card {
+    flex-wrap: wrap;
+  }
+  .opf-select-btn {
+    width: 100%;
+    min-height: 50px;
+  }
+}
+
+/* --- Reduced motion --- */
+@media (prefers-reduced-motion: reduce) {
+  .opf-view.active {
+    animation: none;
+  }
+  .opf-btn,
+  .opf-select-btn {
+    transition: none;
+  }
+  .opf-spin {
+    animation-duration: 1.6s;
+  }
+}

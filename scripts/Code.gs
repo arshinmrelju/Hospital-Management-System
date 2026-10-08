@@ -10,6 +10,7 @@ function doGet(e) {
   if (action === 'getPatients') result = handleGetPatients(e);
   else if (action === 'getTodayCount') result = handleGetTodayCount(e);
   else if (action === 'getPatient') result = handleGetPatient(e);
+  else if (action === 'findOpByPhone') result = handleFindOpByPhone(e);
   else if (action === 'getAppointments') result = handleGetAppointments(e);
   else if (action === 'getDoctors') result = handleGetDoctors(e);
   else if (action === 'createDoctor') result = handleCreateDoctor(e);
@@ -292,6 +293,87 @@ function handleGetPatient(e) {
     return { success: true, data: p };
   }
   return { success: false, error: 'Patient not found' };
+}
+
+/* ─── PUBLIC OP-NUMBER FINDER (patient-facing) ───
+   Used by public/op-finder.html. Read-only and deliberately minimal:
+   - requires a full mobile number (6–15 digits), so records cannot be
+     enumerated with short/partial queries,
+   - matches only against the Phone column,
+   - returns ONLY name / age / gender / OP number — never notes,
+     address, blood group, email, doctor, status or any other
+     medical/administrative field,
+   - caps the response at 20 rows and skips duplicate rows. */
+function handleFindOpByPhone(e) {
+  var query = String(e.parameter.phone || '').replace(/[^0-9]/g, '');
+  if (query.length < 6 || query.length > 15) {
+    return { success: false, error: 'Enter a valid mobile number' };
+  }
+
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = ss.getSheetByName('Patients') || ss.getSheets()[0];
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+  var idx = {};
+  for (var j = 0; j < headers.length; j++) idx[headers[j]] = j;
+
+  var phoneLabels = ['Phone', 'phone', 'Mobile', 'mobile', 'Mobile Number', 'Contact', 'contact'];
+  var colPhone = -1;
+  for (var pl = 0; pl < phoneLabels.length; pl++) {
+    if (idx[phoneLabels[pl]] !== undefined) { colPhone = idx[phoneLabels[pl]]; break; }
+  }
+  if (colPhone === -1) return { success: false, error: 'Phone column not found' };
+
+  var colFname   = idx['First Name'] !== undefined ? idx['First Name'] : -1;
+  var colLname   = idx['Last Name']  !== undefined ? idx['Last Name']  : -1;
+  var colName    = idx['Name']       !== undefined ? idx['Name']       : -1;
+  var colAge     = idx['Age']        !== undefined ? idx['Age']        : -1;
+  var colGender  = idx['Gender']     !== undefined ? idx['Gender']     : -1;
+  var idCol      = idx['ID']         !== undefined ? idx['ID']         : -1;
+  var notesCol   = idx['Notes']      !== undefined ? idx['Notes']      : -1;
+  var uhidCol    = idx['UHID']       !== undefined ? idx['UHID']       : -1;
+
+  var totalRows = sheet.getLastRow() - 1;
+  if (totalRows <= 0) return { success: true, data: [] };
+  var rows = sheet.getRange(2, 1, totalRows, headers.length).getValues();
+
+  var result = [];
+  var seen = {};
+  for (var i = 0; i < rows.length; i++) {
+    if (result.length >= 20) break;
+    var row = rows[i];
+
+    var rawPhone = row[colPhone];
+    var rowPhone = String(rawPhone === null || rawPhone === undefined ? '' : rawPhone).replace(/[^0-9]/g, '');
+    if (rowPhone.length < 5) continue;
+    // Tolerate country-code / trunk-prefix variants on either side
+    if (rowPhone.indexOf(query) === -1 && query.indexOf(rowPhone) === -1) continue;
+
+    var opNo = resolveOpNo(row, headers, idCol, notesCol, uhidCol);
+    if (!opNo) continue;
+
+    var name = '';
+    if (colFname >= 0 || colLname >= 0) {
+      var f = colFname >= 0 ? String(row[colFname] || '').trim() : '';
+      var l = colLname >= 0 ? String(row[colLname] || '').trim() : '';
+      name = (f + ' ' + l).replace(/\s+/g, ' ').trim();
+    }
+    if (!name && colName >= 0) name = String(row[colName] || '').trim();
+    if (!name) continue;
+
+    var key = name + '|' + opNo;
+    if (seen[key]) continue;
+    seen[key] = true;
+
+    result.push({
+      name: name,
+      age: colAge >= 0 ? String(row[colAge] || '').trim() : '',
+      gender: colGender >= 0 ? String(row[colGender] || '').trim() : '',
+      op_no: opNo
+    });
+  }
+
+  return { success: true, data: result };
 }
 
 function handleCreatePatient(e) {

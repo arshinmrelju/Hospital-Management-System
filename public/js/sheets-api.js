@@ -418,6 +418,85 @@ window.API = {
     });
   },
 
+  /* ─── PUBLIC OP-NUMBER FINDER (patient-facing, minimal data) ───
+     Used by op-finder.html. Projects every match down to
+     { name, age, gender, op_no } so the public screen never
+     receives (or renders) medical, address or contact fields. */
+
+  _opFinderSlim: function (p) {
+    var name = ((p.fname || '') + ' ' + (p.lname || '')).replace(/\s+/g, ' ').trim();
+    if (!name) name = String(p.name || p.patient_name || '').trim();
+    return {
+      name: name,
+      age: String(p.age || '').trim(),
+      gender: String(p.gender || '').trim(),
+      op_no: String(p.op_no || p.id || '').trim()
+    };
+  },
+
+  findOpByPhone: function (phone) {
+    var query = String(phone || '').replace(/[^0-9]/g, '');
+    if (query.length < 6 || query.length > 15) {
+      return Promise.resolve({ success: false, error: 'invalid_phone' });
+    }
+
+    // Keep only the minimal projection — applied to BOTH the new server
+    // action and the legacy fallback so the shape is always identical.
+    function slimRows(rows) {
+      var out = [];
+      var seen = {};
+      for (var i = 0; i < rows.length; i++) {
+        var s = window.API._opFinderSlim(rows[i]);
+        if (!s.name || !s.op_no) continue;
+        var key = s.name + '|' + s.op_no;
+        if (seen[key]) continue;
+        seen[key] = true;
+        out.push(s);
+        if (out.length >= 20) break;
+      }
+      return out;
+    }
+
+    return sheetsFetch({ action: 'findOpByPhone', phone: query }).then(function (resp) {
+      if (resp && resp.success && resp.data) {
+        return { success: true, data: slimRows(resp.data) };
+      }
+      // Apps Script deployments older than this feature answer with
+      // "Unknown action" — fall back to the existing search endpoint
+      // (same data source, no second database) and filter + project here.
+      if (resp && resp.error && /unknown action/i.test(String(resp.error))) {
+        return window.API._findOpByPhoneFallback(query);
+      }
+      return { success: false, error: (resp && resp.error) || 'search_failed' };
+    });
+  },
+
+  // Legacy path: reuse the existing getPatients search action, then keep
+  // only rows whose Phone matches and only the four public fields.
+  _findOpByPhoneFallback: function (query) {
+    return sheetsFetch({ action: 'getPatients', search: query }).then(function (resp) {
+      if (!resp || !resp.success || !resp.data) {
+        return { success: false, error: (resp && resp.error) || 'search_failed' };
+      }
+      var out = [];
+      var seen = {};
+      for (var i = 0; i < resp.data.length; i++) {
+        var p = normalizePatient(resp.data[i]);
+        var rowPhone = String(p.contact || '').replace(/[^0-9]/g, '');
+        if (rowPhone.length < 5) continue;
+        if (rowPhone.indexOf(query) === -1 && query.indexOf(rowPhone) === -1) continue;
+        var s = window.API._opFinderSlim(p);
+        if (!s.name || !s.op_no) continue;
+        var key = s.name + '|' + s.op_no;
+        if (seen[key]) continue;
+        seen[key] = true;
+        out.push(s);
+        if (out.length >= 20) break;
+      }
+      return { success: true, data: out, fallback: true };
+    });
+  },
+
   createPatient: function (data) {
     var q = { action: 'createPatient' };
     ['op_no', 'fname', 'lname', 'contact', 'gender', 'age', 'address', 'blood_group', 'department', 'patient_type', 'status', 'assigned_doctor', 'notes'].forEach(function (k) {

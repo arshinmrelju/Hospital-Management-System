@@ -47,6 +47,7 @@ Five distinct portals, each with a dedicated accent colour and tailored interfac
 - **OPD Patient Management** — Register walk-in patients with visit tracking and auto-generated token numbers
 - **Appointment Scheduling** — Full CRUD calendar with real-time status tracking (confirmed / in-progress / completed / cancelled)
 - **Patient Registry** — Searchable patient database backed by Google Sheets
+- **Find My OP Number** — Patient-facing lookup at `/op-finder`: enter mobile number → select your name → get your OP number to read out at the desk (returns only name, age, gender and OP number — no medical data)
 - **Google Sheets Sync** — Bidirectional read/write integration with Google Sheets as a live structured data store
 
 ### 🔐 Admin & Security
@@ -87,6 +88,7 @@ Wellness Medicals/
 │   ├── index.html                   # Reception portal (OPD, appointments, patients)
 │   ├── admin.html                   # Admin portal (metrics, staff, sessions)
 │   ├── patients.html                # Standalone patient management view
+│   ├── op-finder.html               # Patient-facing "Find My OP Number" screen
 │   ├── developer.html               # Developer / debug panel
 │   ├── offline.html                 # PWA offline fallback page
 │   ├── import.html                  # Bulk data import utility
@@ -100,7 +102,8 @@ Wellness Medicals/
 │   │   ├── administration.css       # Admin portal styles
 │   │   ├── patients.css             # Patient management styles
 │   │   ├── portals.css              # Role portal themes
-│   │   └── staff-theme.css          # Staff accent overrides
+│   │   ├── staff-theme.css          # Staff accent overrides
+│   │   └── op-finder.css            # Patient OP number finder styles
 │   └── js/
 │       ├── firebase-init.js         # Firebase SDK initialisation
 │       ├── sheets-api.js            # Google Sheets API integration layer
@@ -111,7 +114,8 @@ Wellness Medicals/
 │       ├── skin.js                  # Dermatology / skin clinic module
 │       ├── ortho.js                 # Orthopaedics module
 │       ├── developer.js             # Developer panel logic
-│       └── pwa.js                   # PWA install prompt handler
+│       ├── pwa.js                   # PWA install prompt handler
+│       └── op-finder.js             # Patient OP number finder logic
 ├── firestore.rules                  # Firestore security rules
 ├── firestore.indexes.json           # Firestore composite indexes
 ├── firebase.json                    # Firebase Hosting & Firestore config
