@@ -6,7 +6,7 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-WTGQMNEK28"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
+    function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
 
     gtag('config', 'G-WTGQMNEK28');
@@ -17,13 +17,15 @@
   <meta name="robots" content="noindex, nofollow" />
   <meta name="theme-color" content="#0D9488" />
   <link rel="icon" type="image/jpeg" href="assets/hms-logo.jpg">
-  <meta name="description" content="Look up your OP Number with your mobile number, then share it with the receptionist." />
+  <meta name="description"
+    content="Look up your OP Number with your mobile number, then share it with the receptionist." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null" />
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" media="print" onload="this.media='all';this.onload=null" />
-  <link rel="stylesheet" href="css/main.css?v=27" />
-  <link rel="stylesheet" href="css/op-finder.css?v=1" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css?v=28" />
+  <link rel="stylesheet" href="css/op-finder.css?v=2" />
 </head>
 
 <body class="opf-body">
@@ -49,46 +51,159 @@
       <!-- STEP 1 — Enter mobile number -->
       <section class="opf-view active" id="opfViewSearch">
         <h1 class="opf-title">Find Your OP Number</h1>
-        <p class="opf-sub">Enter your mobile number</p>
+        <p class="opf-sub">Enter your registered mobile number below</p>
+
         <form id="opfForm" novalidate>
           <label class="opf-label" for="opfPhone">Mobile Number</label>
-          <input class="opf-input" id="opfPhone" name="phone" type="tel" inputmode="numeric"
-            autocomplete="tel" maxlength="18" placeholder="98765 43210" />
-          <p class="opf-error" id="opfInputError" role="alert"></p>
+
+          <div class="opf-input-wrap">
+            <span class="opf-prefix-pill" aria-label="Country code">
+              <span class="opf-flag">🇮🇳</span> +91
+            </span>
+            <input class="opf-input" id="opfPhone" name="phone" type="tel" inputmode="numeric" autocomplete="tel"
+              maxlength="14" placeholder="98765 43210" aria-describedby="opfCounter opfInputError" />
+            <button type="button" class="opf-clear-btn" id="opfClearBtn" aria-label="Clear number" title="Clear">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Live digit feedback & validation -->
+          <div class="opf-meta-row">
+            <p class="opf-error" id="opfInputError" role="alert"></p>
+            <div class="opf-counter" id="opfCounter">
+              <span class="opf-counter-text">0 / 10 digits</span>
+            </div>
+          </div>
+
+          <!-- Dynamic Interactive Loading State (Medical ECG Pulse Scanner) -->
+          <div class="opf-loading-state" id="opfLoadingBox" aria-live="polite" aria-hidden="true">
+            <div class="opf-ecg-card">
+              <div class="opf-radar-ring"></div>
+              <!-- Vital signs ECG heartbeat monitor wave -->
+              <svg class="opf-ecg-svg" viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true">
+                <path class="opf-ecg-bg-line"
+                  d="M0,30 L60,30 L75,12 L85,48 L95,18 L105,38 L115,30 L180,30 L195,8 L205,52 L215,18 L225,38 L235,30 L300,30" />
+                <path class="opf-ecg-pulse-line"
+                  d="M0,30 L60,30 L75,12 L85,48 L95,18 L105,38 L115,30 L180,30 L195,8 L205,52 L215,18 L225,38 L235,30 L300,30" />
+              </svg>
+              <div class="opf-ticker-wrap">
+                <span class="opf-ticker-dot"></span>
+                <span class="opf-ticker-text" id="opfTickerText">Searching hospital records...</span>
+              </div>
+            </div>
+          </div>
+
           <button class="opf-btn" id="opfSearchBtn" type="submit">
-            <span class="material-icons-round">search</span> SEARCH
+            <svg class="opf-btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span class="opf-btn-text">SEARCH OP NUMBER</span>
           </button>
         </form>
       </section>
 
-      <!-- STEP 2 — Select your name (only when several records share the number) -->
+      <!-- STEP 2 — Select your name (when several records share the phone number) -->
       <section class="opf-view" id="opfViewResults">
-        <h1 class="opf-title">Select Your Name</h1>
+        <h1 class="opf-title">Select Patient</h1>
+        <p class="opf-sub">Multiple patients found for this number</p>
         <div class="opf-list" id="opfList" role="list"></div>
         <button class="opf-btn opf-btn-ghost" id="opfBackBtn" type="button">
-          <span class="material-icons-round">refresh</span> SEARCH AGAIN
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          </svg>
+          SEARCH AGAIN
         </button>
       </section>
 
-      <!-- STEP 3 — Your OP number -->
+      <!-- STEP 3 — Your OP number (Interactive Result Card) -->
       <section class="opf-view" id="opfViewOp">
+        <div class="opf-success-badge" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          OP RECORD FOUND
+        </div>
+
         <h1 class="opf-title">Your OP Number</h1>
-        <p class="opf-person-confirm" id="opfPersonConfirm"></p>
-        <div class="opf-op-value" id="opfOpValue">&mdash;</div>
-        <p class="opf-note">Please tell this OP Number to the receptionist.</p>
-        <button class="opf-btn" id="opfAgainBtn" type="button">
-          <span class="material-icons-round">refresh</span> SEARCH AGAIN
+
+        <div class="opf-patient-header">
+          <div class="opf-avatar" id="opfAvatar" aria-hidden="true">WM</div>
+          <div class="opf-patient-info">
+            <div class="opf-person-name" id="opfPatientName">—</div>
+            <p class="opf-person-confirm" id="opfPersonConfirm">—</p>
+          </div>
+        </div>
+
+        <!-- Token Ticket Box -->
+        <div class="opf-token-card">
+          <span class="opf-token-label">OP NUMBER</span>
+          <div class="opf-op-value" id="opfOpValue" title="Your OP Number">&mdash;</div>
+
+          <button class="opf-copy-btn" id="opfCopyBtn" type="button" aria-label="Copy OP Number">
+            <svg class="opf-copy-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span class="opf-copy-text">Copy OP Number</span>
+          </button>
+        </div>
+
+        <div class="opf-reception-notice">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span>Show this OP Number to the receptionist at the desk.</span>
+        </div>
+
+        <button class="opf-btn opf-btn-ghost" id="opfAgainBtn" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          </svg>
+          SEARCH ANOTHER NUMBER
         </button>
       </section>
 
       <!-- No record found -->
       <section class="opf-view" id="opfViewNone">
         <div class="opf-msg">
-          <span class="material-icons-round opf-msg-icon">person_search</span>
-          <h1 class="opf-msg-title">No patient record found.</h1>
-          <p class="opf-msg-body">Please contact the reception desk<br />for assistance.</p>
+          <div class="opf-msg-icon-box">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              <line x1="8" y1="11" x2="14" y2="11"></line>
+            </svg>
+          </div>
+          <h1 class="opf-msg-title">No Patient Record Found</h1>
+          <p class="opf-msg-body">We couldn't find an OP number registered under <br /><strong
+              id="opfNonePhone">—</strong></p>
+          <div class="opf-helper-card">
+            <span>💡 Please contact the reception desk to register as a new patient.</span>
+          </div>
           <button class="opf-btn" id="opfRetryBtn" type="button">
-            <span class="material-icons-round">refresh</span> TRY AGAIN
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+            </svg>
+            TRY ANOTHER NUMBER
           </button>
         </div>
       </section>
@@ -96,25 +211,42 @@
       <!-- Network / service error -->
       <section class="opf-view" id="opfViewError">
         <div class="opf-msg">
-          <span class="material-icons-round opf-msg-icon">wifi_off</span>
-          <h1 class="opf-msg-title">Cannot search right now.</h1>
-          <p class="opf-msg-body">Please check the connection<br />and try again.</p>
+          <div class="opf-msg-icon-box opf-msg-icon-error">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+              <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+              <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+              <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+              <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+              <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+              <line x1="12" y1="20" x2="12.01" y2="20"></line>
+            </svg>
+          </div>
+          <h1 class="opf-msg-title">Connection Issue</h1>
+          <p class="opf-msg-body">Unable to connect to the hospital registry. Please check your internet connection.</p>
           <button class="opf-btn" id="opfErrorRetryBtn" type="button">
-            <span class="material-icons-round">refresh</span> TRY AGAIN
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+            </svg>
+            RETRY SEARCH
           </button>
         </div>
       </section>
 
     </div>
 
-    <p class="opf-foot">Wellness Medicals &middot; Show this number to the receptionist</p>
+    <p class="opf-foot">Wellness Medicals &middot; Keep your OP number handy for doctor consultations</p>
   </main>
 
-  <div id="toastContainer"></div>
+  <!-- Interactive toast notification -->
+  <div id="opfToast" class="opf-toast" role="status" aria-live="polite"></div>
 
   <script src="js/sheets-api.js?v=3"></script>
   <script src="js/pwa.js?v=1"></script>
-  <script src="js/op-finder.js?v=1"></script>
+  <script src="js/op-finder.js?v=2"></script>
 </body>
 
 </html>

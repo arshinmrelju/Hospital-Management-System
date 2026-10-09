@@ -1,7 +1,8 @@
 /* =============================================
    FIND MY OP NUMBER — Patient-facing screen
-   Small VitalGlass extension (relies on main.css
+   VitalGlass extension (relies on main.css
    design tokens: colors, radii, glass, fonts)
+   Preserves original medical color theme.
    ============================================= */
 
 /* --- Page shell --- */
@@ -12,6 +13,8 @@ body.opf-body {
     radial-gradient(1100px 560px at 8% -12%, rgba(13, 148, 136, 0.18), transparent 60%),
     radial-gradient(900px 520px at 112% 18%, rgba(0, 104, 95, 0.14), transparent 58%),
     linear-gradient(165deg, #eefaf7 0%, #f7f9fb 48%, #e9f6f3 100%);
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* Decorative ambient orbs (VitalGlass background accent) */
@@ -27,20 +30,27 @@ body.opf-body {
   border-radius: 50%;
   filter: blur(64px);
   opacity: 0.55;
+  animation: opfOrbFloat 14s ease-in-out infinite alternate;
 }
 .opf-orb-1 {
-  width: 320px;
-  height: 320px;
+  width: 340px;
+  height: 340px;
   background: rgba(13, 148, 136, 0.38);
   top: -90px;
   left: -80px;
 }
 .opf-orb-2 {
-  width: 280px;
-  height: 280px;
+  width: 300px;
+  height: 300px;
   background: rgba(0, 104, 95, 0.30);
   bottom: -70px;
   right: -70px;
+  animation-delay: -7s;
+}
+
+@keyframes opfOrbFloat {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(20px, 25px) scale(1.08); }
 }
 
 .opf-page {
@@ -55,11 +65,18 @@ body.opf-body {
   padding: 24px 16px calc(24px + var(--safe-bottom));
 }
 
-/* --- Glass card --- */
+/* --- Glass card container --- */
 .opf-shell {
   width: 100%;
   max-width: 480px;
-  padding: 28px 26px 30px;
+  padding: 32px 28px 30px;
+  box-shadow: 0 12px 40px rgba(0, 104, 95, 0.10), 0 1px 3px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.90);
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  border-radius: 24px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 /* --- Brand header --- */
@@ -71,12 +88,16 @@ body.opf-body {
   margin-bottom: 22px;
 }
 .opf-brand-logo {
-  width: 46px;
-  height: 46px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.18), 0 4px 12px rgba(0, 104, 95, 0.15);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.opf-brand-logo:hover {
+  transform: rotate(6deg) scale(1.05);
 }
 .opf-brand-text {
   display: flex;
@@ -86,15 +107,16 @@ body.opf-body {
 .opf-brand-name {
   font-family: var(--font-head);
   font-weight: 800;
-  font-size: 1rem;
+  font-size: 1.05rem;
   color: var(--primary-dark);
+  letter-spacing: -0.01em;
 }
 .opf-brand-sub {
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--outline);
+  color: var(--primary-light);
 }
 
 /* --- Views --- */
@@ -103,16 +125,16 @@ body.opf-body {
 }
 .opf-view.active {
   display: block;
-  animation: opfFadeIn 0.28s ease;
+  animation: opfViewFadeUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
-@keyframes opfFadeIn {
+@keyframes opfViewFadeUp {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(12px) scale(0.99);
   }
   to {
     opacity: 1;
-    transform: none;
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -120,290 +142,709 @@ body.opf-body {
 .opf-title {
   font-family: var(--font-head);
   font-weight: 800;
-  font-size: clamp(1.5rem, 6vw, 1.75rem);
-  letter-spacing: -0.01em;
+  font-size: clamp(1.45rem, 5.5vw, 1.75rem);
+  letter-spacing: -0.02em;
   color: var(--primary-dark);
   text-align: center;
   margin: 0;
 }
 .opf-sub {
-  font-size: 1rem;
+  font-size: 0.94rem;
   color: var(--on-surface-var);
   text-align: center;
-  margin: 8px 0 22px;
-  line-height: 1.5;
+  margin: 6px 0 20px;
+  line-height: 1.45;
 }
 
-/* --- Form --- */
+/* --- Form & Interactive Input Group --- */
 .opf-label {
   display: block;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: var(--on-surface-var);
   margin-bottom: 8px;
 }
-.opf-input {
+
+.opf-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
   width: 100%;
   height: 60px;
-  padding: 0 18px;
-  font-size: 1.35rem;
-  font-weight: 600;
+  background: #ffffff;
+  border: 2px solid var(--outline-var);
+  border-radius: 16px;
+  padding: 0 8px 0 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.opf-input-wrap:focus-within {
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 4px var(--primary-soft), 0 4px 16px rgba(13, 148, 136, 0.12);
+  transform: translateY(-1px);
+}
+.opf-input-wrap.error-shake {
+  animation: opfShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  border-color: var(--accent-red);
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12);
+}
+
+@keyframes opfShake {
+  10%, 90% { transform: translate3d(-2px, 0, 0); }
+  20%, 80% { transform: translate3d(3px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+.opf-prefix-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: var(--surface-low);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+  margin-right: 8px;
+  flex-shrink: 0;
+  user-select: none;
+}
+.opf-flag {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.opf-input {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 1.32rem;
+  font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--on-surface);
-  background: var(--surface-low);
-  border: 2px solid var(--outline-var);
-  border-radius: 14px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  padding: 0;
+  outline: none;
+  user-select: text;
+  -webkit-user-select: text;
 }
 .opf-input::placeholder {
   color: var(--outline);
   font-weight: 500;
+  letter-spacing: 0.02em;
+  opacity: 0.7;
 }
-.opf-input:focus {
-  border-color: var(--primary-light);
-  box-shadow: 0 0 0 4px var(--primary-soft);
+
+/* Clear button */
+.opf-clear-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--surface-mid);
+  color: var(--outline);
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-left: 6px;
+  transition: all 0.18s ease;
+}
+.opf-clear-btn.visible {
+  display: flex;
+}
+.opf-clear-btn:hover {
+  background: var(--outline-var);
+  color: var(--on-surface);
+  transform: scale(1.08);
+}
+.opf-clear-btn:active {
+  transform: scale(0.92);
+}
+
+/* Meta row under input: error message & digit counter */
+.opf-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  min-height: 22px;
+  gap: 8px;
 }
 .opf-error {
   display: none;
   color: var(--accent-red);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  margin: 8px 2px 0;
+  margin: 0;
+  line-height: 1.3;
 }
 .opf-error.visible {
   display: block;
 }
+.opf-counter {
+  margin-left: auto;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--outline);
+  background: var(--surface-low);
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+.opf-counter.valid {
+  background: rgba(16, 185, 129, 0.14);
+  color: #047857;
+  font-weight: 800;
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.25);
+  animation: opfPulseCounter 0.3s ease;
+}
+@keyframes opfPulseCounter {
+  0% { transform: scale(0.92); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
 
-/* --- Buttons (large, elderly-friendly) --- */
-.opf-btn {
+/* =============================================
+   NON-BORING MEDICAL ECG & PULSE LOADER
+   Engaging hospital heartbeat line & status ticker
+   ============================================= */
+.opf-loading-state {
+  display: none;
+  margin: 18px 0 6px;
+  animation: opfFadeIn 0.3s ease;
+}
+.opf-loading-state.active {
+  display: block;
+}
+
+.opf-ecg-card {
+  position: relative;
+  background: linear-gradient(135deg, rgba(238, 250, 247, 0.95), rgba(247, 249, 251, 0.9));
+  border: 1.5px solid rgba(13, 148, 136, 0.3);
+  border-radius: 16px;
+  padding: 16px 14px 14px;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(13, 148, 136, 0.08);
+}
+
+.opf-radar-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 140px;
+  height: 140px;
+  margin-top: -70px;
+  margin-left: -70px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(13, 148, 136, 0.2);
+  pointer-events: none;
+  animation: opfRadarPulse 2.4s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+@keyframes opfRadarPulse {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+
+/* ECG Heartbeat SVG Wave */
+.opf-ecg-svg {
+  width: 100%;
+  height: 52px;
+  display: block;
+  overflow: visible;
+}
+.opf-ecg-bg-line {
+  stroke: rgba(13, 148, 136, 0.16);
+  stroke-width: 2.2;
+  fill: none;
+}
+.opf-ecg-pulse-line {
+  stroke: var(--primary-light);
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  stroke-dasharray: 80 220;
+  stroke-dashoffset: 300;
+  filter: drop-shadow(0 0 5px rgba(13, 148, 136, 0.75));
+  animation: opfEcgBeat 1.8s linear infinite;
+}
+
+@keyframes opfEcgBeat {
+  0% { stroke-dashoffset: 300; }
+  100% { stroke-dashoffset: 0; }
+}
+
+/* Live dynamic ticker text */
+.opf-ticker-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  margin-top: 10px;
+}
+.opf-ticker-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.5);
+  animation: opfDotBlink 1.2s ease infinite;
+}
+@keyframes opfDotBlink {
+  0% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.6); }
+  70% { transform: scale(1.15); box-shadow: 0 0 0 7px rgba(13, 148, 136, 0); }
+  100% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(13, 148, 136, 0); }
+}
+.opf-ticker-text {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+  letter-spacing: 0.01em;
+  transition: opacity 0.2s ease;
+}
+
+/* --- Buttons --- */
+.opf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   width: 100%;
   min-height: 58px;
-  margin-top: 18px;
+  margin-top: 16px;
   background: linear-gradient(135deg, #00685f, #0d9488);
-  color: #fff;
+  color: #ffffff;
   border: none;
-  border-radius: 14px;
+  border-radius: 16px;
+  font-family: var(--font-head);
   font-size: 1.02rem;
   font-weight: 800;
   letter-spacing: 0.05em;
-  box-shadow: 0 6px 20px rgba(13, 148, 136, 0.32);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+  box-shadow: 0 8px 22px rgba(13, 148, 136, 0.32);
+  cursor: pointer;
+  transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.16s ease, filter 0.16s ease;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .opf-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 26px rgba(13, 148, 136, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(13, 148, 136, 0.42);
+  filter: brightness(1.04);
 }
 .opf-btn:active {
-  transform: translateY(0);
+  transform: translateY(1px) scale(0.99);
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.25);
 }
 .opf-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.75;
   transform: none;
-  box-shadow: none;
-  cursor: default;
+  cursor: not-allowed;
+  filter: grayscale(0.2);
 }
-.opf-btn .material-icons-round {
-  font-size: 22px;
+.opf-btn-icon {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
 }
+.opf-btn:hover .opf-btn-icon {
+  transform: scale(1.1);
+}
+
 .opf-btn-ghost {
   background: var(--primary-soft);
-  color: var(--primary-light);
-  border: 1.5px solid rgba(13, 148, 136, 0.3);
+  color: var(--primary-dark);
+  border: 1.5px solid rgba(13, 148, 136, 0.25);
   box-shadow: none;
+  font-weight: 700;
 }
 .opf-btn-ghost:hover {
-  background: rgba(13, 148, 136, 0.16);
-  box-shadow: none;
+  background: rgba(13, 148, 136, 0.18);
+  box-shadow: 0 4px 16px rgba(13, 148, 136, 0.15);
+  color: var(--primary-dark);
 }
 
-/* Spinner inside a loading button */
-.opf-spin {
+/* Spinner inside loading button */
+.opf-spin-loader {
   width: 20px;
   height: 20px;
-  border: 3px solid rgba(255, 255, 255, 0.4);
-  border-top-color: #fff;
+  border: 2.8px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
   border-radius: 50%;
-  animation: opfSpin 0.8s linear infinite;
-}
-.opf-btn-ghost .opf-spin,
-.opf-select-btn .opf-spin {
-  border-color: rgba(13, 148, 136, 0.3);
-  border-top-color: var(--primary-light);
+  animation: opfSpin 0.75s linear infinite;
 }
 @keyframes opfSpin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
-/* --- Name selection list --- */
+/* --- STEP 3: INTERACTIVE OP TOKEN RESULT CARD --- */
+.opf-success-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+  border-radius: 30px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin: 0 auto 14px;
+  display: table;
+}
+
+.opf-patient-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1.5px solid var(--outline-var);
+  border-radius: 16px;
+  padding: 12px 16px;
+  margin: 14px 0 16px;
+}
+.opf-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00685f, #0d9488);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+}
+.opf-patient-info {
+  min-width: 0;
+  flex: 1;
+}
+.opf-person-name {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--on-surface);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.opf-person-confirm {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--on-surface-var);
+  margin-top: 3px;
+}
+
+/* OP Token Ticket Box */
+.opf-token-card {
+  position: relative;
+  background: linear-gradient(145deg, #eefaf7, #e3f5f0);
+  border: 2px dashed rgba(13, 148, 136, 0.4);
+  border-radius: 20px;
+  padding: 22px 18px 18px;
+  text-align: center;
+  margin: 12px 0 16px;
+  box-shadow: inset 0 2px 6px rgba(13, 148, 136, 0.05);
+}
+.opf-token-label {
+  display: block;
+  font-family: var(--font-head);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: var(--primary-light);
+  margin-bottom: 4px;
+}
+.opf-op-value {
+  display: block;
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: clamp(2.4rem, 12vw, 3.4rem);
+  letter-spacing: 0.03em;
+  color: var(--primary-dark);
+  line-height: 1.1;
+  margin: 4px 0 14px;
+  overflow-wrap: anywhere;
+  user-select: all;
+  -webkit-user-select: all;
+}
+
+/* Copy button */
+.opf-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #ffffff;
+  color: var(--primary-dark);
+  border: 1.5px solid rgba(13, 148, 136, 0.3);
+  border-radius: 30px;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0, 104, 95, 0.08);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.opf-copy-btn:hover {
+  background: var(--primary-soft);
+  border-color: var(--primary-light);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(13, 148, 136, 0.16);
+}
+.opf-copy-btn:active {
+  transform: scale(0.96);
+}
+.opf-copy-btn.copied {
+  background: #047857;
+  color: #ffffff;
+  border-color: #047857;
+}
+
+/* Reception guidance banner */
+.opf-reception-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--outline-var);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--on-surface-var);
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+.opf-reception-notice svg {
+  color: var(--primary-light);
+  flex-shrink: 0;
+}
+
+/* --- STEP 2: NAME SELECTION LIST --- */
 .opf-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin: 4px 0 6px;
+  margin: 8px 0 12px;
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: 2px;
 }
 .opf-person-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.95);
   border: 1.5px solid var(--outline-var);
-  border-radius: 14px;
-  padding: 14px 14px 14px 16px;
-  box-shadow: var(--shadow-sm);
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: 0 3px 12px rgba(0, 104, 95, 0.06);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.opf-person-card:hover {
+  border-color: var(--primary-light);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(13, 148, 136, 0.15);
+}
+.opf-person-card:active {
+  transform: translateY(0);
+}
+.opf-person-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.opf-person-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.95rem;
+  flex-shrink: 0;
 }
 .opf-person-info {
   min-width: 0;
 }
-.opf-person-name {
-  font-family: var(--font-head);
-  font-weight: 800;
-  font-size: 1.05rem;
-  color: var(--on-surface);
-  line-height: 1.3;
-  overflow-wrap: anywhere;
-}
 .opf-person-meta {
-  font-size: 0.9rem;
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+.opf-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  background: var(--surface-low);
+  border-radius: 6px;
   color: var(--on-surface-var);
-  margin-top: 2px;
 }
 .opf-select-btn {
   flex-shrink: 0;
-  min-height: 48px;
-  padding: 0 22px;
+  min-height: 44px;
+  padding: 0 18px;
   background: linear-gradient(135deg, #00685f, #0d9488);
   color: #fff;
   border: none;
   border-radius: 12px;
-  font-size: 0.95rem;
+  font-family: var(--font-head);
+  font-size: 0.88rem;
   font-weight: 800;
   letter-spacing: 0.04em;
-  box-shadow: 0 3px 12px rgba(13, 148, 136, 0.3);
+  box-shadow: 0 3px 10px rgba(13, 148, 136, 0.25);
+  cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .opf-select-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 5px 16px rgba(13, 148, 136, 0.38);
-}
-.opf-select-btn:active {
-  transform: translateY(0);
+  transform: scale(1.04);
+  box-shadow: 0 5px 14px rgba(13, 148, 136, 0.35);
 }
 
-/* --- OP number display --- */
-.opf-person-confirm {
-  text-align: center;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--on-surface-var);
-  margin: 10px 0 2px;
-}
-.opf-op-value {
-  display: block;
-  width: 100%;
-  text-align: center;
-  font-family: var(--font-head);
-  font-weight: 800;
-  font-size: clamp(2.3rem, 13vw, 3.2rem);
-  letter-spacing: 0.02em;
-  color: var(--primary-dark);
-  background: var(--primary-soft);
-  border: 2px solid rgba(13, 148, 136, 0.28);
-  border-radius: 18px;
-  padding: 20px 16px;
-  margin: 10px 0 16px;
-  overflow-wrap: anywhere;
-}
-.opf-note {
-  text-align: center;
-  font-size: 1rem;
-  color: var(--on-surface-var);
-  line-height: 1.55;
-  margin: 0 0 4px;
-}
-
-/* --- Message views (no result / error) --- */
+/* --- MESSAGE VIEWS (NOT FOUND / ERROR) --- */
 .opf-msg {
   text-align: center;
-  padding-top: 4px;
+  padding: 10px 4px 6px;
 }
-.opf-msg-icon {
-  font-size: 56px;
+.opf-msg-icon-box {
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  background: var(--surface-low);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--outline);
+}
+.opf-msg-icon-error {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--accent-red);
 }
 .opf-msg-title {
   font-family: var(--font-head);
   font-weight: 800;
   font-size: 1.25rem;
   color: var(--on-surface);
-  margin-top: 10px;
-}
-.opf-msg-body {
-  font-size: 1rem;
-  color: var(--on-surface-var);
-  line-height: 1.55;
   margin-top: 6px;
 }
+.opf-msg-body {
+  font-size: 0.95rem;
+  color: var(--on-surface-var);
+  line-height: 1.5;
+  margin: 8px 0 14px;
+}
+.opf-helper-card {
+  background: var(--primary-soft);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--primary-dark);
+  margin-bottom: 14px;
+}
 
-/* --- Footer --- */
+/* --- FOOTER --- */
 .opf-foot {
   margin-top: 18px;
   text-align: center;
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 500;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
   color: var(--outline);
+  padding: 0 12px;
 }
 
-/* --- Mobile / tablet tuning --- */
+/* --- TOAST NOTIFICATION --- */
+.opf-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(25, 28, 30, 0.92);
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+  opacity: 0;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+  z-index: 9999;
+  backdrop-filter: blur(10px);
+}
+.opf-toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* --- MOBILE RESPONSIVE TUNING --- */
 @media (max-width: 480px) {
   .opf-page {
-    padding: 16px 12px calc(16px + var(--safe-bottom));
+    padding: 14px 10px calc(16px + var(--safe-bottom));
   }
   .opf-shell {
-    padding: 24px 18px 26px;
-    border-radius: var(--radius-lg);
+    padding: 24px 16px 22px;
+    border-radius: 20px;
   }
-  .opf-brand {
-    margin-bottom: 18px;
+  .opf-input-wrap {
+    height: 56px;
+    padding: 0 6px 0 10px;
   }
-  .opf-sub {
-    margin-bottom: 18px;
+  .opf-prefix-pill {
+    padding: 5px 8px;
+    font-size: 0.9rem;
   }
   .opf-input {
-    height: 56px;
     font-size: 1.2rem;
-    padding: 0 14px;
   }
   .opf-btn {
-    min-height: 56px;
-    font-size: 1rem;
+    min-height: 54px;
+    font-size: 0.98rem;
   }
   .opf-person-card {
-    flex-wrap: wrap;
-  }
-  .opf-select-btn {
-    width: 100%;
-    min-height: 50px;
+    padding: 12px 14px;
   }
 }
 
-/* --- Reduced motion --- */
+/* --- ACCESSIBILITY / REDUCED MOTION --- */
 @media (prefers-reduced-motion: reduce) {
-  .opf-view.active {
+  .opf-orb,
+  .opf-view.active,
+  .opf-radar-ring,
+  .opf-ecg-pulse-line,
+  .opf-ticker-dot {
     animation: none;
   }
   .opf-btn,
-  .opf-select-btn {
+  .opf-select-btn,
+  .opf-copy-btn {
     transition: none;
   }
-  .opf-spin {
-    animation-duration: 1.6s;
-  }
 }
+
