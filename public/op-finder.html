@@ -25,7 +25,7 @@
     href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="css/main.css?v=28" />
-  <link rel="stylesheet" href="css/op-finder.css?v=2" />
+  <link rel="stylesheet" href="css/op-finder.css?v=3" />
 </head>
 
 <body class="opf-body">
@@ -39,13 +39,26 @@
   <main class="opf-page">
     <div class="opf-shell glass-card">
 
-      <!-- Brand -->
-      <header class="opf-brand">
-        <img src="assets/hms-logo.jpg" alt="Wellness Medicals" class="opf-brand-logo" />
-        <div class="opf-brand-text">
-          <span class="opf-brand-name">Wellness Medicals</span>
-          <span class="opf-brand-sub">OP Number Finder</span>
+      <!-- Brand & Controls -->
+      <header class="opf-brand-bar">
+        <div class="opf-brand">
+          <img src="assets/hms-logo.jpg" alt="Wellness Medicals" class="opf-brand-logo" />
+          <div class="opf-brand-text">
+            <span class="opf-brand-name">Wellness Medicals</span>
+            <span class="opf-brand-sub">OP Number Finder</span>
+          </div>
         </div>
+        <button type="button" class="opf-icon-tool-btn" id="opfSoundToggle" aria-label="Toggle Sound Effects" title="Sound Effects">
+          <svg class="opf-sound-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+          <svg class="opf-sound-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+          </svg>
+        </button>
       </header>
 
       <!-- STEP 1 — Enter mobile number -->
@@ -53,8 +66,22 @@
         <h1 class="opf-title">Find Your OP Number</h1>
         <p class="opf-sub">Enter your registered mobile number below</p>
 
+        <!-- Recent Search Chip (Auto-restored if searched previously) -->
+        <div class="opf-recent-wrap" id="opfRecentWrap" style="display:none;">
+          <button type="button" class="opf-recent-chip" id="opfRecentChip" title="Click to fill recent number">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span>Recent: <strong id="opfRecentNum"></strong></span>
+          </button>
+        </div>
+
         <form id="opfForm" novalidate>
-          <label class="opf-label" for="opfPhone">Mobile Number</label>
+          <div class="opf-label-row">
+            <label class="opf-label" for="opfPhone">Mobile Number</label>
+            <span class="opf-label-badge">10 Digits</span>
+          </div>
 
           <div class="opf-input-wrap">
             <span class="opf-prefix-pill" aria-label="Country code">
@@ -62,6 +89,13 @@
             </span>
             <input class="opf-input" id="opfPhone" name="phone" type="tel" inputmode="numeric" autocomplete="tel"
               maxlength="14" placeholder="98765 43210" aria-describedby="opfCounter opfInputError" />
+            <button type="button" class="opf-paste-btn" id="opfPasteBtn" aria-label="Paste from clipboard" title="Paste number">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+              </svg>
+              <span>PASTE</span>
+            </button>
             <button type="button" class="opf-clear-btn" id="opfClearBtn" aria-label="Clear number" title="Clear">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                 stroke-linecap="round" stroke-linejoin="round">
@@ -69,6 +103,21 @@
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
             </button>
+          </div>
+
+          <!-- Dynamic 10-Digit Interactive Progress Capsules -->
+          <div class="opf-digit-meter" id="opfDigitMeter" aria-hidden="true">
+            <span class="opf-digit-dot" data-slot="0"></span>
+            <span class="opf-digit-dot" data-slot="1"></span>
+            <span class="opf-digit-dot" data-slot="2"></span>
+            <span class="opf-digit-dot" data-slot="3"></span>
+            <span class="opf-digit-dot" data-slot="4"></span>
+            <span class="opf-digit-sep"></span>
+            <span class="opf-digit-dot" data-slot="5"></span>
+            <span class="opf-digit-dot" data-slot="6"></span>
+            <span class="opf-digit-dot" data-slot="7"></span>
+            <span class="opf-digit-dot" data-slot="8"></span>
+            <span class="opf-digit-dot" data-slot="9"></span>
           </div>
 
           <!-- Live digit feedback & validation -->
@@ -79,21 +128,88 @@
             </div>
           </div>
 
-          <!-- Dynamic Interactive Loading State (Medical ECG Pulse Scanner) -->
+          <!-- Dynamic Entertaining Interactive Loading Station (Vitality Radar & Trivia Station) -->
           <div class="opf-loading-state" id="opfLoadingBox" aria-live="polite" aria-hidden="true">
-            <div class="opf-ecg-card">
-              <div class="opf-radar-ring"></div>
-              <!-- Vital signs ECG heartbeat monitor wave -->
-              <svg class="opf-ecg-svg" viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true">
-                <path class="opf-ecg-bg-line"
-                  d="M0,30 L60,30 L75,12 L85,48 L95,18 L105,38 L115,30 L180,30 L195,8 L205,52 L215,18 L225,38 L235,30 L300,30" />
-                <path class="opf-ecg-pulse-line"
-                  d="M0,30 L60,30 L75,12 L85,48 L95,18 L105,38 L115,30 L180,30 L195,8 L205,52 L215,18 L225,38 L235,30 L300,30" />
-              </svg>
-              <div class="opf-ticker-wrap">
-                <span class="opf-ticker-dot"></span>
-                <span class="opf-ticker-text" id="opfTickerText">Searching hospital records...</span>
+            <div class="opf-scanner-station">
+
+              <!-- Interactive Heart Booster Mini-Game -->
+              <div class="opf-booster-header">
+                <div class="opf-heart-btn-wrap">
+                  <button type="button" class="opf-heart-booster" id="opfHeartBooster" aria-label="Tap to boost scanner" title="Tap heart to boost scanner!">
+                    <div class="opf-heart-glow"></div>
+                    <span class="opf-heart-icon" id="opfHeartIcon">❤️</span>
+                    <span class="opf-heart-ripple"></span>
+                  </button>
+                  <div class="opf-booster-meta">
+                    <div class="opf-bpm-row">
+                      <span class="opf-bpm-num" id="opfBpmVal">74</span>
+                      <span class="opf-bpm-unit">BPM</span>
+                      <span class="opf-bpm-tag">RHYTHM ACTIVE</span>
+                    </div>
+                    <span class="opf-tap-hint">👉 <strong class="opf-tap-highlight">Tap heart</strong> to boost scanner speed!</span>
+                  </div>
+                </div>
+                <div class="opf-boost-counter" id="opfBoostBadge" title="Taps recorded">
+                  <span class="opf-boost-count" id="opfBoostCount">0</span>
+                  <span class="opf-boost-label">BOOSTS</span>
+                </div>
               </div>
+
+              <!-- Holographic ECG Screen with Laser Scanline -->
+              <div class="opf-screen-card">
+                <div class="opf-laser-beam" aria-hidden="true"></div>
+                <div class="opf-grid-lines" aria-hidden="true"></div>
+
+                <svg class="opf-ecg-svg" viewBox="0 0 320 64" preserveAspectRatio="none" aria-hidden="true">
+                  <path class="opf-ecg-bg-line"
+                    d="M0,32 L50,32 L60,10 L70,54 L80,18 L90,44 L100,32 L160,32 L170,8 L180,56 L190,16 L200,42 L210,32 L320,32" />
+                  <path class="opf-ecg-pulse-line"
+                    d="M0,32 L50,32 L60,10 L70,54 L80,18 L90,44 L100,32 L160,32 L170,8 L180,56 L190,16 L200,42 L210,32 L320,32" />
+                </svg>
+
+                <div class="opf-live-status-row">
+                  <div class="opf-status-dot"></div>
+                  <span class="opf-ticker-text" id="opfTickerText">Connecting to hospital database...</span>
+                  <span class="opf-percent-text" id="opfPercentText">15%</span>
+                </div>
+
+                <!-- Smooth Progress Bar -->
+                <div class="opf-load-track">
+                  <div class="opf-load-bar" id="opfLoadBar"></div>
+                </div>
+              </div>
+
+              <!-- Live Diagnostic Checklist -->
+              <div class="opf-steps-list" id="opfStepsList" aria-hidden="true">
+                <div class="opf-step-item done" id="opfStep1">
+                  <span class="opf-step-icon">✓</span>
+                  <span class="opf-step-label">Hospital registry connected</span>
+                </div>
+                <div class="opf-step-item active" id="opfStep2">
+                  <span class="opf-step-icon">⚡</span>
+                  <span class="opf-step-label">Matching phone index</span>
+                </div>
+                <div class="opf-step-item" id="opfStep3">
+                  <span class="opf-step-icon">○</span>
+                  <span class="opf-step-label">Locating outpatient OP file</span>
+                </div>
+                <div class="opf-step-item" id="opfStep4">
+                  <span class="opf-step-icon">○</span>
+                  <span class="opf-step-label">Preparing digital OP pass</span>
+                </div>
+              </div>
+
+              <!-- Rotating Entertaining Health Trivia & Clinic Tips Carousel -->
+              <div class="opf-trivia-card" id="opfTriviaCard">
+                <div class="opf-trivia-head">
+                  <span class="opf-trivia-badge" id="opfTriviaBadge">HEALTH TRIVIA</span>
+                  <span class="opf-trivia-tag">WHILE YOU WAIT</span>
+                </div>
+                <p class="opf-trivia-content" id="opfTriviaText">
+                  🍎 An apple a day provides natural quercetin &amp; fiber to keep cardiovascular cells strong!
+                </p>
+              </div>
+
             </div>
           </div>
 
@@ -125,8 +241,12 @@
 
       <!-- STEP 3 — Your OP number (Interactive Result Card) -->
       <section class="opf-view" id="opfViewOp">
+        <!-- Confetti Animation Layer -->
+        <canvas id="opfConfettiCanvas" class="opf-confetti-canvas" aria-hidden="true"></canvas>
+
         <div class="opf-success-badge" aria-hidden="true">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+          <span class="opf-badge-pulse"></span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
             stroke-linecap="round" stroke-linejoin="round">
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
@@ -143,18 +263,64 @@
           </div>
         </div>
 
-        <!-- Token Ticket Box -->
-        <div class="opf-token-card">
-          <span class="opf-token-label">OP NUMBER</span>
-          <div class="opf-op-value" id="opfOpValue" title="Your OP Number">&mdash;</div>
+        <!-- 3D Interactive Holographic Ticket Box -->
+        <div class="opf-token-card" id="opfTokenCard">
+          <div class="opf-token-sheen" aria-hidden="true"></div>
+          <div class="opf-token-top">
+            <span class="opf-token-chip">PATIENT OP TOKEN</span>
+            <span class="opf-token-status">● VERIFIED</span>
+          </div>
 
-          <button class="opf-copy-btn" id="opfCopyBtn" type="button" aria-label="Copy OP Number">
-            <svg class="opf-copy-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          <span class="opf-token-label">OP NUMBER</span>
+          <div class="opf-op-value" id="opfOpValue" title="Click to copy OP Number">&mdash;</div>
+
+          <!-- Reception Scannable Barcode Box -->
+          <div class="opf-barcode-box" id="opfBarcodeBox" title="Tap to expand for reception scanner">
+            <div class="opf-barcode-svg-wrap" id="opfBarcodeSvgWrap"></div>
+            <div class="opf-barcode-hint">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                <path d="M7 7h3v3H7zM14 7h3v3h-3zM7 14h3v3H7z"></path>
+              </svg>
+              <span>SCANNABLE AT RECEPTION DESK</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Quick Action Hub -->
+        <div class="opf-actions-grid">
+          <button class="opf-action-btn opf-action-copy" id="opfCopyBtn" type="button" aria-label="Copy OP Number">
+            <svg class="opf-copy-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
             </svg>
-            <span class="opf-copy-text">Copy OP Number</span>
+            <span class="opf-copy-text">Copy</span>
+          </button>
+
+          <button class="opf-action-btn opf-action-wa" id="opfWhatsappBtn" type="button" aria-label="Share via WhatsApp">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+            </svg>
+            <span>WhatsApp</span>
+          </button>
+
+          <button class="opf-action-btn opf-action-speak" id="opfSpeakBtn" type="button" aria-label="Read OP Number aloud">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            </svg>
+            <span>Speak</span>
+          </button>
+
+          <button class="opf-action-btn opf-action-enlarge" id="opfEnlargeBtn" type="button" aria-label="Enlarge Barcode for Scanner">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <polyline points="9 21 3 21 3 15"></polyline>
+              <line x1="21" y1="3" x2="14" y2="10"></line>
+              <line x1="3" y1="21" x2="10" y2="14"></line>
+            </svg>
+            <span>Scanner</span>
           </button>
         </div>
 
@@ -167,7 +333,7 @@
             <line x1="16" y1="17" x2="8" y2="17"></line>
             <polyline points="10 9 9 9 8 9"></polyline>
           </svg>
-          <span>Show this OP Number to the receptionist at the desk.</span>
+          <span>Show this OP Number or Barcode to the receptionist at the desk.</span>
         </div>
 
         <button class="opf-btn opf-btn-ghost" id="opfAgainBtn" type="button">
@@ -241,12 +407,25 @@
     <p class="opf-foot">Wellness Medicals &middot; Keep your OP number handy for doctor consultations</p>
   </main>
 
+  <!-- High-Contrast Fullscreen Scanner Modal for Reception Desk -->
+  <div class="opf-scanner-modal" id="opfScannerModal" aria-hidden="true" role="dialog" aria-labelledby="opfModalTag">
+    <div class="opf-scanner-card">
+      <button type="button" class="opf-modal-close" id="opfCloseScannerBtn" aria-label="Close scanner view">✕</button>
+      <span class="opf-modal-tag" id="opfModalTag">RECEPTION DESK SCANNER VIEW</span>
+      <div class="opf-modal-patient" id="opfModalPatientName">—</div>
+      <div class="opf-modal-op" id="opfModalOpValue">—</div>
+      <div class="opf-modal-barcode" id="opfModalBarcode"></div>
+      <p class="opf-modal-hint">Present this bright screen directly to the reception barcode scanner</p>
+      <button type="button" class="opf-modal-done-btn" id="opfModalDoneBtn">CLOSE SCANNER VIEW</button>
+    </div>
+  </div>
+
   <!-- Interactive toast notification -->
   <div id="opfToast" class="opf-toast" role="status" aria-live="polite"></div>
 
   <script src="js/sheets-api.js?v=3"></script>
   <script src="js/pwa.js?v=1"></script>
-  <script src="js/op-finder.js?v=2"></script>
+  <script src="js/op-finder.js?v=3"></script>
 </body>
 
 </html>
