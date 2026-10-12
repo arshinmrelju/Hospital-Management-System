@@ -25,7 +25,7 @@
     href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="css/main.css?v=28" />
-  <link rel="stylesheet" href="css/op-finder.css?v=3" />
+  <link rel="stylesheet" href="css/op-finder.css?v=7" />
 </head>
 
 <body class="opf-body">
@@ -85,7 +85,7 @@
 
           <div class="opf-input-wrap">
             <span class="opf-prefix-pill" aria-label="Country code">
-              <span class="opf-flag">🇮🇳</span> +91
+              <span class="opf-flag" aria-hidden="true">IN</span> +91
             </span>
             <input class="opf-input" id="opfPhone" name="phone" type="tel" inputmode="numeric" autocomplete="tel"
               maxlength="14" placeholder="98765 43210" aria-describedby="opfCounter opfInputError" />
@@ -137,7 +137,7 @@
                 <div class="opf-heart-btn-wrap">
                   <button type="button" class="opf-heart-booster" id="opfHeartBooster" aria-label="Tap to boost scanner" title="Tap heart to boost scanner!">
                     <div class="opf-heart-glow"></div>
-                    <span class="opf-heart-icon" id="opfHeartIcon">❤️</span>
+                    <span class="opf-heart-icon" id="opfHeartIcon"><svg width="22" height="22" viewBox="0 0 24 24" fill="#e11d48" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></span>
                     <span class="opf-heart-ripple"></span>
                   </button>
                   <div class="opf-booster-meta">
@@ -146,7 +146,7 @@
                       <span class="opf-bpm-unit">BPM</span>
                       <span class="opf-bpm-tag">RHYTHM ACTIVE</span>
                     </div>
-                    <span class="opf-tap-hint">👉 <strong class="opf-tap-highlight">Tap heart</strong> to boost scanner speed!</span>
+                    <span class="opf-tap-hint"><strong class="opf-tap-highlight">Tap heart</strong> to boost scanner speed!</span>
                   </div>
                 </div>
                 <div class="opf-boost-counter" id="opfBoostBadge" title="Taps recorded">
@@ -186,7 +186,7 @@
                   <span class="opf-step-label">Hospital registry connected</span>
                 </div>
                 <div class="opf-step-item active" id="opfStep2">
-                  <span class="opf-step-icon">⚡</span>
+                  <span class="opf-step-icon">◉</span>
                   <span class="opf-step-label">Matching phone index</span>
                 </div>
                 <div class="opf-step-item" id="opfStep3">
@@ -206,7 +206,7 @@
                   <span class="opf-trivia-tag">WHILE YOU WAIT</span>
                 </div>
                 <p class="opf-trivia-content" id="opfTriviaText">
-                  🍎 An apple a day provides natural quercetin &amp; fiber to keep cardiovascular cells strong!
+                  An apple a day provides natural quercetin &amp; fiber to keep cardiovascular cells strong!
                 </p>
               </div>
 
@@ -361,7 +361,7 @@
           <p class="opf-msg-body">We couldn't find an OP number registered under <br /><strong
               id="opfNonePhone">—</strong></p>
           <div class="opf-helper-card">
-            <span>💡 Please contact the reception desk to register as a new patient.</span>
+            <span>Please contact the reception desk to register as a new patient.</span>
           </div>
           <button class="opf-btn" id="opfRetryBtn" type="button">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
@@ -407,6 +407,78 @@
     <p class="opf-foot">Wellness Medicals &middot; Keep your OP number handy for doctor consultations</p>
   </main>
 
+  <!-- Fullscreen Hospital Database Splash Loader -->
+  <div class="opf-splash" id="opfSplash" aria-hidden="true" role="status" aria-live="polite">
+    <div class="opf-splash-atmos" aria-hidden="true">
+      <span class="opf-splash-orb opf-splash-orb-a"></span>
+      <span class="opf-splash-orb opf-splash-orb-b"></span>
+      <span class="opf-splash-grid"></span>
+      <span class="opf-splash-scan"></span>
+    </div>
+
+    <div class="opf-splash-card" role="presentation">
+      <div class="opf-splash-top">
+        <div class="opf-splash-brand">
+          <span class="opf-splash-logo-wrap">
+            <img src="assets/hms-logo.jpg" alt="" class="opf-splash-logo" />
+            <span class="opf-splash-logo-ping" aria-hidden="true"></span>
+          </span>
+          <span class="opf-splash-brand-text">
+            <strong>WELLNESS MEDICALS</strong>
+            <em>HOSPITAL DATABASE</em>
+          </span>
+        </div>
+        <span class="opf-splash-secure"><span class="opf-splash-secure-dot"></span>SECURE</span>
+      </div>
+
+      <!-- Percentage ring -->
+      <div class="opf-splash-ring-wrap">
+        <div class="opf-splash-ring" id="opfSplashRing" style="--p:0">
+          <div class="opf-splash-ring-inner">
+            <span class="opf-splash-percent" id="opfSplashPercent">0%</span>
+            <span class="opf-splash-percent-sub">DATABASE SCAN</span>
+          </div>
+        </div>
+        <span class="opf-splash-orbit opf-splash-orbit-1" aria-hidden="true"><i>✚</i></span>
+        <span class="opf-splash-orbit opf-splash-orbit-2" aria-hidden="true"><i>●</i></span>
+      </div>
+
+      <h2 class="opf-splash-title">Searching hospital database&hellip;</h2>
+      <p class="opf-splash-phone">For mobile <strong id="opfSplashPhone">+91 &mdash;</strong></p>
+
+      <div class="opf-splash-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="opfSplashProgress" aria-label="Database search progress">
+        <div class="opf-splash-bar" id="opfSplashBar"></div>
+        <div class="opf-splash-shine" aria-hidden="true"></div>
+      </div>
+
+      <div class="opf-splash-status-row">
+        <span class="opf-splash-live-dot" aria-hidden="true"></span>
+        <span class="opf-splash-status" id="opfSplashStatus">Connecting to secure hospital registry&hellip;</span>
+      </div>
+
+      <!-- Live database terminal log -->
+      <div class="opf-splash-log" id="opfSplashLog" aria-hidden="true"></div>
+
+      <div class="opf-splash-stats">
+        <div class="opf-splash-stat">
+          <strong id="opfSplashRecords">0</strong>
+          <span>records scanned</span>
+        </div>
+        <div class="opf-splash-stat">
+          <strong id="opfSplashBlocks">0</strong>
+          <span>blocks checked</span>
+        </div>
+        <div class="opf-splash-stat">
+          <strong id="opfSplashTime">0.0s</strong>
+          <span>elapsed</span>
+        </div>
+      </div>
+
+      <p class="opf-splash-tip" id="opfSplashTip">Please wait while we go through the hospital records.</p>
+      <p class="opf-splash-cancel-hint">Do not close or refresh this page</p>
+    </div>
+  </div>
+
   <!-- High-Contrast Fullscreen Scanner Modal for Reception Desk -->
   <div class="opf-scanner-modal" id="opfScannerModal" aria-hidden="true" role="dialog" aria-labelledby="opfModalTag">
     <div class="opf-scanner-card">
@@ -423,9 +495,9 @@
   <!-- Interactive toast notification -->
   <div id="opfToast" class="opf-toast" role="status" aria-live="polite"></div>
 
-  <script src="js/sheets-api.js?v=3"></script>
+  <script src="js/sheets-api.js?v=4"></script>
   <script src="js/pwa.js?v=1"></script>
-  <script src="js/op-finder.js?v=3"></script>
+  <script src="js/op-finder.js?v=10"></script>
 </body>
 
 </html>

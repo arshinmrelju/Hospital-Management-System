@@ -295,8 +295,11 @@ body.opf-body {
   user-select: none;
 }
 .opf-flag {
-  font-size: 1.1rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
   line-height: 1;
+  color: var(--primary-dark);
 }
 
 .opf-input {
@@ -1579,6 +1582,536 @@ body.opf-body {
   .opf-select-btn,
   .opf-copy-btn {
     transition: none;
+  }
+}
+
+/* =============================================
+   FULLSCREEN HOSPITAL DATABASE SPLASH LOADER
+   Whole-screen takeover while going through
+   the hospital registry. Percentage-driven.
+   ============================================= */
+body.opf-locked {
+  overflow: hidden;
+}
+
+.opf-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 14px calc(18px + env(safe-area-inset-bottom, 0px));
+  background:
+    radial-gradient(900px 500px at 50% -10%, rgba(45, 212, 191, 0.22), transparent 60%),
+    radial-gradient(700px 500px at 50% 115%, rgba(16, 185, 129, 0.16), transparent 60%),
+    linear-gradient(170deg, #022a27 0%, #01302c 45%, #011a19 100%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.32s ease, visibility 0.32s ease;
+  overflow-y: auto;
+}
+
+.opf-splash.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* Ambient layers */
+.opf-splash-atmos {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.opf-splash-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.5;
+}
+.opf-splash-orb-a {
+  width: 340px;
+  height: 340px;
+  background: rgba(13, 148, 136, 0.55);
+  top: -100px;
+  left: -80px;
+  animation: opfSplashDrift 9s ease-in-out infinite alternate;
+}
+.opf-splash-orb-b {
+  width: 300px;
+  height: 300px;
+  background: rgba(52, 211, 153, 0.35);
+  bottom: -90px;
+  right: -70px;
+  animation: opfSplashDrift 11s ease-in-out infinite alternate-reverse;
+}
+@keyframes opfSplashDrift {
+  from { transform: translate(0, 0) scale(1); }
+  to { transform: translate(24px, 28px) scale(1.1); }
+}
+.opf-splash-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(45, 212, 191, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(45, 212, 191, 0.09) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(circle at 50% 40%, black 30%, transparent 78%);
+  -webkit-mask-image: radial-gradient(circle at 50% 40%, black 30%, transparent 78%);
+}
+.opf-splash-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 120px;
+  top: -120px;
+  background: linear-gradient(to bottom, transparent, rgba(45, 212, 191, 0.14), transparent);
+  animation: opfSplashScanDrop 3.2s linear infinite;
+}
+@keyframes opfSplashScanDrop {
+  0% { top: -18%; opacity: 0; }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { top: 110%; opacity: 0; }
+}
+
+/* Card */
+.opf-splash-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 440px;
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid rgba(45, 212, 191, 0.35);
+  border-radius: 26px;
+  padding: 22px 20px 18px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06), 0 0 44px rgba(45, 212, 191, 0.18);
+  text-align: center;
+  transform: translateY(14px) scale(0.98);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  margin: auto;
+}
+.opf-splash.active .opf-splash-card {
+  transform: translateY(0) scale(1);
+}
+
+.opf-splash-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.opf-splash-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.opf-splash-logo-wrap {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+.opf-splash-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.25), 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+.opf-splash-logo-ping {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid rgba(16, 185, 129, 0.7);
+  animation: opfSplashPing 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+@keyframes opfSplashPing {
+  0% { transform: scale(0.9); opacity: 1; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+.opf-splash-brand-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+}
+.opf-splash-brand-text strong {
+  font-family: var(--font-head);
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--primary-dark);
+}
+.opf-splash-brand-text em {
+  font-style: normal;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: var(--primary-light);
+}
+.opf-splash-secure {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #047857;
+  background: rgba(16, 185, 129, 0.14);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 5px 10px;
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+.opf-splash-secure-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: opfPulseDot 1.2s ease infinite;
+}
+
+/* Percentage ring */
+.opf-splash-ring-wrap {
+  position: relative;
+  width: 172px;
+  height: 172px;
+  margin: 2px auto 12px;
+}
+.opf-splash-ring {
+  --p: 0;
+  width: 172px;
+  height: 172px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: conic-gradient(#0d9488 calc(var(--p) * 1%), #34d399 calc(var(--p) * 1%), rgba(13, 148, 136, 0.14) 0);
+  box-shadow: 0 10px 30px rgba(13, 148, 136, 0.25), inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+  position: relative;
+  transition: --p 0.2s linear;
+}
+.opf-splash-ring::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(13, 148, 136, 0.35);
+  animation: opfSplashSpin 14s linear infinite;
+}
+@keyframes opfSplashSpin {
+  to { transform: rotate(360deg); }
+}
+.opf-splash-ring-inner {
+  width: 138px;
+  height: 138px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #ffffff 0%, #eefaf7 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 2px 10px rgba(0, 104, 95, 0.1);
+}
+.opf-splash-percent {
+  font-family: var(--font-head);
+  font-weight: 900;
+  font-size: 2.5rem;
+  line-height: 1;
+  color: var(--primary-dark);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.opf-splash-percent-sub {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: var(--primary-light);
+  margin-top: 4px;
+}
+.opf-splash-orbit {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  z-index: 3;
+}
+.opf-splash-orbit i {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  font-style: normal;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transform: translate(-50%, -50%);
+}
+.opf-splash-orbit-1 {
+  inset: -6px;
+  animation: opfSplashSpin 6s linear infinite;
+}
+.opf-splash-orbit-1 i {
+  width: 30px;
+  height: 30px;
+  background: #0d9488;
+  color: #fff;
+  font-size: 1rem;
+}
+.opf-splash-orbit-2 {
+  inset: 6px;
+  animation: opfSplashSpinRev 9s linear infinite;
+}
+.opf-splash-orbit-2 i {
+  width: 14px;
+  height: 14px;
+  background: #34d399;
+  color: transparent;
+  font-size: 0.4rem;
+}
+@keyframes opfSplashSpinRev {
+  to { transform: rotate(-360deg); }
+}
+
+.opf-splash-title {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.18rem;
+  letter-spacing: -0.01em;
+  color: var(--primary-dark);
+  margin: 0;
+}
+.opf-splash-phone {
+  font-size: 0.88rem;
+  color: var(--on-surface-var);
+  font-weight: 600;
+  margin: 4px 0 14px;
+}
+.opf-splash-phone strong {
+  color: var(--primary-dark);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+/* Progress bar */
+.opf-splash-track {
+  position: relative;
+  height: 12px;
+  background: rgba(13, 148, 136, 0.14);
+  border: 1px solid rgba(13, 148, 136, 0.2);
+  border-radius: 20px;
+  overflow: hidden;
+}
+.opf-splash-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #00685f, #0d9488, #34d399);
+  border-radius: 20px;
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.7);
+  transition: width 0.22s ease;
+}
+.opf-splash-shine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 60px;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.75), transparent);
+  animation: opfSplashShine 1.4s ease-in-out infinite;
+}
+@keyframes opfSplashShine {
+  0% { left: -70px; }
+  100% { left: 110%; }
+}
+
+.opf-splash-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  min-height: 22px;
+}
+.opf-splash-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  flex-shrink: 0;
+  animation: opfPulseDot 1s ease infinite;
+}
+.opf-splash-status {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity 0.18s ease;
+}
+.opf-splash-status.swap {
+  opacity: 0;
+}
+
+/* Terminal log — the "going through database" feel */
+.opf-splash-log {
+  margin-top: 12px;
+  background: #02211f;
+  border: 1px solid rgba(45, 212, 191, 0.3);
+  border-radius: 14px;
+  padding: 10px 12px;
+  min-height: 86px;
+  max-height: 96px;
+  overflow: hidden;
+  text-align: left;
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.55);
+  position: relative;
+}
+.opf-splash-log::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 22px;
+  background: linear-gradient(transparent, rgba(2, 33, 31, 0.9));
+  pointer-events: none;
+}
+.opf-splash-log-line {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.7rem;
+  line-height: 1.55;
+  color: #a7f3d0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: opfSplashLogIn 0.28s ease;
+}
+.opf-splash-log-line b {
+  color: #34d399;
+  font-weight: 700;
+}
+.opf-splash-log-line.dim {
+  color: rgba(167, 243, 208, 0.6);
+}
+@keyframes opfSplashLogIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Stats */
+.opf-splash-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+.opf-splash-stat {
+  background: rgba(13, 148, 136, 0.08);
+  border: 1px solid rgba(13, 148, 136, 0.18);
+  border-radius: 14px;
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.opf-splash-stat strong {
+  font-family: var(--font-head);
+  font-weight: 900;
+  font-size: 1.02rem;
+  color: var(--primary-dark);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.opf-splash-stat span {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--on-surface-var);
+}
+
+.opf-splash-tip {
+  margin: 12px 0 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--on-surface-var);
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px dashed rgba(245, 158, 11, 0.35);
+  border-radius: 12px;
+  padding: 8px 10px;
+  line-height: 1.4;
+  min-height: 36px;
+}
+.opf-splash-cancel-hint {
+  margin: 8px 0 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--outline);
+}
+
+/* Success hold — makes the final 100% state unmistakable */
+.opf-splash.complete .opf-splash-card {
+  border-color: rgba(16, 185, 129, 0.65);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(16, 185, 129, 0.25), 0 0 60px rgba(16, 185, 129, 0.35);
+}
+.opf-splash.complete .opf-splash-ring {
+  background: conic-gradient(#10b981 100%, rgba(16, 185, 129, 0.15) 0);
+  box-shadow: 0 10px 34px rgba(16, 185, 129, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+.opf-splash.complete .opf-splash-percent {
+  color: #047857;
+}
+.opf-splash.complete .opf-splash-bar {
+  background: linear-gradient(90deg, #047857, #10b981, #34d399);
+}
+.opf-splash.complete .opf-splash-status {
+  color: #047857;
+}
+
+@media (max-width: 480px) {
+  .opf-splash {
+    padding: 12px 10px calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  .opf-splash-card {
+    padding: 18px 14px 14px;
+    border-radius: 22px;
+  }
+  .opf-splash-ring-wrap,
+  .opf-splash-ring {
+    width: 152px;
+    height: 152px;
+  }
+  .opf-splash-ring-inner {
+    width: 122px;
+    height: 122px;
+  }
+  .opf-splash-percent {
+    font-size: 2.15rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .opf-splash-scan,
+  .opf-splash-ring::before,
+  .opf-splash-orbit-1,
+  .opf-splash-orbit-2,
+  .opf-splash-shine,
+  .opf-splash-logo-ping {
+    animation: none;
   }
 }
 

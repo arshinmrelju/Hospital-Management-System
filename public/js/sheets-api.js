@@ -440,6 +440,42 @@ window.API = {
       return Promise.resolve({ success: false, error: 'invalid_phone' });
     }
 
+    // Instant repeat-search cache (24h). Cold Apps Script starts take
+    // 30s+, so a cached hit skips the network entirely.
+    var OP_CACHE_KEY = 'hms_op_phone_cache';
+    var OP_CACHE_TTL = 24 * 60 * 60 * 1000;
+    function readOpCache(q) {
+      try {
+        var raw = localStorage.getItem(OP_CACHE_KEY);
+        if (!raw) return null;
+        var map = JSON.parse(raw);
+        var hit = map[q];
+        if (hit && hit.ts && (Date.now() - hit.ts < OP_CACHE_TTL) && hit.data) {
+          return { success: true, data: hit.data, cached: true };
+        }
+      } catch (e) {}
+      return null;
+    }
+    function writeOpCache(q, data) {
+      try {
+        var raw = localStorage.getItem(OP_CACHE_KEY);
+        var map = raw ? JSON.parse(raw) : {};
+        map[q] = { data: data, ts: Date.now() };
+        // Keep cache small — last 30 numbers only.
+        var keys = Object.keys(map);
+        if (keys.length > 30) {
+          keys.sort(function (a, b) { return (map[a].ts || 0) - (map[b].ts || 0); });
+          for (var i = 0; i < keys.length - 30; i++) delete map[keys[i]];
+        }
+        localStorage.setItem(OP_CACHE_KEY, JSON.stringify(map));
+      } catch (e) {}
+    }
+
+    var cached = readOpCache(query);
+    if (cached) {
+      return Promise.resolve(cached);
+    }
+
     // Keep only the minimal projection — applied to BOTH the new server
     // action and the legacy fallback so the shape is always identical.
     function slimRows(rows) {
@@ -459,16 +495,29 @@ window.API = {
 
     return sheetsFetch({ action: 'findOpByPhone', phone: query }).then(function (resp) {
       if (resp && resp.success && resp.data) {
-        return { success: true, data: slimRows(resp.data) };
+        var slim = slimRows(resp.data);
+        writeOpCache(query, slim);
+        return { success: true, data: slim };
       }
       // Apps Script deployments older than this feature answer with
       // "Unknown action" — fall back to the existing search endpoint
       // (same data source, no second database) and filter + project here.
       if (resp && resp.error && /unknown action/i.test(String(resp.error))) {
-        return window.API._findOpByPhoneFallback(query);
+        return window.API._findOpByPhoneFallback(query).then(function (fb) {
+          if (fb && fb.success && fb.data) writeOpCache(query, fb.data);
+          return fb;
+        });
       }
       return { success: false, error: (resp && resp.error) || 'search_failed' };
     });
+  },
+
+  // Fire-and-forget warmup: wakes a cold Apps Script instance while the
+  // patient is still typing, so the real search rarely pays the 30s cost.
+  warmupOpFinder: function () {
+    try {
+      sheetsFetch({ action: 'getTodayCount' }, function () {});
+    } catch (e) {}
   },
 
   // Legacy path: reuse the existing getPatients search action, then keep

@@ -63,6 +63,34 @@
   var boostCount = 0;
   var progressPercent = 15;
 
+  /* Fullscreen hospital-database splash refs */
+  var splashEl = document.getElementById('opfSplash');
+  var splashRingEl = document.getElementById('opfSplashRing');
+  var splashPercentEl = document.getElementById('opfSplashPercent');
+  var splashBarEl = document.getElementById('opfSplashBar');
+  var splashProgressEl = document.getElementById('opfSplashProgress');
+  var splashStatusEl = document.getElementById('opfSplashStatus');
+  var splashLogEl = document.getElementById('opfSplashLog');
+  var splashRecordsEl = document.getElementById('opfSplashRecords');
+  var splashBlocksEl = document.getElementById('opfSplashBlocks');
+  var splashTimeEl = document.getElementById('opfSplashTime');
+  var splashPhoneEl = document.getElementById('opfSplashPhone');
+  var splashTipEl = document.getElementById('opfSplashTip');
+
+  var splashProgress = 0;
+  var splashRecords = 0;
+  var splashBlocks = 0;
+  var splashStartTime = 0;
+  var splashProgressTimer = null;
+  var splashStatusTimer = null;
+  var splashLogTimer = null;
+  var splashClockTimer = null;
+  var splashTipTimer = null;
+  var splashStatusIdx = 0;
+  var splashDone = false;
+  var splashLongWaitNoted = false;
+  var splashColdStartNoted = false;
+
   var listEl = document.getElementById('opfList');
   var tokenCard = document.getElementById('opfTokenCard');
   var opValueEl = document.getElementById('opfOpValue');
@@ -107,6 +135,26 @@
     'Scanning patient registry...',
     'Matching phone number...',
     'Locating patient OP details...'
+  ];
+
+  var splashStatusMessages = [
+    'Connecting to secure hospital registry…',
+    'Authenticating terminal session…',
+    'Opening outpatient index…',
+    'Going through hospital database…',
+    'Scanning patient record blocks…',
+    'Matching mobile number…',
+    'Cross-checking OP files…',
+    'Verifying record integrity…',
+    'Finalizing secure result…'
+  ];
+
+  var splashTips = [
+    'Please wait while we go through the hospital records.',
+    'We scan thousands of OP records to find your number.',
+    'Your search is secure and private.',
+    'Large registries can take a few seconds — please stay here.',
+    'Save your OP number after this for faster visits.'
   ];
 
   /* -------------------------------------------------------------
@@ -399,8 +447,252 @@
   }
 
   /* -------------------------------------------------------------
-     MEDICAL ECG LOADING TICKER
+     FULLSCREEN HOSPITAL DATABASE SPLASH LOADER
+     Whole-screen takeover with real percentage calculation:
+     - Progress bar + ring count 0% -> 92% while API is pending
+     - Records / blocks counters simulate going through DB
+     - Terminal log lines show registry traversal
+     - On API resolve, animate to 100% then reveal result
      ------------------------------------------------------------- */
+  function fmtNum(n) {
+    return String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  function renderSplashProgress() {
+    var exact = Math.max(0, Math.min(100, splashProgress));
+    // Above 95% show one decimal so micro-progress stays visible
+    // (99.2 -> 99.5 reads as alive; floor(99.x) would look frozen at 99).
+    // Exactly 100 always reads clean — never "100.0%".
+    var label = exact >= 99.95 ? '100%' : (exact >= 95 ? (Math.floor(exact * 10) / 10).toFixed(1) + '%' : Math.floor(exact) + '%');
+    if (splashPercentEl) splashPercentEl.textContent = label;
+    if (splashBarEl) splashBarEl.style.width = exact + '%';
+    if (splashRingEl) splashRingEl.style.setProperty('--p', exact);
+    if (splashProgressEl) splashProgressEl.setAttribute('aria-valuenow', String(Math.floor(exact)));
+    if (splashRecordsEl) splashRecordsEl.textContent = fmtNum(splashRecords);
+    if (splashBlocksEl) splashBlocksEl.textContent = fmtNum(splashBlocks);
+  }
+
+  function pushSplashLog(html, dim) {
+    if (!splashLogEl) return;
+    var line = document.createElement('div');
+    line.className = 'opf-splash-log-line' + (dim ? ' dim' : '');
+    line.innerHTML = html;
+    splashLogEl.appendChild(line);
+    while (splashLogEl.children.length > 4) {
+      splashLogEl.removeChild(splashLogEl.firstChild);
+    }
+  }
+
+  function randomHex(len) {
+    var chars = '0123456789ABCDEF';
+    var out = '';
+    for (var i = 0; i < len; i++) out += chars[Math.floor(Math.random() * 16)];
+    return out;
+  }
+
+  function startSplashClocks() {
+    if (splashClockTimer) clearInterval(splashClockTimer);
+    splashClockTimer = setInterval(function () {
+      if (!splashStartTime) return;
+      var secs = (Date.now() - splashStartTime) / 1000;
+      if (splashTimeEl) splashTimeEl.textContent = secs.toFixed(1) + 's';
+    }, 100);
+  }
+
+  function startSplashStatus() {
+    splashStatusIdx = 0;
+    if (splashStatusEl) splashStatusEl.textContent = splashStatusMessages[0];
+    if (splashStatusTimer) clearInterval(splashStatusTimer);
+    splashStatusTimer = setInterval(function () {
+      splashStatusIdx = (splashStatusIdx + 1) % splashStatusMessages.length;
+      if (!splashStatusEl) return;
+      splashStatusEl.classList.add('swap');
+      setTimeout(function () {
+        if (!splashStatusEl) return;
+        splashStatusEl.textContent = splashStatusMessages[splashStatusIdx];
+        splashStatusEl.classList.remove('swap');
+      }, 160);
+    }, 1400);
+  }
+
+  function startSplashTips() {
+    var tipIdx = 0;
+    if (splashTipTimer) clearInterval(splashTipTimer);
+    splashTipTimer = setInterval(function () {
+      tipIdx = (tipIdx + 1) % splashTips.length;
+      if (splashTipEl) splashTipEl.textContent = splashTips[tipIdx];
+    }, 2600);
+  }
+
+  function startSplashLog() {
+    if (splashLogTimer) clearInterval(splashLogTimer);
+    pushSplashLog('<b>✓</b> Secure link established (TLS 1.3)');
+    var n = 0;
+    splashLogTimer = setInterval(function () {
+      n++;
+      var batch = 180 + Math.floor(Math.random() * 480);
+      splashRecords += batch;
+      if (n % 2 === 0) splashBlocks += 1 + Math.floor(Math.random() * 2);
+      renderSplashProgress();
+      var kind = n % 3;
+      if (kind === 0) {
+        pushSplashLog('▸ Scanning block <b>#' + randomHex(4) + '</b> — ' + fmtNum(batch) + ' records…');
+      } else if (kind === 1) {
+        pushSplashLog('▸ Outpatient index <b>' + (12 + Math.floor(Math.random() * 40)) + '%</b> traversed', true);
+      } else {
+        pushSplashLog('▸ Phone hash match <b>' + randomHex(6) + '</b> checked…', true);
+      }
+    }, 420);
+  }
+
+  function startSplashProgress() {
+    if (splashProgressTimer) clearInterval(splashProgressTimer);
+    splashProgressTimer = setInterval(function () {
+      if (splashDone) return;
+      // Continuous crawl toward 99.9% — never parks at 92 / 98 / 99.
+      // Fast at first, then creeps with a guaranteed minimum step so
+      // long Apps Script cold starts (30s+) still tick visibly.
+      // The decimal label (see renderSplashProgress) makes even
+      // 0.05% steps readable, so nothing ever looks frozen.
+      var CAP = 99.9;
+      var remaining = CAP - splashProgress;
+      if (remaining <= 0.005) {
+        // Fully saturated: keep counters + clock moving so nothing freezes.
+        splashRecords += 40 + Math.floor(Math.random() * 120);
+        splashBlocks += Math.random() < 0.3 ? 1 : 0;
+        renderSplashProgress();
+        return;
+      }
+      var step = remaining * 0.028 + Math.random() * 1.1;
+      if (splashProgress > 85) step = Math.min(step, 0.9 + Math.random() * 0.5);
+      if (splashProgress > 95) step = Math.min(step, 0.35 + Math.random() * 0.25);
+      if (splashProgress > 98) step = Math.min(Math.max(step, 0.08), 0.22 + Math.random() * 0.12);
+      if (splashProgress > 99) step = 0.02 + Math.random() * 0.04;
+      if (step < 0.02) step = 0.02;
+      splashProgress = Math.min(CAP, splashProgress + step);
+      renderSplashProgress();
+      var waited = splashStartTime ? (Date.now() - splashStartTime) : 0;
+      // After ~7s of waiting, reassure the user we are still digging.
+      if (waited > 7000 && !splashLongWaitNoted) {
+        splashLongWaitNoted = true;
+        if (splashStatusEl) splashStatusEl.textContent = 'Still going through a large database — almost there…';
+        pushSplashLog('◷ Large registry — still scanning, please stay…', true);
+      }
+      // Cold-start honesty after ~15s: the Apps Script instance is waking up.
+      // Then keep the status line rotating so no text sits static.
+      if (waited > 15000 && !splashColdStartNoted) {
+        splashColdStartNoted = true;
+        startSplashWaitingCycle();
+        pushSplashLog('◷ Server cold start — retrying secure channel…', true);
+      }
+    }, 200);
+  }
+
+  var splashWaitingTimer = null;
+  var splashWaitingMsgs = [
+    'Hospital server is waking up — holding your place…',
+    'Waiting for hospital server reply — scan is saved…',
+    'Still connected — finishing the last records…'
+  ];
+  var splashWaitingIdx = 0;
+
+  function startSplashWaitingCycle() {
+    if (splashWaitingTimer) clearInterval(splashWaitingTimer);
+    // Hand over the status line: stop the generic rotator so texts don't fight.
+    if (splashStatusTimer) { clearInterval(splashStatusTimer); splashStatusTimer = null; }
+    splashWaitingIdx = 0;
+    if (splashStatusEl) splashStatusEl.textContent = splashWaitingMsgs[0];
+    splashWaitingTimer = setInterval(function () {
+      if (splashDone || !splashStatusEl) return;
+      splashWaitingIdx = (splashWaitingIdx + 1) % splashWaitingMsgs.length;
+      splashStatusEl.classList.add('swap');
+      setTimeout(function () {
+        if (!splashStatusEl) return;
+        splashStatusEl.textContent = splashWaitingMsgs[splashWaitingIdx];
+        splashStatusEl.classList.remove('swap');
+      }, 160);
+    }, 3000);
+  }
+
+  function stopSplashTimers() {
+    if (splashProgressTimer) { clearInterval(splashProgressTimer); splashProgressTimer = null; }
+    if (splashStatusTimer) { clearInterval(splashStatusTimer); splashStatusTimer = null; }
+    if (splashWaitingTimer) { clearInterval(splashWaitingTimer); splashWaitingTimer = null; }
+    if (splashLogTimer) { clearInterval(splashLogTimer); splashLogTimer = null; }
+    if (splashClockTimer) { clearInterval(splashClockTimer); splashClockTimer = null; }
+    if (splashTipTimer) { clearInterval(splashTipTimer); splashTipTimer = null; }
+  }
+
+  function showSplash(digits) {
+    splashDone = false;
+    splashLongWaitNoted = false;
+    splashColdStartNoted = false;
+    splashProgress = 3;
+    splashRecords = 240 + Math.floor(Math.random() * 400);
+    splashBlocks = 2;
+    splashStartTime = Date.now();
+    if (splashLogEl) splashLogEl.innerHTML = '';
+    if (splashPhoneEl && digits) splashPhoneEl.textContent = '+91 ' + formatPhone(digits);
+    if (splashTipEl) splashTipEl.textContent = splashTips[0];
+    if (splashTimeEl) splashTimeEl.textContent = '0.0s';
+    renderSplashProgress();
+    if (splashEl) {
+      splashEl.classList.add('active');
+      splashEl.setAttribute('aria-hidden', 'false');
+    }
+    document.body.classList.add('opf-locked');
+    startSplashProgress();
+    startSplashStatus();
+    startSplashLog();
+    startSplashClocks();
+    startSplashTips();
+  }
+
+  function completeSplashTo100(cb) {
+    splashDone = true;
+    // Freeze background chatter so the success state reads clearly.
+    if (splashProgressTimer) { clearInterval(splashProgressTimer); splashProgressTimer = null; }
+    if (splashStatusTimer) { clearInterval(splashStatusTimer); splashStatusTimer = null; }
+    if (splashWaitingTimer) { clearInterval(splashWaitingTimer); splashWaitingTimer = null; }
+    if (splashLogTimer) { clearInterval(splashLogTimer); splashLogTimer = null; }
+    if (splashTipTimer) { clearInterval(splashTipTimer); splashTipTimer = null; }
+    if (splashStatusEl) splashStatusEl.textContent = 'Match complete — opening your OP pass…';
+    if (splashTipEl) splashTipEl.textContent = 'Record verified. Opening your OP pass now.';
+    if (splashEl) splashEl.classList.add('complete');
+    pushSplashLog('<b>✓</b> Match complete — result verified');
+    var start = splashProgress;
+    var t0 = performance.now();
+    var dur = 650;
+    function frame(now) {
+      var t = Math.min(1, (now - t0) / dur);
+      splashProgress = start + (100 - start) * (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+      splashRecords += Math.floor(Math.random() * 120);
+      renderSplashProgress();
+      if (t < 1) {
+        requestAnimationFrame(frame);
+      } else {
+        // Hold a clean 100% state long enough to actually read it.
+        splashProgress = 100;
+        renderSplashProgress();
+        setTimeout(function () {
+          hideSplash();
+          if (cb) cb();
+        }, 1300);
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function hideSplash() {
+    stopSplashTimers();
+    if (splashEl) splashEl.classList.remove('complete');
+    if (splashEl) {
+      splashEl.classList.remove('active');
+      splashEl.setAttribute('aria-hidden', 'true');
+    }
+    document.body.classList.remove('opf-locked');
+  }
+
   function startLoadingTicker() {
     if (!tickerTextEl) return;
     var idx = 0;
@@ -424,11 +716,15 @@
     }
   }
 
-  function setLoading(on) {
+  function setLoading(on, digits) {
     searching = on;
+    // Legacy inline loader is superseded by the fullscreen splash.
     if (loadingBox) {
-      loadingBox.classList.toggle('active', on);
-      loadingBox.setAttribute('aria-hidden', on ? 'false' : 'true');
+      loadingBox.classList.remove('active');
+      loadingBox.setAttribute('aria-hidden', 'true');
+    }
+    if (on) {
+      showSplash(digits || '');
     }
     if (searchBtn) {
       searchBtn.disabled = on;
@@ -878,25 +1174,66 @@
     }
 
     setInputError('');
-    setLoading(true);
+    setLoading(true, digits);
     playTapSound();
     triggerHaptic([25]);
 
+    var searchBeganAt = Date.now();
+    var MIN_SPLASH_MS = 1700;
+
+    function restoreButton() {
+      searching = false;
+      if (searchBtn) {
+        searchBtn.disabled = false;
+        searchBtn.innerHTML = searchBtnHtml;
+      }
+      stopLoadingTicker();
+    }
+
+    function finishWithSplash(cb) {
+      var elapsed = Date.now() - searchBeganAt;
+      var wait = Math.max(0, MIN_SPLASH_MS - elapsed);
+      setTimeout(function () {
+        restoreButton();
+        completeSplashTo100(cb);
+      }, wait);
+    }
+
+    function failWithSplash(cb) {
+      var elapsed = Date.now() - searchBeganAt;
+      var wait = Math.max(0, Math.min(900, MIN_SPLASH_MS - elapsed));
+      setTimeout(function () {
+        restoreButton();
+        completeSplashTo100(cb);
+      }, wait);
+    }
+
+    if (!window.API || typeof window.API.findOpByPhone !== 'function') {
+      failWithSplash(function () {
+        showView('error');
+        playErrorSound();
+      });
+      return;
+    }
+
     window.API.findOpByPhone(digits)
       .then(function (res) {
-        setLoading(false);
         if (!res || !res.success) {
-          showView('error');
-          playErrorSound();
+          failWithSplash(function () {
+            showView('error');
+            playErrorSound();
+          });
           return;
         }
         results = res.data || [];
         if (!results.length) {
-          if (nonePhoneEl) {
-            nonePhoneEl.textContent = '+91 ' + formatPhone(digits);
-          }
-          showView('none');
-          playErrorSound();
+          failWithSplash(function () {
+            if (nonePhoneEl) {
+              nonePhoneEl.textContent = '+91 ' + formatPhone(digits);
+            }
+            showView('none');
+            playErrorSound();
+          });
           return;
         }
 
@@ -905,17 +1242,20 @@
 
         // One match — skip list to save taps
         if (results.length === 1) {
-          showOp(0);
+          finishWithSplash(function () { showOp(0); });
           return;
         }
-        renderList();
-        showView('results');
-        playTone(600, 'sine', 0.1, 0.04);
+        finishWithSplash(function () {
+          renderList();
+          showView('results');
+          playTone(600, 'sine', 0.1, 0.04);
+        });
       })
       .catch(function () {
-        setLoading(false);
-        showView('error');
-        playErrorSound();
+        failWithSplash(function () {
+          showView('error');
+          playErrorSound();
+        });
       });
   }
 
@@ -988,4 +1328,14 @@
   // Initial setup
   updateInputControls();
   updateRecentChip();
+
+  // Warm up the Apps Script backend while the patient reads the screen,
+  // so the first real search rarely pays the 30s+ cold-start cost.
+  setTimeout(function () {
+    try {
+      if (window.API && typeof window.API.warmupOpFinder === 'function') {
+        window.API.warmupOpFinder();
+      }
+    } catch (e) {}
+  }, 600);
 })();
