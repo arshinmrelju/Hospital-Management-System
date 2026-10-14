@@ -608,12 +608,6 @@
   text-decoration: none;
 }
 
-.techsiah-badge svg {
-  width: 14px;
-  height: 14px;
-  display: block;
-}
-
 .techsiah-badge .techsiah-label {
   color: var(--outline);
   font-size: 0.68rem;
@@ -622,21 +616,15 @@
   letter-spacing: 0.04em;
 }
 
-.techsiah-badge .techsiah-text {
-  font-family: 'Outfit', var(--font-body);
-  font-weight: 700;
-  color: var(--on-bg);
-  letter-spacing: -0.2px;
-  transition: color 0.2s ease;
+.techsiah-badge .techsiah-logo-img {
+  height: 26px;
+  width: auto;
+  display: block;
 }
 
-.techsiah-badge:hover .techsiah-text {
-  color: #2563EB;
-}
-
-.techsiah-badge .techsiah-dot {
-  color: #2563EB;
-}
+/* NOTE: the sidebar footer is always light, so the dark-text logo is used
+   unconditionally. techsiah-full-logo-white.png is kept in assets for
+   future dark surfaces — do NOT key off prefers-color-scheme here. */
 
 /* ================== FILTER BAR ================== */
 .list-filter-bar {
