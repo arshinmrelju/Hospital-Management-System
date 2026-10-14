@@ -319,7 +319,23 @@ function applyFilters() {
   }
   currentPage = 1;
   const countEl = document.getElementById('patientCount');
-  if (countEl) countEl.textContent = filteredPatients.length;
+  if (countEl) {
+    // If we know the server holds more than we loaded, say so explicitly
+    // instead of silently showing "2632 registered patients".
+    var serverTotal = window._patientsServerTotal || 0;
+    var noFilterActive = !search && !patientId && !dept && !status && !minAgeVal && !maxAgeVal && !place && !doctor && !op && !visitFrom && !visitTo && activeFilter === 'all';
+    if (noFilterActive && serverTotal > filteredPatients.length) {
+      countEl.textContent = filteredPatients.length + ' of ' + serverTotal + ' (incomplete load — Refresh)';
+      countEl.style.color = '#dc2626';
+      var mr = window._patientsMissingRows || [];
+      countEl.title = 'Server reports ' + serverTotal + ' but only ' + filteredPatients.length + ' loaded.' +
+        (mr.length ? ' Missing sheet rows: ' + mr.join(', ') + '.' : '') + ' Hover rows = exact Sheets row numbers. Refresh first; if stable, inspect those rows (often blank/deleted rows at the sheet bottom).';
+    } else {
+      countEl.textContent = filteredPatients.length;
+      countEl.style.color = '';
+      countEl.title = '';
+    }
+  }
 
   const advResultsCount = document.getElementById('advResultsCount');
   if (advResultsCount) {
@@ -649,7 +665,42 @@ async function loadPatients(skipCache) {
     const result = await window.API.getPatients();
     allPatients = normalizePatients(result.data || []);
     window.allPatients = allPatients;
-    PatientCache.set(allPatients);
+    // Only cache COMPLETE loads. Caching a partial 2632 of 17000 is what
+    // traps the registry on the wrong number across reloads.
+    var serverTotal = (result && (result.total !== undefined ? result.total : result.loaded)) || allPatients.length;
+    // Pinpoint EXACT missing sheet rows via the __row stamp (Code.gs).
+    // e.g. missingRows=[2644,2645,2646,2647] => check the bottom of the sheet.
+    var missingRows = [];
+    try {
+      var seenRows = {};
+      allPatients.forEach(function (p) { if (p.__row) seenRows[p.__row] = true; });
+      if (Object.keys(seenRows).length > 0) {
+        for (var r = 2; r <= serverTotal + 1; r++) {
+          if (!seenRows[r]) {
+            missingRows.push(r);
+            if (missingRows.length >= 50) { missingRows.push('...'); break; }
+          }
+        }
+      }
+    } catch (e) {}
+    window._patientsMissingRows = missingRows;
+    if (result && (result.partial || allPatients.length < serverTotal)) {
+      console.error('HMS: PARTIAL LOAD ' + allPatients.length + '/' + serverTotal +
+        '. Failed batches: ' + JSON.stringify((result && result.failedBatches) || []) +
+        '. Missing sheet rows: ' + JSON.stringify(missingRows));
+      if (typeof toast === 'function') toast('Incomplete load: ' + allPatients.length + ' of ' + serverTotal +
+        (missingRows.length ? '. Missing sheet rows: ' + missingRows.join(', ') : '') + '. Press Refresh — if it persists, inspect those rows in Sheets.', 'error');
+      // Do NOT overwrite good cache with partial data.
+    } else {
+      // Best-effort cache (17k exceeds localStorage quota — failure is OK,
+      // IndexedDB already persisted each batch via persistFetch).
+      try { PatientCache.set(allPatients); } catch (e) {}
+    }
+    if (serverTotal > allPatients.length) {
+      window._patientsServerTotal = serverTotal;
+    } else {
+      window._patientsServerTotal = allPatients.length;
+    }
     if (typeof updateExportBadge === 'function') updateExportBadge();
     _patientsDataLoading = false;
     applyFilters();

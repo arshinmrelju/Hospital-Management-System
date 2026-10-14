@@ -1,6 +1,6 @@
 'use strict';
 
-var SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbw0KyFeZIH3Gowr-PYILabJH5QFNDMlGdfdz9p5m7zKX1Njq9jSmiOLeO-7kjssRCNlIg/exec';
+var SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbxksBe8FWDOoa9SToKSpYFfA4esfLbTjEXrche24pm_INr_prD3gGOzRC8zmYa8t3V78A/exec';
 
 var _patientsCache = null;
 var _appointmentsCache = null;
@@ -331,8 +331,11 @@ window.API = {
       var batchSize = _batchSize;
       promise = sheetsFetch({ action: 'getPatients', limit: batchSize, offset: 0 }).then(function (meta) {
         if (!meta.success) {
-          console.warn('Using LocalStorage patients fallback.');
-          return fallbackPatients(params);
+          console.warn('Using LocalStorage patients fallback. Server said: ' + ((meta && meta.error) || 'unknown'));
+          var fb0 = fallbackPatients(params);
+          fb0.partial = true;
+          fb0.serverError = (meta && meta.error) || 'fetch_failed';
+          return fb0;
         }
 
         // Old server — returns everything in one shot, no total field
@@ -357,36 +360,123 @@ window.API = {
 
         var firstBatchData = (meta.data || []).map(normalizePatient);
 
+        // Single-batch case (total fits in one response): verify the server
+        // actually returned every row. A short first batch used to be
+        // reported as success — that is the "2643 of 2647" hole.
+        if (total <= batchSize) {
+          if (firstBatchData.length >= total) {
+            _patientsCache = firstBatchData;
+            try { setLocalData('patients', firstBatchData); } catch (e) {}
+            return { success: true, data: firstBatchData, total: total, loaded: firstBatchData.length };
+          }
+          // Short batch: retry once (transient truncation), then report
+          // partial WITH the exact missing sheet rows (via __row).
+          console.warn('HMS: short first batch (' + firstBatchData.length + '/' + total + '), retrying once');
+          return sheetsFetch({ action: 'getPatients', limit: batchSize, offset: 0 }).then(function (retry) {
+            var rd = ((retry && retry.data) || []).map(normalizePatient);
+            var best = rd.length > firstBatchData.length ? rd : firstBatchData;
+            if (best.length >= total) {
+              _patientsCache = best;
+              try { setLocalData('patients', best); } catch (e) {}
+              return { success: true, data: best, total: total, loaded: best.length };
+            }
+            return { success: false, partial: true, data: best, total: total,
+                     loaded: best.length, failedBatches: [0],
+                     error: 'Partial load: ' + best.length + ' of ' + total + ' (first batch short)' };
+          });
+        }
+
         // If the first batch already contains all patients, we're done!
-        if (firstBatchData.length >= total || total <= batchSize) {
+        if (firstBatchData.length >= total) {
           _patientsCache = firstBatchData;
           setLocalData('patients', firstBatchData);
           return { success: true, data: firstBatchData, total: total };
         }
 
-        // Step 2: fetch remaining pages sequentially with retry
+        // Step 2: fetch remaining pages sequentially with retry.
+        // NEVER silently present a partial load as complete (that is how a
+        // registry shows "2632" while the sheet holds 17000).
         var allData = firstBatchData;
         var pages = Math.ceil(total / batchSize);
+        var failedBatches = [];
+
+        // One-pass gap-fill: sheet rows map 1:1 to offsets (row = offset+2),
+        // so any rows missing from __row can be refetched directly.
+        function fillGaps() {
+          var seen = {};
+          allData.forEach(function (p) { if (p.__row) seen[p.__row] = true; });
+          if (!Object.keys(seen).length) return Promise.resolve(); // old backend: no __row
+          var missing = [];
+          for (var r = 2; r <= total + 1; r++) if (!seen[r]) missing.push(r);
+          if (!missing.length || missing.length > 6000) return Promise.resolve();
+          // Group into contiguous ranges (one request each, max 10 ranges)
+          var ranges = [];
+          var a = missing[0], prev = missing[0];
+          for (var m = 1; m <= missing.length; m++) {
+            if (m < missing.length && missing[m] === prev + 1) { prev = missing[m]; continue; }
+            ranges.push([a, prev]);
+            if (m < missing.length) { a = missing[m]; prev = missing[m]; }
+            if (ranges.length >= 10) break;
+          }
+          console.warn('HMS: gap-fill fetching ' + missing.length + ' missing rows in ' + ranges.length + ' range(s)');
+          var chain = Promise.resolve();
+          ranges.forEach(function (rg) {
+            chain = chain.then(function () {
+              var off = rg[0] - 2, lim = rg[1] - rg[0] + 1;
+              return sheetsFetch({ action: 'getPatients', offset: off, limit: lim }).then(function (resp) {
+                if (resp && resp.success && resp.data) {
+                  var have = {};
+                  allData.forEach(function (p) { if (p.__row) have[p.__row] = true; });
+                  resp.data.map(normalizePatient).forEach(function (p) {
+                    if (!p.__row || !have[p.__row]) { allData.push(p); if (p.__row) have[p.__row] = true; }
+                  });
+                }
+              });
+            });
+          });
+          return chain;
+        }
+
+        function finishLoad() {
+          _patientsCache = allData;
+          try { setLocalData('patients', allData); } catch (e) {}
+          var complete = (failedBatches.length === 0 && allData.length >= total);
+          if (!complete) {
+            console.error('HMS: PARTIAL patient load: got ' + allData.length + ' of ' + total +
+              '. Failed batches: ' + JSON.stringify(failedBatches) + '. NOT caching as complete.');
+          }
+          return { success: complete, partial: !complete, data: allData, total: total,
+                   loaded: allData.length, failedBatches: failedBatches,
+                   error: complete ? undefined : ('Partial load: ' + allData.length + ' of ' + total + ' (batches failed: ' + failedBatches.join(',') + ')') };
+        }
 
         function loadPage(idx, retried) {
           if (idx >= pages) {
-            _patientsCache = allData;
-            setLocalData('patients', allData);
-            return { success: true, data: allData };
+            return fillGaps().then(finishLoad);
           }
           var offset = idx * batchSize;
           var limit = Math.min(batchSize, total - offset);
           return sheetsFetch({ action: 'getPatients', offset: offset, limit: limit }).then(function (resp) {
-            if (resp.success && resp.data) {
+            if (resp && resp.success && resp.data) {
+              if (resp.total !== undefined && resp.total !== total) {
+                console.warn('HMS: server total changed mid-load (' + total + ' -> ' + resp.total + ')');
+              }
+              // Short batch (fewer rows than requested) = failure, not success
+              if (resp.data.length < limit && idx < pages - 1) {
+                console.warn('HMS: batch ' + idx + ' short (' + resp.data.length + '/' + limit + ')');
+                if (!retried) return loadPage(idx, true);
+                failedBatches.push(idx);
+                return loadPage(idx + 1);
+              }
               allData = allData.concat(resp.data.map(normalizePatient));
               return loadPage(idx + 1);
             }
-            // Retry failed batch once
             if (!retried) {
-              console.warn('Retrying batch ' + idx + ' after failure');
+              console.warn('Retrying batch ' + idx + ' after failure: ' + ((resp && resp.error) || 'unknown'));
               return loadPage(idx, true);
             }
-            console.error('Batch ' + idx + ' failed after retry, skipping');
+            console.error('Batch ' + idx + ' failed, keeping track and continuing. Error: ' + ((resp && resp.error) || 'unknown'));
+            failedBatches.push(idx);
             return loadPage(idx + 1);
           });
         }
@@ -402,6 +492,12 @@ window.API = {
 
   getTodayCount: function() {
     return sheetsFetch({ action: 'getTodayCount' });
+  },
+
+  /* Lightweight probe: how many rows does the DEPLOYED backend see?
+     Use in console: await window.API.getPatientsCount() */
+  getPatientsCount: function () {
+    return sheetsFetch({ action: 'getPatientsCount' });
   },
 
   getPatient: function (id) {

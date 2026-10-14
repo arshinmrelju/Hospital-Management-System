@@ -8,6 +8,7 @@ function doGet(e) {
   var result = { success: false, error: 'Unknown action: ' + action };
 
   if (action === 'getPatients') result = handleGetPatients(e);
+  else if (action === 'getPatientsCount') result = handleGetPatientsCount(e);
   else if (action === 'getTodayCount') result = handleGetTodayCount(e);
   else if (action === 'getPatient') result = handleGetPatient(e);
   else if (action === 'findOpByPhone') result = handleFindOpByPhone(e);
@@ -222,10 +223,29 @@ function handleGetPatients(e) {
       if (haystack.indexOf(search) === -1) continue;
     }
 
+    // Diagnostic: exact sheet row number (lets the frontend pinpoint gaps)
+    p.__row = rowStart + i;
     result.push(p);
   }
 
-  return { success: true, data: result, total: totalRows };
+  return { success: true, data: result, total: totalRows, returned: result.length, rowStart: rowStart };
+}
+
+/* Lightweight row-count probe — NO row data is read, so this stays fast
+   even with 17k+ patients. Use it to verify the sheet the deployment
+   actually sees: returns lastRow, total, lastColumn and the sheet name. */
+function handleGetPatientsCount(e) {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = ss.getSheetByName('Patients') || ss.getSheets()[0];
+  var lastRow = sheet.getLastRow();
+  var lastCol = sheet.getLastColumn();
+  return {
+    success: true,
+    sheetName: sheet.getName(),
+    lastRow: lastRow,
+    lastColumn: lastCol,
+    total: Math.max(0, lastRow - 1)
+  };
 }
 
 /* Count patients registered today (IST) — fast server-side check */
