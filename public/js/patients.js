@@ -2,6 +2,7 @@
 
 var CACHE_TTL = 5 * 60 * 1000;
 var CACHE_KEY = 'hms_patients_cache_v2';
+window._patientsJsVersion = '2026-10-14-f';
 
 window.PatientCache = {
   get: function() {
@@ -206,6 +207,12 @@ function clearAdvancedFilters() {
 window.clearAdvancedFilters = clearAdvancedFilters;
 
 function applyFilters() {
+  // Single source of truth: other modules (dashboard boot, retries) replace
+  // window.allPatients. Rendering from a stale local snapshot is what kept
+  // showing "17660 of 17681" after memory already held all 17681.
+  if (Array.isArray(window.allPatients) && window.allPatients !== allPatients) {
+    allPatients = window.allPatients;
+  }
   if (_patientsDataLoading && !allPatients.length) {
     const tbody = document.getElementById('patientTableBody');
     if (tbody && !tbody.querySelector('.skeleton-row')) {
@@ -250,12 +257,17 @@ function applyFilters() {
     if (dept && p.department !== dept) return false;
     if (status && p.status !== status) return false;
 
-    // 4. Advanced Age
-    const age = parseInt(p.age);
-    if (!isNaN(age)) {
-      if (age < minAge || age > maxAge) return false;
-    } else if (minAgeVal || maxAgeVal) {
-      return false;
+    // 4. Advanced Age — ONLY when the user set a bound. The old code applied
+    // the 0–999 defaults unconditionally, silently hiding rows whose Age cell
+    // holds a date/DOB string (parseInt("2026-05-31…") = 2026 > 999). The
+    // default view must show every loaded row.
+    if (minAgeVal || maxAgeVal) {
+      const age = parseInt(p.age);
+      if (!isNaN(age)) {
+        if (age < minAge || age > maxAge) return false;
+      } else {
+        return false;
+      }
     }
 
     // 5. Advanced Place
@@ -325,15 +337,58 @@ function applyFilters() {
     var serverTotal = window._patientsServerTotal || 0;
     var noFilterActive = !search && !patientId && !dept && !status && !minAgeVal && !maxAgeVal && !place && !doctor && !op && !visitFrom && !visitTo && activeFilter === 'all';
     if (noFilterActive && serverTotal > filteredPatients.length) {
-      countEl.textContent = filteredPatients.length + ' of ' + serverTotal + ' (incomplete load — Refresh)';
+      try {
+        window._patientsRedRender = {
+          at: new Date().toISOString(),
+          rendered: filteredPatients.length,
+          serverTotal: serverTotal,
+          closureLen: allPatients.length,
+          sharedLen: window.allPatients ? window.allPatients.length : -1
+        };
+      } catch (e3) {}
+      if (window._patientsScanRunning) {
+        countEl.textContent = filteredPatients.length + ' of ' + serverTotal + ' (working — ' + window._patientsScanRunning + ')';
+        countEl.style.color = '#b45309';
+        countEl.title = 'Fetch in progress, please wait…';
+        return;
+      }
+      countEl.innerHTML = '';
+      countEl.style.cursor = 'pointer';
+      countEl.style.textDecoration = 'underline';
+      countEl.style.textUnderlineOffset = '3px';
+      countEl.onclick = function (ev) {
+        if (ev && ev.target && ev.target.id === 'hmsPatientsDetails') return;
+        if (typeof retryMissingPatients === 'function') retryMissingPatients();
+      };
+      var txt = document.createElement('span');
+      txt.textContent = filteredPatients.length + ' of ' + serverTotal + ' (incomplete load — click here to complete) ';
+      txt.title = 'Click anywhere on this line to fetch the missing rows';
+      var det = document.createElement('a');
+      det.href = '#';
+      det.textContent = '[details]';
+      det.style.color = '#dc2626';
+      det.style.textDecoration = 'underline';
+      det.style.cursor = 'pointer';
+      det.style.fontWeight = '400';
+      det.id = 'hmsPatientsDetails';
+      det.onclick = function (ev) {
+        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+        if (typeof showPatientsDiag === 'function') showPatientsDiag();
+        return false;
+      };
+      countEl.appendChild(txt);
+      countEl.appendChild(det);
       countEl.style.color = '#dc2626';
       var mr = window._patientsMissingRows || [];
       countEl.title = 'Server reports ' + serverTotal + ' but only ' + filteredPatients.length + ' loaded.' +
-        (mr.length ? ' Missing sheet rows: ' + mr.join(', ') + '.' : '') + ' Hover rows = exact Sheets row numbers. Refresh first; if stable, inspect those rows (often blank/deleted rows at the sheet bottom).';
+        (mr.length ? ' Missing sheet rows: ' + mr.join(', ') + '.' : '') + ' Hover rows = exact Sheets row numbers. Click to fetch the missing rows first; if stable, inspect those rows (often blank/deleted rows at the sheet bottom).';
     } else {
       countEl.textContent = filteredPatients.length;
       countEl.style.color = '';
+      countEl.style.cursor = '';
+      countEl.style.textDecoration = '';
       countEl.title = '';
+      countEl.onclick = null;
     }
   }
 
@@ -610,6 +665,237 @@ function refreshPatients() {
 }
 window.refreshPatients = refreshPatients;
 
+// No-__row fallback: the deployed backend doesn't stamp rows, so re-read the
+// sheet in 1000-row windows and merge by OP number. Logs per-window counts —
+// the short window(s) pinpoint the problem area of the sheet.
+async function retryMissingPositional(serverTotal, countEl, setStatus) {
+  if (!serverTotal || serverTotal <= allPatients.length) { refreshPatients(); return; }
+  var B = 1000;
+  var pages = Math.ceil(serverTotal / B);
+  function rowKey(p) {
+    if (p.__row) return 'row:' + p.__row;
+    var op = p.op_no || p.id || '';
+    return op ? 'op:' + String(op).trim() : null;
+  }
+  var have = {};
+  allPatients.forEach(function (p) { var k = rowKey(p); if (k) have[k] = true; });
+  if (typeof toast === 'function') toast('Row map missing — scanning sheet in ' + pages + ' small windows…', 'info');
+  if (countEl) countEl.style.opacity = '0.6';
+  var added = 0;
+  var shortWindows = [];
+  window._patientsScanRunning = 'scan 0/' + pages;
+  try {
+    for (var i = 0; i < pages; i++) {
+      window._patientsScanRunning = 'scan ' + (i + 1) + '/' + pages;
+      if (countEl) countEl.textContent = allPatients.length + ' of ' + serverTotal + ' (scanning ' + (i + 1) + '/' + pages + '…)';
+      var off = i * B, lim = Math.min(B, serverTotal - off);
+      var resp = null;
+      try {
+        resp = window.sheetsFetchDirect
+          ? await window.sheetsFetchDirect({ action: 'getPatients', offset: off, limit: lim })
+          : await window.API.getPatients({ offset: off, limit: lim });
+      } catch (e) { resp = null; }
+      if (!resp || resp.offline || resp.fallback || !resp.success) {
+        shortWindows.push([off, lim, 'error:' + ((resp && resp.error) || 'fetch_failed')]);
+        continue;
+      }
+      var rows = normalizePatients(resp.data || []);
+      if (rows.length < lim) shortWindows.push([off, lim, 'got ' + rows.length]);
+      rows.forEach(function (p) {
+        var k = rowKey(p);
+        if (!k || !have[k]) { allPatients.push(p); added++; if (k) have[k] = true; }
+      });
+      if (i % 4 === 3 || i === pages - 1) {
+        console.warn('HMS: positional scan ' + (i + 1) + '/' + pages + ' added=' + added);
+        if (typeof toast === 'function' && i !== pages - 1) toast('Scanning… ' + (i + 1) + '/' + pages, 'info');
+      }
+    }
+    window.allPatients = allPatients;
+    console.warn('HMS: positional scan done. added=' + added + ' loaded=' + allPatients.length + '/' + serverTotal +
+      ' shortWindows=' + JSON.stringify(shortWindows));
+    window._patientsShortWindows = shortWindows;
+    window._patientsScanRunning = null;
+    try {
+      var _uk = {};
+      allPatients.forEach(function (p) { var k = rowKey(p); if (k) _uk[k] = true; });
+      window._patientsUniqueKeys = Object.keys(_uk).length;
+    } catch (euk) {}
+    if (countEl) countEl.style.opacity = '';
+    if (allPatients.length >= serverTotal) {
+      window._patientsServerTotal = allPatients.length;
+      window._patientsMissingRows = [];
+      try { PatientCache.set(allPatients); } catch (e) {}
+      if (typeof toast === 'function') toast('Registry complete: ' + allPatients.length + ' patients', 'success');
+      _patientsDataLoading = false;
+      applyFilters();
+    } else {
+      setStatus('Scan added ' + added + ' rows; still ' + allPatients.length + '/' + serverTotal +
+        '. Short windows (offset,limit,detail): ' + JSON.stringify(shortWindows) +
+        '. Send this + console log to support.');
+      if (typeof toast === 'function') toast('Still ' + allPatients.length + ' of ' + serverTotal + ' — click [details], screenshot it', 'warning', null, 8000);
+      _patientsDataLoading = false;
+      applyFilters();
+      if (typeof showPatientsDiag === 'function') showPatientsDiag();
+    }
+  } catch (e) {
+    window._patientsScanRunning = null;
+    if (countEl) countEl.style.opacity = '';
+    console.error('HMS: positional scan failed', e);
+    if (typeof toast === 'function') toast('Scan failed: ' + (e && e.message ? e.message : e), 'error');
+  }
+}
+window.retryMissingPositional = retryMissingPositional;
+
+// Screenshot-able diagnostics for a stuck "17660 of 17681" load.
+function showPatientsDiag() {
+  var lines = [];
+  lines.push('Patient Registry diagnostics');
+  lines.push('JS version: ' + (window._patientsJsVersion || 'pre-d'));
+  var _loaded = window.allPatients ? window.allPatients.length : 0;
+  var _total = window._patientsServerTotal || 0;
+  lines.push('Loaded: ' + _loaded + ' / server total: ' + _total +
+    (_total && _loaded >= _total ? '  => COMPLETE (red message must be gone)' : '  => INCOMPLETE'));
+  try {
+    var _hdr = document.getElementById('patientCount');
+    lines.push('Header currently shows: "' + (_hdr ? _hdr.textContent : '(no header element)') + '"');
+  } catch (eh) {}
+  lines.push('Row stamps (__row from server): ' + (window._patientsHasRowStamps ? 'YES' : 'NO — redeploy scripts/Code.gs'));
+  lines.push('Last full load: ' + JSON.stringify(window._patientsLastLoad || null));
+  lines.push('Last red render: ' + JSON.stringify(window._patientsRedRender || null));
+  var _mr = window._patientsMissingRows || [];
+  if (_mr.length) lines.push('Missing rows: ' + JSON.stringify(_mr));
+  var _sw = window._patientsShortWindows || null;
+  if (_sw && _sw.length) lines.push('Scan short windows [offset,limit,detail]: ' + JSON.stringify(_sw));
+  if (window._patientsUniqueKeys) lines.push('Unique OP/row keys in memory: ' + window._patientsUniqueKeys);
+  if (_sw && !_sw.length && (window._patientsUniqueKeys || 0) < _total) {
+    lines.push('NOTE: every window returned FULL data but unique IDs are fewer —');
+    lines.push('the sheet itself has duplicate/blank OP numbers. Check the sheet, not the loader.');
+  }
+  var text = lines.join('\n');
+  var ov = document.getElementById('hmsPatientsDiag');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'hmsPatientsDiag';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;';
+    ov.innerHTML =
+      '<div style="background:#fff;border-radius:12px;max-width:560px;width:100%;padding:20px;font-family:monospace;">' +
+        '<h3 style="font-family:inherit;margin:0 0 10px;font-size:1rem;">Incomplete load — details</h3>' +
+        '<textarea id="hmsPatientsDiagText" readonly rows="12" style="width:100%;font-family:monospace;font-size:.75rem;border:1px solid #ddd;border-radius:8px;padding:8px;box-sizing:border-box;"></textarea>' +
+        '<div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">' +
+          '<button id="hmsPatientsDiagCopy" style="padding:8px 14px;border-radius:8px;border:1px solid #0d9488;background:#0d9488;color:#fff;cursor:pointer;">Copy</button>' +
+          '<button id="hmsPatientsDiagClose" style="padding:8px 14px;border-radius:8px;border:1px solid #ccc;background:#fff;cursor:pointer;">Close</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(ov);
+    document.getElementById('hmsPatientsDiagClose').onclick = function () { ov.style.display = 'none'; };
+    ov.onclick = function (ev) { if (ev.target === ov) ov.style.display = 'none'; };
+    document.getElementById('hmsPatientsDiagCopy').onclick = function () {
+      var ta = document.getElementById('hmsPatientsDiagText');
+      ta.select();
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value);
+        else document.execCommand('copy');
+      } catch (e) { try { document.execCommand('copy'); } catch (e2) {} }
+      if (typeof toast === 'function') toast('Copied — paste it in chat', 'success');
+    };
+  }
+  document.getElementById('hmsPatientsDiagText').value = text;
+  ov.style.display = 'flex';
+}
+window.showPatientsDiag = showPatientsDiag;
+
+// Fast path for "17660 of 17681": fetch ONLY the missing __row ranges
+// (one small request per contiguous gap), merge, and re-render. Falls back
+// to a full refresh if gaps remain or row stamps are unavailable.
+async function retryMissingPatients() {
+  if (window._patientsScanRunning) {
+    if (typeof toast === 'function') toast('Already working (' + window._patientsScanRunning + ') — please wait…', 'info');
+    return;
+  }
+  var missing = window._patientsMissingRows || [];
+  var serverTotal = window._patientsServerTotal || 0;
+  var countEl = document.getElementById('patientCount');
+  function setStatus(t) { if (countEl) countEl.title = t; }
+  var nums = (missing || []).filter(function (r) { return typeof r === 'number'; }).sort(function (a, b) { return a - b; });
+  if (!nums.length) {
+    // No __row stamps — the deployed Apps Script is older than scripts/Code.gs
+    // (it doesn't send __row), so gaps can't be targeted. Fall back to a
+    // positional scan: re-read the sheet in small windows and merge by OP no.
+    // Small windows also dodge the truncation that caused the short load.
+    console.warn('HMS: retryMissingPatients — no row stamps (hasRowStamps=' + window._patientsHasRowStamps +
+      '). serverTotal=' + serverTotal + ' loaded=' + allPatients.length +
+      ' lastLoad=' + JSON.stringify(window._patientsLastLoad || null));
+    return retryMissingPositional(serverTotal, countEl, setStatus);
+  }
+  // Group "17683,17684,17685" style rows into contiguous ranges.
+  var ranges = [];
+  var rs = nums[0], pe = nums[0];
+  for (var i = 1; i <= nums.length; i++) {
+    if (i < nums.length && nums[i] === pe + 1) { pe = nums[i]; continue; }
+    ranges.push([rs, pe]);
+    if (i < nums.length) { rs = nums[i]; pe = nums[i]; }
+  }
+  console.warn('HMS: retryMissingPatients fetching ' + nums.length + ' rows in ' + ranges.length +
+    ' range(s): ' + JSON.stringify(ranges));
+  if (countEl) countEl.style.opacity = '0.6';
+  if (typeof toast === 'function') toast('Fetching ' + nums.length + ' missing rows…', 'info');
+  try {
+    var have = {};
+    allPatients.forEach(function (p) { if (p.__row) have[p.__row] = true; });
+    var added = 0;
+    // Use the direct JSONP reader: window.API.getPatients()'s offline
+    // fallback returns the whole cached table (not the window) and its
+    // _patientsLoading dedup can hand back the wrong promise — both made
+    // the old retry a silent no-op.
+    for (var k = 0; k < ranges.length; k++) {
+      var off = ranges[k][0] - 2, lim = ranges[k][1] - ranges[k][0] + 1;
+      var resp = null;
+      if (window.sheetsFetchDirect) {
+        resp = await window.sheetsFetchDirect({ action: 'getPatients', offset: off, limit: lim });
+      } else if (window.API && window.API.getPatients) {
+        resp = await window.API.getPatients({ offset: off, limit: lim });
+      }
+      if (resp && (resp.offline || resp.fallback)) {
+        console.warn('HMS: range ' + ranges[k][0] + '-' + ranges[k][1] + ' got offline fallback — skipping');
+        continue;
+      }
+      var rows = (resp && resp.data) ? normalizePatients(resp.data) : [];
+      console.warn('HMS: range ' + ranges[k][0] + '-' + ranges[k][1] + ' (offset ' + off + ' limit ' + lim + ') -> ' + rows.length + ' rows');
+      rows.forEach(function (p) {
+        if (!p.__row || !have[p.__row]) { allPatients.push(p); added++; if (p.__row) have[p.__row] = true; }
+      });
+    }
+    window.allPatients = allPatients;
+    // Recompute gaps
+    var still = [];
+    if (serverTotal) {
+      for (var r = 2; r <= serverTotal + 1; r++) if (!have[r]) { still.push(r); if (still.length >= 50) break; }
+    }
+    window._patientsMissingRows = still;
+    console.warn('HMS: retry done. added=' + added + ' loaded=' + allPatients.length + '/' + serverTotal +
+      ' stillMissing=' + JSON.stringify(still));
+    if (countEl) countEl.style.opacity = '';
+    if (!still.length || allPatients.length >= serverTotal) {
+      window._patientsServerTotal = Math.max(serverTotal, allPatients.length);
+      try { PatientCache.set(allPatients); } catch (e) {}
+      if (typeof toast === 'function') toast('Registry complete: ' + allPatients.length + ' patients', 'success');
+    } else {
+      setStatus('Fetched ' + added + ' rows, still missing: ' + still.join(', ') + '. Running full refresh…');
+      if (typeof toast === 'function') toast('Got ' + added + ', still missing ' + still.length + ' — full refresh…', 'warning');
+      refreshPatients();
+      return;
+    }
+    _patientsDataLoading = false;
+    applyFilters();
+  } catch (e) {
+    if (countEl) countEl.style.opacity = '';
+    console.error('HMS: retryMissingPatients failed', e);
+    if (typeof toast === 'function') toast('Retry failed: ' + (e && e.message ? e.message : e), 'error');
+    refreshPatients();
+  }
+}
+window.retryMissingPatients = retryMissingPatients;
+
 async function loadPatients(skipCache) {
   skipCache = skipCache || false;
   _patientsDataLoading = true;
@@ -684,6 +970,10 @@ async function loadPatients(skipCache) {
       }
     } catch (e) {}
     window._patientsMissingRows = missingRows;
+    try {
+      window._patientsHasRowStamps = Object.keys(seenRows || {}).length > 0;
+      window._patientsSampleRow = allPatients.length ? allPatients[0] : null;
+    } catch (e2) {}
     if (result && (result.partial || allPatients.length < serverTotal)) {
       console.error('HMS: PARTIAL LOAD ' + allPatients.length + '/' + serverTotal +
         '. Failed batches: ' + JSON.stringify((result && result.failedBatches) || []) +

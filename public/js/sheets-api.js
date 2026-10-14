@@ -71,7 +71,7 @@ function _clearDepartmentsCache() {
 }
 
 var _patientsTotal = 0;
-var _batchSize = 5000;
+var _batchSize = 3000;
 var _patientsLoading = null;
 
 // One-time purge of stale seed/demo data from localStorage
@@ -400,6 +400,46 @@ window.API = {
         var pages = Math.ceil(total / batchSize);
         var failedBatches = [];
 
+        // Fetch one offset/limit window with up to 3 attempts. On persistent
+        // failure (or a short batch, e.g. 2660 of 2681 on the last page),
+        // split into <=1000-row sub-chunks — small reads rarely truncate.
+        function fetchWindow(offset, limit, attempts) {
+          attempts = attempts || 3;
+          return sheetsFetch({ action: 'getPatients', offset: offset, limit: limit }).then(function (resp) {
+            // Offline/IDB fallback returns the WHOLE cached table, not the
+            // requested window — never accept it as a window read, or a
+            // 21-row gap-fill silently "succeeds" with 0 new rows.
+            if (resp && (resp.offline || resp.fallback)) {
+              console.warn('HMS: window offset=' + offset + ' limit=' + limit +
+                ' got offline fallback, retrying (' + (attempts - 1) + ' left)');
+              if (attempts <= 1) return [];
+              return fetchWindow(offset, limit, attempts - 1);
+            }
+            if (resp && resp.success && resp.data && resp.data.length >= limit) {
+              return resp.data.map(normalizePatient);
+            }
+            var got = (resp && resp.success && resp.data) ? resp.data.length : 0;
+            // Short final window: keep what we got only if no more attempts.
+            if (attempts <= 1) {
+              if (limit > 1000 && got < limit) {
+                // Split and fetch halves — recovers e.g. "21 rows missing".
+                var half = Math.ceil(limit / 2);
+                return fetchWindow(offset, half, 2).then(function (left) {
+                  return fetchWindow(offset + half, limit - half, 2).then(function (right) {
+                    var merged = left.concat(right);
+                    if (merged.length) return merged;
+                    return ((resp && resp.data) || []).map(normalizePatient);
+                  });
+                });
+              }
+              return ((resp && resp.data) || []).map(normalizePatient);
+            }
+            console.warn('HMS: window offset=' + offset + ' limit=' + limit +
+              ' got ' + got + ', retrying (' + (attempts - 1) + ' left)');
+            return fetchWindow(offset, limit, attempts - 1);
+          });
+        }
+
         // One-pass gap-fill: sheet rows map 1:1 to offsets (row = offset+2),
         // so any rows missing from __row can be refetched directly.
         function fillGaps() {
@@ -409,28 +449,34 @@ window.API = {
           var missing = [];
           for (var r = 2; r <= total + 1; r++) if (!seen[r]) missing.push(r);
           if (!missing.length || missing.length > 6000) return Promise.resolve();
-          // Group into contiguous ranges (one request each, max 10 ranges)
+          // Group into contiguous ranges (one request each, max 25 ranges so
+          // scattered holes like "21 rows" are all covered, not just 10).
           var ranges = [];
           var a = missing[0], prev = missing[0];
           for (var m = 1; m <= missing.length; m++) {
             if (m < missing.length && missing[m] === prev + 1) { prev = missing[m]; continue; }
             ranges.push([a, prev]);
             if (m < missing.length) { a = missing[m]; prev = missing[m]; }
-            if (ranges.length >= 10) break;
+            if (ranges.length >= 25) break;
           }
           console.warn('HMS: gap-fill fetching ' + missing.length + ' missing rows in ' + ranges.length + ' range(s)');
           var chain = Promise.resolve();
           ranges.forEach(function (rg) {
-            chain = chain.then(function () {
-              var off = rg[0] - 2, lim = rg[1] - rg[0] + 1;
-              return sheetsFetch({ action: 'getPatients', offset: off, limit: lim }).then(function (resp) {
-                if (resp && resp.success && resp.data) {
+            // Split large ranges into <=1000-row chunks (GAS answers fast).
+            var chunks = [];
+            for (var s = rg[0]; s <= rg[1]; s += 1000) {
+              chunks.push([s, Math.min(s + 999, rg[1])]);
+            }
+            chunks.forEach(function (cr) {
+              chain = chain.then(function () {
+                var off = cr[0] - 2, lim = cr[1] - cr[0] + 1;
+                return fetchWindow(off, lim, 3).then(function (rows) {
                   var have = {};
                   allData.forEach(function (p) { if (p.__row) have[p.__row] = true; });
-                  resp.data.map(normalizePatient).forEach(function (p) {
+                  rows.forEach(function (p) {
                     if (!p.__row || !have[p.__row]) { allData.push(p); if (p.__row) have[p.__row] = true; }
                   });
-                }
+                });
               });
             });
           });
@@ -441,6 +487,13 @@ window.API = {
           _patientsCache = allData;
           try { setLocalData('patients', allData); } catch (e) {}
           var complete = (failedBatches.length === 0 && allData.length >= total);
+          try {
+            window._patientsLastLoad = { total: total, loaded: allData.length, failedBatches: failedBatches.slice(), at: new Date().toISOString() };
+          } catch (e) {}
+          if (!complete) {
+            console.error('HMS: PARTIAL patient load: got ' + allData.length + ' of ' + total +
+              '. Failed batches: ' + JSON.stringify(failedBatches) + '. NOT caching as complete.');
+          }
           if (!complete) {
             console.error('HMS: PARTIAL patient load: got ' + allData.length + ' of ' + total +
               '. Failed batches: ' + JSON.stringify(failedBatches) + '. NOT caching as complete.');
@@ -450,38 +503,25 @@ window.API = {
                    error: complete ? undefined : ('Partial load: ' + allData.length + ' of ' + total + ' (batches failed: ' + failedBatches.join(',') + ')') };
         }
 
-        function loadPage(idx, retried) {
+        function loadPage(idx) {
           if (idx >= pages) {
             return fillGaps().then(finishLoad);
           }
           var offset = idx * batchSize;
           var limit = Math.min(batchSize, total - offset);
-          return sheetsFetch({ action: 'getPatients', offset: offset, limit: limit }).then(function (resp) {
-            if (resp && resp.success && resp.data) {
-              if (resp.total !== undefined && resp.total !== total) {
-                console.warn('HMS: server total changed mid-load (' + total + ' -> ' + resp.total + ')');
-              }
-              // Short batch (fewer rows than requested) = failure, not success
-              if (resp.data.length < limit && idx < pages - 1) {
-                console.warn('HMS: batch ' + idx + ' short (' + resp.data.length + '/' + limit + ')');
-                if (!retried) return loadPage(idx, true);
-                failedBatches.push(idx);
-                return loadPage(idx + 1);
-              }
-              allData = allData.concat(resp.data.map(normalizePatient));
-              return loadPage(idx + 1);
+          return fetchWindow(offset, limit, 3).then(function (rows) {
+            if (rows.length < limit) {
+              // Even after retries/split we are short: record it, keep what
+              // we got, and let fillGaps() target the exact missing rows.
+              console.error('HMS: batch ' + idx + ' still short (' + rows.length + '/' + limit + ') — gap-fill will target it');
+              failedBatches.push(idx);
             }
-            if (!retried) {
-              console.warn('Retrying batch ' + idx + ' after failure: ' + ((resp && resp.error) || 'unknown'));
-              return loadPage(idx, true);
-            }
-            console.error('Batch ' + idx + ' failed, keeping track and continuing. Error: ' + ((resp && resp.error) || 'unknown'));
-            failedBatches.push(idx);
+            allData = allData.concat(rows);
             return loadPage(idx + 1);
           });
         }
         // Start loading from page 1 since page 0 (first batch) is already loaded!
-        return loadPage(1, false);
+        return loadPage(1);
       });
     }
 
