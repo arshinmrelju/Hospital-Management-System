@@ -260,7 +260,10 @@
       .table-scroll {
         overflow: auto;
         -webkit-overflow-scrolling: touch;
-        overscroll-behavior: contain;
+        /* Horizontal swipes stay owned by the table, but vertical gestures
+           must chain to the page — never trap the user inside the pane */
+        overscroll-behavior-x: contain;
+        overscroll-behavior-y: auto;
         max-height: 60vh;
         border: 1px solid var(--outline-var);
         border-radius: var(--radius-md);
@@ -430,6 +433,8 @@
         animation: actionsSheetUp 0.28s cubic-bezier(0.34,1.2,0.64,1);
         max-height: 50vh;
         overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
       }
       @keyframes actionsSheetUp {
         from { transform: translateY(60px); opacity: 0; }
@@ -570,16 +575,34 @@
       .stat-card { padding: 16px; gap: 12px; }
       .appt-form-row { grid-template-columns: 1fr; }
       .dashboard-tabs {
-        overflow-x: auto;
-        flex-wrap: nowrap;
-        -webkit-overflow-scrolling: touch;
-        gap: 4px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin-top: 14px;
+        margin-bottom: 14px;
+        padding: 5px;
+        background: rgba(13,148,136,0.07);
+        border: 1.5px solid rgba(13,148,136,0.18);
+        border-bottom: 1.5px solid rgba(13,148,136,0.18);
+        border-radius: 14px;
+        overflow: visible;
       }
       .dashboard-tab-btn {
+        padding: 10px 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        border-radius: 10px;
+        text-align: center;
         white-space: nowrap;
-        flex-shrink: 0;
-        font-size: 0.82rem;
-        padding: 10px 16px;
+        width: 100%;
+        background: transparent;
+        color: var(--primary-dark, #004d46);
+        box-shadow: none;
+      }
+      .dashboard-tab-btn.active {
+        background: linear-gradient(135deg, var(--primary-light, #0D9488), var(--primary, #00685f));
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(13,148,136,0.30);
       }
       #opdList table { font-size: 0.78rem; }
       /* ── Registry header mobile ── */
@@ -681,15 +704,45 @@
         font-size: 0.82rem;
         box-sizing: border-box;
       }
-      .smart-filter-top { flex-direction: column; align-items: stretch; }
-      .sf-chips {
-        overflow-x: auto;
-        flex-wrap: nowrap;
-        -webkit-overflow-scrolling: touch;
-        padding-bottom: 4px;
+      /* ── Smart filter: label + badge on line 1, chip rows below ── */
+      .smart-filter-top {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 10px;
+        overflow: visible;
+        padding: 0;
+        margin: 0;
       }
+      .sf-label { order: 1; }
+      .sf-result-badge { order: 2; margin-left: auto; align-self: auto; }
+      .smart-filter-top > .sf-chips:not(.sf-dim-chips) {
+        order: 3;
+        flex: 1 0 100%;
+        min-width: 0;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      .sf-divider {
+        order: 4;
+        width: 100%;
+        height: 1.5px;
+        margin: 0;
+      }
+      .sf-dim-chips {
+        order: 5;
+        flex: 1 0 100%;
+        min-width: 0;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      .smart-filter-top .sf-chips::-webkit-scrollbar { height: 0; display: none; }
       .sf-chip { flex-shrink: 0; }
-      .sf-result-badge { margin-left: 0; align-self: flex-end; }
       .smart-filter-custom.expanded { grid-template-columns: 1fr; }
       .sf-range-arrow { display: none; }
       .modal-overlay { padding: 12px; }
@@ -1211,6 +1264,8 @@
       animation: ownerSheetUp 0.3s cubic-bezier(0.34,1.2,0.64,1);
       max-height: 70vh;
       overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
     }
     @keyframes ownerSheetUp {
       from { transform: translateY(60px); opacity: 0; }
@@ -1706,7 +1761,7 @@
                 </div>
                 <!-- Smart Filter Bar -->
                 <div class="smart-filter" id="opdSmartFilter">
-                  <div class="smart-filter-top" style="display:flex; align-items:center; gap:12px;">
+                  <div class="smart-filter-top">
                     <div class="sf-label" style="display:flex; align-items:center; gap:6px;">
                       <span class="material-icons-round">tune</span>
                       Filter Records
