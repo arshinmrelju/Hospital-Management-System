@@ -108,10 +108,12 @@ function initLoginOverlay() {
       if (error) error.style.display = 'none';
       var auth = JSON.parse(localStorage.getItem('hms_auth'));
       showLoginSuccess(auth ? auth.role : '');
+      if (window.hmsAfterLogin) window.hmsAfterLogin(auth);
       return true;
     }
     return false;
   }
+  window.hmsAttemptLogin = attemptLogin;
 
   input.addEventListener('input', function() {
     if (error) error.style.display = 'none';

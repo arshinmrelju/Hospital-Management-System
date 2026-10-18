@@ -10,7 +10,7 @@
    - All app shell pages are pre-cached on install
    ================================================================ */
 
-const CACHE = 'wellness-v31-offline';
+const CACHE = 'wellness-v32-offline';
 
 const STATIC_ASSETS = [
   /* ─── App Shell Pages ─── */
@@ -39,6 +39,7 @@ const STATIC_ASSETS = [
 
   /* ─── Core JS ─── */
   '/js/app.js',
+  '/js/biometric-auth.js',
   '/js/firebase-init.js',
   '/js/sheets-api.js',
   '/js/reception-dashboard.js',
