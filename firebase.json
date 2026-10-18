@@ -3,6 +3,18 @@
     "public": "public",
     "cleanUrls": true,
     "trailingSlash": false,
+    "redirects": [
+      {
+        "source": "/report",
+        "destination": "/owner",
+        "type": 301
+      },
+      {
+        "source": "/report.html",
+        "destination": "/owner.html",
+        "type": 301
+      }
+    ],
     "ignore": [
       "firebase.json",
       "**/.*",

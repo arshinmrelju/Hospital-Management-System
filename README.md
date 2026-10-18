@@ -52,7 +52,7 @@ The system features the **VitalGlass** design language — a custom glassmorphic
 | **Find My OP Number** | [`/op-finder.html`](https://wellnessplpy.web.app/op-finder.html) | Patients — look up their OP number by mobile |
 | **Admin Portal** | [`/admin.html`](https://wellnessplpy.web.app/admin.html) | Metrics, staff, sessions |
 | **Patients** | `/patients.html` | Standalone patient management view |
-| **Reports** | `/report.html` | Operational reports |
+| **Owner Mobile** | `/owner.html` | Mobile version of the reception portal |
 | **Bulk Import** | `/import.html` | Bulk data import utility |
 | **Developer Panel** | `/dev.html` | Debug / developer tools |
 | **Offline Fallback** | `/offline.html` | Shown when the PWA is offline |
@@ -135,7 +135,7 @@ Wellness Medicals/
 │   ├── admin.html                   # Admin portal (metrics, staff, sessions)
 │   ├── patients.html                # Standalone patient management view
 │   ├── op-finder.html               # Patient-facing "Find My OP Number" screen
-│   ├── report.html                  # Operational reports
+│   ├── owner.html                   # Owner mobile console (mobile reception portal)
 │   ├── dev.html                     # Developer / debug panel
 │   ├── devreport.html               # Developer reports view
 │   ├── import.html                  # Bulk data import utility

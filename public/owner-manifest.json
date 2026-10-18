@@ -1,8 +1,8 @@
 {
-  "name": "Wellness Medicals - Executive Owner",
+  "name": "Wellness Medicals - Owner Mobile",
   "short_name": "Wellness Owner",
-  "description": "Executive Mobile App for Wellness Medicals HMS Owners and Leadership.",
-  "start_url": "/report",
+  "description": "Mobile reception console for Wellness Medicals HMS: OPD register, patients and department registries.",
+  "start_url": "/owner",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone"],
   "background_color": "#004d46",
@@ -11,21 +11,21 @@
   "scope": "/",
   "categories": ["medical", "business", "productivity"],
   "lang": "en",
-  "id": "/report",
+  "id": "/owner",
   "screenshots": [],
   "shortcuts": [
     {
-      "name": "Live Pulse",
-      "short_name": "Pulse",
-      "description": "Live hospital database and footfall",
-      "url": "/report",
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "OPD register & today's front-desk console",
+      "url": "/owner",
       "icons": [{ "src": "/assets/hms-logo.jpg", "sizes": "192x192", "type": "image/jpeg" }]
     },
     {
       "name": "Patients",
       "short_name": "Patients",
       "description": "Patient lookup & registries",
-      "url": "/report#patients",
+      "url": "/owner#patients",
       "icons": [{ "src": "/assets/hms-logo.jpg", "sizes": "192x192", "type": "image/jpeg" }]
     }
   ],
