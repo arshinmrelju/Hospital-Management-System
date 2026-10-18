@@ -10,7 +10,7 @@
    - All app shell pages are pre-cached on install
    ================================================================ */
 
-const CACHE = 'wellness-v28-offline';
+const CACHE = 'wellness-v29-offline';
 
 const STATIC_ASSETS = [
   /* ─── App Shell Pages ─── */
@@ -53,7 +53,8 @@ const STATIC_ASSETS = [
   '/js/op-finder.js',
 
   /* ─── Assets ─── */
-  '/assets/hms-logo.jpg'
+  '/assets/hms-logo.jpg',
+  '/assets/techsiah-full-logo.png'
 ];
 
 /* ─── Install: pre-cache everything ─── */
@@ -146,8 +147,11 @@ function cacheFirst(request) {
 }
 
 /* ─── Network-first: try network, fall back to cache ─── */
+/* cache:'no-cache' forces revalidation with the server so a stale HTTP-cache
+   copy of HTML/CSS/JS can never be paired with newer files (this previously
+   left the Techsiah sidebar logo unsized for up to a year). */
 function networkFirst(request) {
-  return fetch(request).then(function (response) {
+  return fetch(request, { cache: 'no-cache' }).then(function (response) {
     if (response && response.ok) {
       caches.open(CACHE).then(function (cache) { cache.put(request, response.clone()); });
     }

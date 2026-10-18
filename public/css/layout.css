@@ -601,6 +601,7 @@
   font-weight: 500;
   color: var(--on-surface-var);
   transition: all 0.2s ease;
+  overflow: hidden;
 }
 
 .techsiah-badge:hover {
@@ -614,11 +615,16 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .techsiah-badge .techsiah-logo-img {
   height: 26px;
   width: auto;
+  max-width: 100%;
+  min-width: 0;
+  flex-shrink: 1;
   display: block;
 }
 
