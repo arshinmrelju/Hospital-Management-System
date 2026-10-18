@@ -1,6 +1,6 @@
 'use strict';
 
-var SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbxksBe8FWDOoa9SToKSpYFfA4esfLbTjEXrche24pm_INr_prD3gGOzRC8zmYa8t3V78A/exec';
+var SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbx64g-ycE56ESjyzxsCZDJVFaJVcEtlZCjaap86jtULhR8ufb_ZeC2qHgQUR2QYWEK6Cw/exec';
 
 var _patientsCache = null;
 var _appointmentsCache = null;
@@ -366,7 +366,7 @@ window.API = {
         if (total <= batchSize) {
           if (firstBatchData.length >= total) {
             _patientsCache = firstBatchData;
-            try { setLocalData('patients', firstBatchData); } catch (e) {}
+            try { setLocalData('patients', firstBatchData); } catch (e) { }
             return { success: true, data: firstBatchData, total: total, loaded: firstBatchData.length };
           }
           // Short batch: retry once (transient truncation), then report
@@ -377,12 +377,14 @@ window.API = {
             var best = rd.length > firstBatchData.length ? rd : firstBatchData;
             if (best.length >= total) {
               _patientsCache = best;
-              try { setLocalData('patients', best); } catch (e) {}
+              try { setLocalData('patients', best); } catch (e) { }
               return { success: true, data: best, total: total, loaded: best.length };
             }
-            return { success: false, partial: true, data: best, total: total,
-                     loaded: best.length, failedBatches: [0],
-                     error: 'Partial load: ' + best.length + ' of ' + total + ' (first batch short)' };
+            return {
+              success: false, partial: true, data: best, total: total,
+              loaded: best.length, failedBatches: [0],
+              error: 'Partial load: ' + best.length + ' of ' + total + ' (first batch short)'
+            };
           });
         }
 
@@ -485,11 +487,11 @@ window.API = {
 
         function finishLoad() {
           _patientsCache = allData;
-          try { setLocalData('patients', allData); } catch (e) {}
+          try { setLocalData('patients', allData); } catch (e) { }
           var complete = (failedBatches.length === 0 && allData.length >= total);
           try {
             window._patientsLastLoad = { total: total, loaded: allData.length, failedBatches: failedBatches.slice(), at: new Date().toISOString() };
-          } catch (e) {}
+          } catch (e) { }
           if (!complete) {
             console.error('HMS: PARTIAL patient load: got ' + allData.length + ' of ' + total +
               '. Failed batches: ' + JSON.stringify(failedBatches) + '. NOT caching as complete.');
@@ -498,9 +500,11 @@ window.API = {
             console.error('HMS: PARTIAL patient load: got ' + allData.length + ' of ' + total +
               '. Failed batches: ' + JSON.stringify(failedBatches) + '. NOT caching as complete.');
           }
-          return { success: complete, partial: !complete, data: allData, total: total,
-                   loaded: allData.length, failedBatches: failedBatches,
-                   error: complete ? undefined : ('Partial load: ' + allData.length + ' of ' + total + ' (batches failed: ' + failedBatches.join(',') + ')') };
+          return {
+            success: complete, partial: !complete, data: allData, total: total,
+            loaded: allData.length, failedBatches: failedBatches,
+            error: complete ? undefined : ('Partial load: ' + allData.length + ' of ' + total + ' (batches failed: ' + failedBatches.join(',') + ')')
+          };
         }
 
         function loadPage(idx) {
@@ -530,7 +534,7 @@ window.API = {
     return _patientsLoading;
   },
 
-  getTodayCount: function() {
+  getTodayCount: function () {
     return sheetsFetch({ action: 'getTodayCount' });
   },
 
@@ -589,7 +593,7 @@ window.API = {
         if (hit && hit.ts && (Date.now() - hit.ts < OP_CACHE_TTL) && hit.data) {
           return { success: true, data: hit.data, cached: true };
         }
-      } catch (e) {}
+      } catch (e) { }
       return null;
     }
     function writeOpCache(q, data) {
@@ -604,7 +608,7 @@ window.API = {
           for (var i = 0; i < keys.length - 30; i++) delete map[keys[i]];
         }
         localStorage.setItem(OP_CACHE_KEY, JSON.stringify(map));
-      } catch (e) {}
+      } catch (e) { }
     }
 
     var cached = readOpCache(query);
@@ -652,8 +656,8 @@ window.API = {
   // patient is still typing, so the real search rarely pays the 30s cost.
   warmupOpFinder: function () {
     try {
-      sheetsFetch({ action: 'getTodayCount' }, function () {});
-    } catch (e) {}
+      sheetsFetch({ action: 'getTodayCount' }, function () { });
+    } catch (e) { }
   },
 
   // Legacy path: reuse the existing getPatients search action, then keep

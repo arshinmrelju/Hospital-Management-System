@@ -595,7 +595,7 @@ async function loadOpdRecords() {
           complaint: a.reason || a.complaint || '—',
           time: a.appointment_time || a.time || '—',
           timestamp: a.createdAt || a.appointment_date || new Date().toISOString(),
-          _isNew: Boolean(a._isNew || a.isNew || (match2Id && (match2Id._isNew || isToday(match2Id.created_on || match2Id['Created On'])))),
+          _isNew: Boolean(match2Id && (match2Id._isNew || isToday(match2Id.created_on || match2Id['Created On']))),
           created_on: (match2Id ? (match2Id.created_on || match2Id['Created On']) : (a.created_on || a['Created On'])) || ''
         };
       });
@@ -764,59 +764,62 @@ function updateStats() {
   // 1. Primary: live count directly from Google Sheet (scanned by getTodayCount)
   if (typeof window._serverTodayCount === 'number' && window._serverTodayCount >= 0) {
     todayRegs = window._serverTodayCount;
+  } else {
+    // 2. Also check local/cached patient registry for any registered today
+    var seenIds = {};
+    var localRegCount = 0;
+    var patientLookup = (window.allPatients || []).concat(window.allSkinPatients || []).concat(window.allOrthoPatients || []);
+
+    patientLookup.forEach(function (pt) {
+      var createdOn = pt.created_on || pt['Created On'] || '';
+      if (isToday(createdOn) || pt._isNew === true) {
+        var id = String(pt.op_no || pt.id || pt.skin_id || pt.ortho_id || patientFullName(pt)).trim().toLowerCase();
+        if (id && !seenIds[id]) {
+          seenIds[id] = true;
+          localRegCount++;
+        }
+      }
+    });
+
+    // 3. Count newly registered patients in today's OPD consults
+    var opdNewCount = 0;
+    (todayOPD || []).forEach(function (r) {
+      var isNew = (r._isNew === true);
+      if (!isNew) {
+        var recId = String(r.op_no || r.patient_id || r.id || '').trim().toLowerCase();
+
+        var matchedPatient = patientLookup.find(function(pt) {
+          var ptId = String(pt.op_no || pt.skin_id || pt.ortho_id || pt.id || '').trim().toLowerCase();
+          return ptId && recId && ptId === recId;
+        });
+
+        if (matchedPatient) {
+          var createdOn = matchedPatient.created_on || matchedPatient['Created On'] || '';
+          isNew = isToday(createdOn);
+        }
+      }
+
+      if (isNew) {
+        var id = String(r.op_no || r.patient_id || r.id || r.name || '').trim().toLowerCase();
+        if (id && !seenIds[id]) {
+          seenIds[id] = true;
+          opdNewCount++;
+        }
+      }
+    });
+
+    // Use the highest reliable figure
+    todayRegs = localRegCount + opdNewCount;
   }
-
-  // 2. Also check local/cached patient registry for any registered today
-  var seenIds = {};
-  var localRegCount = 0;
-  var patientLookup = (window.allPatients || []).concat(window.allSkinPatients || []).concat(window.allOrthoPatients || []);
-
-  patientLookup.forEach(function (pt) {
-    var createdOn = pt.created_on || pt['Created On'] || '';
-    if (isToday(createdOn) || pt._isNew === true) {
-      var id = String(pt.op_no || pt.id || pt.skin_id || pt.ortho_id || patientFullName(pt)).trim().toLowerCase();
-      if (id && !seenIds[id]) {
-        seenIds[id] = true;
-        localRegCount++;
-      }
-    }
-  });
-
-  // 3. Count newly registered patients in today's OPD consults
-  var opdNewCount = 0;
-  (todayOPD || []).forEach(function (r) {
-    var isNew = (r._isNew === true);
-    if (!isNew) {
-      var recId = String(r.op_no || r.patient_id || r.id || '').trim().toLowerCase();
-
-      var matchedPatient = patientLookup.find(function(pt) {
-        var ptId = String(pt.op_no || pt.skin_id || pt.ortho_id || pt.id || '').trim().toLowerCase();
-        return ptId && recId && ptId === recId;
-      });
-
-      if (matchedPatient) {
-        var createdOn = matchedPatient.created_on || matchedPatient['Created On'] || '';
-        isNew = isToday(createdOn);
-      }
-    }
-
-    if (isNew) {
-      var id = String(r.op_no || r.patient_id || r.id || r.name || '').trim().toLowerCase();
-      if (id && !seenIds[id]) {
-        seenIds[id] = true;
-        opdNewCount++;
-      }
-    }
-  });
-
-  // Use the highest reliable figure
-  todayRegs = Math.max(todayRegs, localRegCount + opdNewCount);
 
   // If server count wasn't fetched yet, asynchronously fetch it and update counter
   if (window._serverTodayCount === undefined && window.API && window.API.getTodayCount) {
     window.API.getTodayCount().then(function(r) {
-      if (r && r.success && typeof r.generalToday === 'number') {
-        window._serverTodayCount = r.generalToday;
+      if (r && r.success && (r.generalToday !== undefined || r.skinToday !== undefined || r.orthoToday !== undefined)) {
+        var gen = (typeof r.generalToday === 'number') ? r.generalToday : 0;
+        var skin = (typeof r.skinToday === 'number') ? r.skinToday : 0;
+        var ortho = (typeof r.orthoToday === 'number') ? r.orthoToday : 0;
+        window._serverTodayCount = gen + skin + ortho;
         updateStats();
       }
     }).catch(function() {});
@@ -946,8 +949,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       window.API && window.API.getDoctors ? window.API.getDoctors() : Promise.resolve(),
       window.API && window.API.getDepartments ? window.API.getDepartments() : Promise.resolve(),
       window.API && window.API.getTodayCount ? window.API.getTodayCount().then(function(r) {
-        if (r && r.success && typeof r.generalToday === 'number') {
-          window._serverTodayCount = r.generalToday;
+        if (r && r.success && (r.generalToday !== undefined || r.skinToday !== undefined || r.orthoToday !== undefined)) {
+          var gen = (typeof r.generalToday === 'number') ? r.generalToday : 0;
+          var skin = (typeof r.skinToday === 'number') ? r.skinToday : 0;
+          var ortho = (typeof r.orthoToday === 'number') ? r.orthoToday : 0;
+          window._serverTodayCount = gen + skin + ortho;
         }
       }).catch(function() {}) : Promise.resolve()
     ]).then(function() {

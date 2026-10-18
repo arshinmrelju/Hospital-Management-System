@@ -251,35 +251,49 @@ function handleGetPatientsCount(e) {
 /* Count patients registered today (IST) — fast server-side check */
 function handleGetTodayCount(e) {
   var ss = SpreadsheetApp.openById(SHEET_ID);
-  var sheet = ss.getSheetByName('Patients') || ss.getSheets()[0];
   var tz = Session.getScriptTimeZone();
   var todayStr = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
 
-  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  var colCreated = headers.indexOf('Created On');
-  if (colCreated < 0) return { success: true, generalToday: 0, todayStr: todayStr };
-
-  var totalRows = sheet.getLastRow() - 1;
-  if (totalRows <= 0) return { success: true, generalToday: 0, todayStr: todayStr };
-
-  // Only scan the last 200 rows (today's new patients are always at the bottom)
-  var scanRows = Math.min(200, totalRows);
-  var startRow = totalRows - scanRows + 2; // +2: 1-indexed + skip header
-  var rawData = sheet.getRange(startRow, colCreated + 1, scanRows, 1).getValues();
-
-  var count = 0;
-  for (var i = 0; i < rawData.length; i++) {
-    var val = rawData[i][0];
-    var dateStr;
-    if (val instanceof Date && !isNaN(val.getTime())) {
-      dateStr = Utilities.formatDate(val, tz, 'yyyy-MM-dd');
-    } else {
-      dateStr = String(val || '').slice(0, 10);
+  // Helper: count rows where 'Created On' equals today in a given sheet
+  function countTodayInSheet(sheet) {
+    if (!sheet) return 0;
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return 0;
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var colCreated = headers.indexOf('Created On');
+    if (colCreated < 0) return 0;
+    var totalRows = lastRow - 1;
+    var scanRows = Math.min(200, totalRows);
+    var startRow = totalRows - scanRows + 2; // 1-indexed, skip header
+    var rawData = sheet.getRange(startRow, colCreated + 1, scanRows, 1).getValues();
+    var c = 0;
+    for (var i = 0; i < rawData.length; i++) {
+      var val = rawData[i][0];
+      var dateStr = (val instanceof Date && !isNaN(val.getTime()))
+        ? Utilities.formatDate(val, tz, 'yyyy-MM-dd')
+        : String(val || '').slice(0, 10);
+      if (dateStr === todayStr) c++;
     }
-    if (dateStr === todayStr) count++;
+    return c;
   }
 
-  return { success: true, generalToday: count, todayStr: todayStr };
+  // Scan all three patient registries
+  var generalSheet = ss.getSheetByName('Patients') || ss.getSheets()[0];
+  var skinSheet    = ss.getSheetByName('SkinPatients');
+  var orthoSheet   = ss.getSheetByName('OrthopedicPatients');
+
+  var generalToday = countTodayInSheet(generalSheet);
+  var skinToday    = countTodayInSheet(skinSheet);
+  var orthoToday   = countTodayInSheet(orthoSheet);
+
+  return {
+    success:      true,
+    generalToday: generalToday,
+    skinToday:    skinToday,
+    orthoToday:   orthoToday,
+    totalToday:   generalToday + skinToday + orthoToday,
+    todayStr:     todayStr
+  };
 }
 
 function handleGetPatient(e) {

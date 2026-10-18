@@ -458,7 +458,15 @@
     }) : Promise.resolve();
 
     var pTodayCount = api.getTodayCount ? withTimeout(api.getTodayCount()).then(function (r) {
-      if (r && r.success && r.generalToday !== undefined) _data.serverTodayCount = r.generalToday;
+      if (r && r.success) {
+        // Sum all clinic new registrations: General + Skin + Ortho
+        var gen = (typeof r.generalToday === 'number') ? r.generalToday : 0;
+        var skin = (typeof r.skinToday === 'number') ? r.skinToday : 0;
+        var ortho = (typeof r.orthoToday === 'number') ? r.orthoToday : 0;
+        if (r.generalToday !== undefined || r.skinToday !== undefined || r.orthoToday !== undefined) {
+          _data.serverTodayCount = gen + skin + ortho;
+        }
+      }
       setLoaderPct(50, 'Today\'s count synced...');
     }).catch(function () { setLoaderPct(50); }) : Promise.resolve();
 
@@ -593,12 +601,12 @@
       return _data.serverTodayCount;
     }
 
-    // 2. Count explicit _isNew flags from TODAY's OPD visits only (deduped by patient id / name)
+    // 2. Count explicit _isNew flags from TODAY's OPD visits only (deduped by ID only)
     var seenExp = {};
     var explicitNew = 0;
     (todayOPD || []).forEach(function (a) {
       if (a._isNew === true) {
-        var id = String(a.patient_id || a.op_no || a.id || a.name || a.patient_name || '').trim().toLowerCase();
+        var id = String(a.op_no || a.patient_id || a.id || '').trim().toLowerCase();
         if (id && !seenExp[id]) {
           seenExp[id] = true;
           explicitNew++;
@@ -922,7 +930,7 @@
           complaint: a.reason || a.complaint || '—',
           time: a.appointment_time || a.time || '—',
           timestamp: rawDate,
-          _isNew: Boolean(a._isNew || a.isNew || (match && pid && (match._isNew || isToday(match.created_on || match['Created On'])))),
+          _isNew: Boolean(match && pid && (match._isNew || isToday(match.created_on || match['Created On']))),
           created_on: (match ? (match.created_on || match['Created On']) : (a.created_on || a['Created On'])) || ''
         };
       });
