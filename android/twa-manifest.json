@@ -1,0 +1,43 @@
+{
+  "packageId": "com.wellnessmedicals.owner",
+  "host": "wellnessplpy.web.app",
+  "name": "Wellness Owner",
+  "launcherName": "Wellness",
+  "display": "standalone",
+  "displayOverride": ["window-controls-overlay", "standalone"],
+  "themeColor": "#004d46",
+  "themeColorDark": "#002f2b",
+  "navigationColor": "#004d46",
+  "navigationColorDark": "#002f2b",
+  "navigationDividerColor": "#004d46",
+  "navigationDividerColorDark": "#002f2b",
+  "backgroundColor": "#004d46",
+  "enableNotifications": false,
+  "startUrl": "/owner",
+  "iconUrl": "https://wellnessplpy.web.app/assets/icons/icon-512.png",
+  "maskableIconUrl": "https://wellnessplpy.web.app/assets/icons/maskable-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "wellness-owner"
+  },
+  "appVersionCode": 1,
+  "appVersion": "1.0.0",
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://wellnessplpy.web.app/owner-manifest.json",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://wellnessplpy.web.app/",
+  "minSdkVersion": 24,
+  "orientation": "portrait-primary",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": []
+}

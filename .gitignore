@@ -3,6 +3,7 @@ node_modules/
 Thumbs.db
 *.log
 .gemini/
+.freebuff/
 scratch/
 
 # Editor
@@ -19,6 +20,17 @@ wellnessplpy-firebase-adminsdk-fbsvc-*.json
 # Build
 dist/
 build/
+
+# Android / TWA
+android/*.keystore
+android/*.jks
+android/*.apk
+android/*.aab
+android/*.idsig
+android/app/build/
+android/.gradle/
+android/build/
+android/build-log.txt
 
 # Misc
 *.csv

@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.wellnessmedicals.owner",
+      "sha256_cert_fingerprints": [
+        "43:F9:AB:3F:95:C2:20:33:44:D8:76:E5:41:3C:D4:C5:D8:BF:FA:EC:3B:2D:D7:4A:1E:09:9A:65:41:E2:EE:F9"
+      ]
+    }
+  }
+]

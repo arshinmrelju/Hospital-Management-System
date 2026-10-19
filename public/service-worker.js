@@ -10,7 +10,7 @@
    - All app shell pages are pre-cached on install
    ================================================================ */
 
-const CACHE = 'wellness-v32-offline';
+const CACHE = 'wellness-v33-offline';
 
 const STATIC_ASSETS = [
   /* ─── App Shell Pages ─── */
@@ -53,7 +53,11 @@ const STATIC_ASSETS = [
 
   /* ─── Assets ─── */
   '/assets/hms-logo.jpg',
-  '/assets/techsiah-full-logo.png'
+  '/assets/techsiah-full-logo.png',
+  '/assets/icons/icon-192.png',
+  '/assets/icons/icon-512.png',
+  '/assets/icons/maskable-192.png',
+  '/assets/icons/maskable-512.png'
 ];
 
 /* ─── Install: pre-cache everything ─── */
