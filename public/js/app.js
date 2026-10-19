@@ -882,8 +882,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 16);
   };
 
+  // Loader host: #pageLoader on most pages, #appSplash on owner.html (merged splash)
+  function getLoaderEl() {
+    return document.getElementById('pageLoader') || document.getElementById('appSplash');
+  }
+
   window.showLoader = function() {
-    var loader = document.getElementById('pageLoader');
+    var loader = getLoaderEl();
     if (loader) {
       loader.classList.remove('hidden');
       msgIndex = 0;
@@ -895,7 +900,7 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   window.hideLoader = function() {
-    var loader = document.getElementById('pageLoader');
+    var loader = getLoaderEl();
     if (!loader) return;
     stopRotation();
     _targetPct = 100;
@@ -924,7 +929,7 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   // Start on load
-  var loader = document.getElementById('pageLoader');
+  var loader = getLoaderEl();
   if (loader && !loader.classList.contains('hidden')) {
     _currentPct = 0;
     _targetPct = 0;
