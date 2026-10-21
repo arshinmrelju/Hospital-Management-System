@@ -10,7 +10,7 @@
    - All app shell pages are pre-cached on install
    ================================================================ */
 
-const CACHE = 'wellness-v33-offline';
+const CACHE = 'wellness-v34-offline';
 
 const STATIC_ASSETS = [
   /* ─── App Shell Pages ─── */
@@ -24,6 +24,8 @@ const STATIC_ASSETS = [
   '/owner',
   '/op-finder.html',
   '/op-finder',
+  '/download.html',
+  '/download',
   '/offline.html',
   '/manifest.json',
   '/owner-manifest.json',
@@ -36,6 +38,7 @@ const STATIC_ASSETS = [
   '/css/patients.css',
   '/css/administration.css',
   '/css/op-finder.css',
+  '/css/download.css',
 
   /* ─── Core JS ─── */
   '/js/app.js',

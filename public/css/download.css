@@ -1,0 +1,618 @@
+/* =============================================
+   DOWNLOAD APP — APK download page
+   VitalGlass extension (relies on main.css
+   design tokens: colors, radii, glass, fonts)
+   ============================================= */
+
+/* --- Page shell --- */
+body.dl-body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background:
+    radial-gradient(1100px 560px at 8% -12%, rgba(13, 148, 136, 0.18), transparent 60%),
+    radial-gradient(900px 520px at 112% 18%, rgba(0, 104, 95, 0.14), transparent 58%),
+    linear-gradient(165deg, #eefaf7 0%, #f7f9fb 48%, #e9f6f3 100%);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Decorative ambient orbs (VitalGlass background accent) */
+.dl-orbs {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.dl-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(64px);
+  opacity: 0.55;
+  animation: dlOrbFloat 14s ease-in-out infinite alternate;
+}
+.dl-orb-1 {
+  width: 340px;
+  height: 340px;
+  background: rgba(13, 148, 136, 0.38);
+  top: -90px;
+  left: -80px;
+}
+.dl-orb-2 {
+  width: 300px;
+  height: 300px;
+  background: rgba(0, 104, 95, 0.30);
+  bottom: -70px;
+  right: -70px;
+  animation-delay: -7s;
+}
+
+@keyframes dlOrbFloat {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(20px, 25px) scale(1.08); }
+}
+
+.dl-page {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px calc(24px + var(--safe-bottom));
+}
+
+/* --- Glass card container --- */
+.dl-shell {
+  width: 100%;
+  max-width: 480px;
+  padding: 28px 26px 26px;
+  box-shadow: 0 12px 40px rgba(0, 104, 95, 0.10), 0 1px 3px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.90);
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  border-radius: 24px;
+}
+
+/* --- Brand header --- */
+.dl-brand-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.dl-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.dl-brand-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.18), 0 4px 12px rgba(0, 104, 95, 0.15);
+}
+.dl-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.dl-brand-name {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--primary-dark);
+  letter-spacing: -0.01em;
+}
+.dl-brand-sub {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--primary-light);
+}
+@keyframes dlPulseDot {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 12px #10b981; }
+  100% { transform: scale(0.9); opacity: 0.8; }
+}
+
+/* --- App hero --- */
+.dl-hero {
+  text-align: center;
+  margin-bottom: 18px;
+}
+.dl-app-icon-wrap {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  margin: 2px auto 14px;
+}
+.dl-app-icon {
+  width: 96px;
+  height: 96px;
+  border-radius: 26px;
+  object-fit: cover;
+  border: 3px solid #ffffff;
+  box-shadow: 0 10px 28px rgba(0, 104, 95, 0.28), 0 0 0 3px rgba(13, 148, 136, 0.16);
+  position: relative;
+  z-index: 1;
+}
+.dl-app-icon-ping {
+  position: absolute;
+  inset: -6px;
+  border-radius: 30px;
+  border: 2px solid rgba(16, 185, 129, 0.6);
+  animation: dlIconPing 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+@keyframes dlIconPing {
+  0% { transform: scale(0.94); opacity: 1; }
+  100% { transform: scale(1.22); opacity: 0; }
+}
+
+.dl-app-name {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: clamp(1.45rem, 5.5vw, 1.7rem);
+  letter-spacing: -0.02em;
+  color: var(--primary-dark);
+  margin: 0;
+  line-height: 1.2;
+}
+.dl-app-pkg {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--outline);
+  letter-spacing: 0.02em;
+  margin: 2px 0 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.dl-app-desc {
+  font-size: 0.92rem;
+  color: var(--on-surface-var);
+  line-height: 1.5;
+  margin: 10px auto 0;
+  max-width: 360px;
+}
+
+/* --- Meta chips --- */
+.dl-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 14px 0 18px;
+}
+.dl-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 7px 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--outline-var);
+  border-radius: 12px;
+  min-width: 74px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+.dl-chip-value {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 0.86rem;
+  color: var(--primary-dark);
+  line-height: 1.2;
+}
+.dl-chip-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--outline);
+}
+
+/* --- Download box --- */
+.dl-download-box {
+  background: linear-gradient(160deg, #f0fbf8 0%, #ffffff 55%, #eaf7f4 100%);
+  border: 1.5px solid rgba(13, 148, 136, 0.3);
+  border-radius: 20px;
+  padding: 16px 16px 14px;
+  box-shadow: 0 8px 24px rgba(0, 104, 95, 0.08), inset 0 1px 3px rgba(255, 255, 255, 0.9);
+  margin-bottom: 18px;
+}
+
+/* --- Buttons --- */
+.dl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 58px;
+  background: linear-gradient(135deg, #00685f, #0d9488);
+  color: #ffffff;
+  border: none;
+  border-radius: 16px;
+  font-family: var(--font-head);
+  font-size: 1.02rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  box-shadow: 0 8px 22px rgba(13, 148, 136, 0.32);
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.16s ease, filter 0.16s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  position: relative;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+.dl-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(13, 148, 136, 0.42);
+  filter: brightness(1.04);
+  text-decoration: none;
+}
+.dl-btn:active {
+  transform: translateY(1px) scale(0.99);
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.25);
+}
+.dl-btn:disabled {
+  opacity: 0.8;
+  cursor: progress;
+  transform: none;
+  filter: none;
+}
+.dl-btn-icon {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+.dl-btn:hover .dl-btn-icon {
+  transform: scale(1.1) translateY(1px);
+}
+.dl-btn-sub {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  opacity: 0.85;
+  margin-top: 1px;
+}
+
+.dl-btn-ghost {
+  margin-top: 10px;
+  min-height: 50px;
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+  border: 1.5px solid rgba(13, 148, 136, 0.25);
+  box-shadow: none;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.dl-btn-ghost:hover {
+  background: rgba(13, 148, 136, 0.18);
+  box-shadow: 0 4px 16px rgba(13, 148, 136, 0.15);
+  color: var(--primary-dark);
+}
+
+/* --- Download progress --- */
+.dl-progress {
+  display: none;
+  margin-top: 12px;
+  animation: dlFadeIn 0.3s ease;
+}
+.dl-progress.active {
+  display: block;
+}
+.dl-progress-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.dl-progress-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+  min-width: 0;
+}
+.dl-progress-status span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dl-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  flex-shrink: 0;
+  animation: dlPulseDot 1s ease infinite;
+}
+.dl-progress-percent {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 0.84rem;
+  color: var(--primary-light);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.dl-progress-track {
+  position: relative;
+  height: 10px;
+  background: rgba(13, 148, 136, 0.14);
+  border: 1px solid rgba(13, 148, 136, 0.2);
+  border-radius: 20px;
+  overflow: hidden;
+}
+.dl-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #00685f, #0d9488, #34d399);
+  border-radius: 20px;
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.7);
+  transition: width 0.22s ease;
+}
+.dl-progress-shine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50px;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.75), transparent);
+  animation: dlShine 1.4s ease-in-out infinite;
+}
+@keyframes dlShine {
+  0% { left: -60px; }
+  100% { left: 110%; }
+}
+
+@keyframes dlFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Section headings --- */
+.dl-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 0.98rem;
+  letter-spacing: -0.01em;
+  color: var(--primary-dark);
+  margin: 0 0 12px;
+}
+.dl-section-title svg {
+  color: var(--primary-light);
+  flex-shrink: 0;
+}
+
+/* --- Features grid --- */
+.dl-features {
+  margin-bottom: 18px;
+}
+.dl-feature-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.dl-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--outline-var);
+  border-radius: 14px;
+  padding: 10px 11px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+.dl-feature-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  flex-shrink: 0;
+}
+.dl-feature-text {
+  min-width: 0;
+}
+.dl-feature-name {
+  display: block;
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 0.78rem;
+  color: var(--on-surface);
+  line-height: 1.25;
+}
+.dl-feature-desc {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--on-surface-var);
+  line-height: 1.35;
+  margin-top: 1px;
+}
+
+/* --- Install steps --- */
+.dl-steps {
+  margin-bottom: 16px;
+}
+.dl-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  counter-reset: dl-step;
+}
+.dl-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--outline-var);
+  border-radius: 14px;
+  padding: 11px 13px;
+  counter-increment: dl-step;
+}
+.dl-step::before {
+  content: counter(dl-step);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00685f, #0d9488);
+  color: #ffffff;
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(13, 148, 136, 0.25);
+}
+.dl-step-body {
+  min-width: 0;
+  padding-top: 2px;
+}
+.dl-step-title {
+  display: block;
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 0.84rem;
+  color: var(--on-surface);
+  line-height: 1.3;
+}
+.dl-step-desc {
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: var(--on-surface-var);
+  line-height: 1.4;
+  margin-top: 1px;
+}
+.dl-step-desc strong {
+  color: var(--primary-dark);
+  font-weight: 700;
+}
+
+/* --- Notes --- */
+.dl-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--outline-var);
+  border-radius: 12px;
+  padding: 11px 13px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--on-surface-var);
+  line-height: 1.45;
+  margin-bottom: 8px;
+}
+.dl-note svg {
+  color: var(--primary-light);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.dl-note strong {
+  color: var(--primary-dark);
+  font-weight: 700;
+}
+.dl-note-ios {
+  margin-bottom: 0;
+}
+
+/* --- Footer --- */
+.dl-foot {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--outline);
+  padding: 0 12px;
+}
+
+/* --- Toast --- */
+.dl-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(25, 28, 30, 0.92);
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+  opacity: 0;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+  z-index: 9999;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  max-width: calc(100vw - 40px);
+  text-align: center;
+}
+.dl-toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* --- Mobile responsive tuning --- */
+@media (max-width: 480px) {
+  .dl-page {
+    padding: 14px 10px calc(16px + var(--safe-bottom));
+  }
+  .dl-shell {
+    padding: 22px 16px 20px;
+    border-radius: 20px;
+  }
+  .dl-btn {
+    min-height: 54px;
+    font-size: 0.98rem;
+  }
+  .dl-feature-grid {
+    gap: 6px;
+  }
+  .dl-feature {
+    padding: 9px 9px;
+    gap: 7px;
+  }
+  .dl-chip {
+    min-width: 66px;
+    padding: 6px 10px;
+  }
+}
+
+/* --- Accessibility / reduced motion --- */
+@media (prefers-reduced-motion: reduce) {
+  .dl-orb,
+  .dl-app-icon-ping,
+  .dl-verified-dot,
+  .dl-live-dot,
+  .dl-progress-shine {
+    animation: none;
+  }
+  .dl-btn {
+    transition: none;
+  }
+}
