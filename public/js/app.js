@@ -24,6 +24,63 @@ window.hmsMatchQuery = function (haystack, query) {
   return true;
 };
 
+/* Local-timezone YYYY-MM-DD string (never UTC — fixes IST evening/morning day flips) */
+window.localDateStr = function (d) {
+  var date = (d instanceof Date) ? d : new Date();
+  if (isNaN(date.getTime())) date = new Date();
+  return date.getFullYear() + '-' +
+    String(date.getMonth() + 1).padStart(2, '0') + '-' +
+    String(date.getDate()).padStart(2, '0');
+};
+
+/* True if the value falls on the local calendar day (handles ISO UTC, YYYY-MM-DD, DD/MM/YYYY) */
+window.isToday = function (dateVal) {
+  if (!dateVal) return false;
+  var now = new Date();
+  var currentYear = now.getFullYear();
+  var currentMonth = now.getMonth();
+  var currentDate = now.getDate();
+
+  if (dateVal instanceof Date) {
+    return dateVal.getFullYear() === currentYear &&
+           dateVal.getMonth() === currentMonth &&
+           dateVal.getDate() === currentDate;
+  }
+  var s = String(dateVal).trim();
+  if (!s || s.length < 8) return false;
+
+  if (/[zZ]|[+\-]\d{2}:?\d{2}$/.test(s) || /\d{4}[\/\-\.]\d{1,2}[\/\-\.]\d{1,2}[T ].*\d/.test(s)) {
+    var parsedTs = new Date(s);
+    if (!isNaN(parsedTs.getTime())) {
+      return parsedTs.getFullYear() === currentYear &&
+             parsedTs.getMonth() === currentMonth &&
+             parsedTs.getDate() === currentDate;
+    }
+  }
+
+  var matchYmd = s.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/);
+  if (matchYmd) {
+    return parseInt(matchYmd[1], 10) === currentYear &&
+           (parseInt(matchYmd[2], 10) - 1) === currentMonth &&
+           parseInt(matchYmd[3], 10) === currentDate;
+  }
+
+  var matchDmy = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/);
+  if (matchDmy) {
+    return parseInt(matchDmy[3], 10) === currentYear &&
+           (parseInt(matchDmy[2], 10) - 1) === currentMonth &&
+           parseInt(matchDmy[1], 10) === currentDate;
+  }
+
+  var parsed = new Date(s);
+  if (!isNaN(parsed.getTime())) {
+    return parsed.getFullYear() === currentYear &&
+           parsed.getMonth() === currentMonth &&
+           parsed.getDate() === currentDate;
+  }
+  return false;
+};
+
 var AUTH_DURATION_MS = 12 * 60 * 60 * 1000;
 
 window.HMS = {

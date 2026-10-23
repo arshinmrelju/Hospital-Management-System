@@ -649,7 +649,9 @@ function normalizePatients(rawList) {
                   (validOp(p.op) && p.op) || '';
     const doctor = p.doctor || p.Doctor || p.doctor_name || p.assigned_doctor || p['Assigned Doctor'] || p.assignedDoctor || '';
     const address = p.address || p.Address || p.place || p.Place || p['Address'] || '';
-    return { ...p, fname, lname, contact, department, blood_group, patient_type, status, last_visit, age, gender, op_no, doctor, address };
+    const created_on = p.created_on || p['Created On'] || p.Created_On || p.createdAt || '';
+    const id = op_no || p.id || '';
+    return { ...p, fname, lname, contact, department, blood_group, patient_type, status, last_visit, age, gender, op_no, id, doctor, address, created_on };
   });
 }
 
@@ -995,6 +997,7 @@ async function loadPatients(skipCache) {
     _patientsDataLoading = false;
     applyFilters();
     setAddPatientEnabled(true);
+    if (typeof window.hmsOnPatientsLoaded === 'function') window.hmsOnPatientsLoaded();
     return allPatients;
   } catch (e) {
     console.error('Failed to load patients:', e);
@@ -1084,8 +1087,8 @@ async function submitAddPatient(e) {
       assigned_doctor: raw.doctor || '',
       notes: raw.notes || '',
       address: raw.address || '',
-      last_visit: new Date().toISOString().slice(0,10),
-      created_on: new Date().toISOString().slice(0,10),
+      last_visit: window.localDateStr(),
+      created_on: window.localDateStr(),
     });
     allPatients.unshift(newP);
     window.allPatients = allPatients;
@@ -1105,7 +1108,7 @@ async function submitAddPatient(e) {
         age: raw.age,
         doctor_id: raw.doctor || '',
         doctor_name: raw.doctor || '',
-        appointment_date: now.toISOString().split('T')[0],
+        appointment_date: window.localDateStr(),
         appointment_time: timeStr,
         type: 'OPD',
         status: 'waiting',
@@ -1126,6 +1129,7 @@ async function submitAddPatient(e) {
             complaint: raw.notes || '—',
             time: timeStr,
             timestamp: now.toISOString(),
+            created_on: window.localDateStr(),
             _isNew: true
           });
           if (typeof renderOpdRecords === 'function') renderOpdRecords();
@@ -1137,8 +1141,12 @@ async function submitAddPatient(e) {
     }
 
     // Increment today's registration count and refresh dashboard KPI
-    if (typeof window._serverTodayCount === 'number') window._serverTodayCount++;
-    if (typeof updateStats === 'function') updateStats();
+    if (typeof window.bumpServerTodayCountThenRefresh === 'function') {
+      window.bumpServerTodayCountThenRefresh();
+    } else {
+      if (typeof window._serverTodayCount === 'number') window._serverTodayCount++;
+      if (typeof updateStats === 'function') updateStats();
+    }
 
     closeModal(null, 'addPatientModal');
     document.getElementById('addPatientForm').reset();

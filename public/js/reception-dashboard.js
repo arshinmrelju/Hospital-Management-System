@@ -16,7 +16,7 @@ function _opdEntryKey(patientId, department, date) {
 }
 
 function _todayKey(patientId, department) {
-  return _opdEntryKey(patientId, department, new Date().toISOString().split('T')[0]);
+  return _opdEntryKey(patientId, department, window.localDateStr());
 }
 
 function _opdNameContactKey(name, contact) {
@@ -34,10 +34,11 @@ function getOpdSeenKeys() {
 
 function isDuplicateOpdEntry(patientId, department, name, contact) {
   if (!patientId && !name) return false;
-  var today = new Date().toISOString().split('T')[0];
+  var today = window.localDateStr();
   return OPD_RECORDS.some(function(r) {
     var rDate = (r.timestamp || '').split('T')[0] || '';
-    if (rDate !== today) return false;
+    // Also accept local-stamped timestamps that may not match the ISO prefix
+    if (rDate !== today && !isToday(r.timestamp)) return false;
     if (patientId) {
       var key = _opdEntryKey(patientId, department, today);
       var rKey = _opdEntryKey(r.patient_id || r.op_no, r.department, today);
@@ -212,6 +213,82 @@ function patientFullName(p) {
   return (f + ' ' + l).trim();
 }
 
+/* --- Patient lookup helpers (robust ID + name matching for NEW tags) --- */
+function _hmsNormId(v) {
+  return String(v == null ? '' : v).trim().toLowerCase().replace(/^0+(?=\d)/, '');
+}
+
+function _hmsPatientIds(pt) {
+  if (!pt) return [];
+  var raw = [
+    pt.op_no, pt.id, pt.skin_id, pt.ortho_id,
+    pt['Hosp. OP No'], pt['OP No'], pt['ID. NO'], pt['ID'], pt.op, pt.uhid, pt['UHID']
+  ];
+  var out = {};
+  raw.forEach(function (v) {
+    var n = _hmsNormId(v);
+    if (n) out[n] = true;
+  });
+  return Object.keys(out);
+}
+
+function hmsFindPatientById(id, lookup) {
+  var nid = _hmsNormId(id);
+  if (!nid) return null;
+  var list = lookup || (window.allPatients || [])
+    .concat(window.allSkinPatients || [])
+    .concat(window.allOrthoPatients || [])
+    .concat(window.latestPatients || []);
+  for (var i = 0; i < list.length; i++) {
+    var ids = _hmsPatientIds(list[i]);
+    if (ids.indexOf(nid) !== -1) return list[i];
+  }
+  return null;
+}
+
+function hmsFindPatientByName(name, lookup) {
+  var nname = window.hmsNormalizeWs ? window.hmsNormalizeWs(name) : String(name || '').toLowerCase().trim();
+  if (!nname) return null;
+  if (!hmsFindPatientByName._idx || hmsFindPatientByName._idxAt !== hmsOnPatientsLoaded._build) {
+    var idx = {};
+    var list = (window.allPatients || [])
+      .concat(window.allSkinPatients || [])
+      .concat(window.allOrthoPatients || []);
+    for (var i = 0; i < list.length; i++) {
+      var key = window.hmsNormalizeWs(patientFullName(list[i]));
+      if (key && !idx[key]) idx[key] = list[i];
+    }
+    hmsFindPatientByName._idx = idx;
+    hmsFindPatientByName._idxAt = hmsOnPatientsLoaded._build;
+  }
+  if (lookup) {
+    for (var j = 0; j < lookup.length; j++) {
+      if ((window.hmsNormalizeWs(patientFullName(lookup[j])) === nname)) return lookup[j];
+    }
+  }
+  return hmsFindPatientByName._idx[nname] || null;
+}
+
+function hmsPatientCreatedOn(pt) {
+  if (!pt) return '';
+  var v = pt.created_on || pt['Created On'] || pt.Created_On || pt.createdAt || '';
+  if (v instanceof Date) return window.localDateStr(v);
+  v = String(v || '').trim();
+  if (!v) return '';
+  // Google serial number date (days since 1899-12-30)
+  if (/^\d+(\.\d+)?$/.test(v) && Number(v) > 20000 && Number(v) < 80000) {
+    var ms = Math.round((Number(v) - 25569) * 86400 * 1000);
+    return window.localDateStr(new Date(ms));
+  }
+  return v;
+}
+
+function hmsIsNewPatientRecord(pt) {
+  if (!pt) return false;
+  if (pt._isNew === true) return true;
+  return isToday(hmsPatientCreatedOn(pt));
+}
+
 /* --- Render OPD Records --- */
 function renderOpdRecords() {
   const list = document.getElementById('opdList');
@@ -264,24 +341,17 @@ function renderOpdRecords() {
         isNew = true;
       }
 
-      // 3. Cross-check patient registries by exact OP number
+      // 3. Cross-check patient registries by ID, then by name
       if (!isNew) {
-        var recId = String(p.op_no || p.patient_id || p.id || '').trim().toLowerCase();
-        if (recId) {
-          var patientLookup = (window.latestPatients || []).concat(window.allPatients || []).concat(window.allSkinPatients || []).concat(window.allOrthoPatients || []);
-          var matchedPatient = patientLookup.find(function (pt) {
-            var ptId = String(pt.op_no || pt.skin_id || pt.ortho_id || pt.id || '').trim().toLowerCase();
-            return ptId && ptId === recId;
-          });
-
-          if (matchedPatient) {
-            var createdOn = matchedPatient.created_on || matchedPatient['Created On'] || '';
-            isNew = isToday(createdOn);
-            // Enrich missing fields if found
-            if ((!p.age || p.age === 'N/A') && matchedPatient.age) p.age = patientAge(matchedPatient);
-            if ((!p.gender || p.gender === '—') && matchedPatient.gender) p.gender = patientGender(matchedPatient);
-            if ((!p.contact || p.contact === '—') && matchedPatient.contact) p.contact = patientContact(matchedPatient);
-          }
+        var matchedPatient = hmsFindPatientById(p.op_no || p.patient_id || p.id);
+        if (!matchedPatient && p.name) matchedPatient = hmsFindPatientByName(p.name);
+        if (matchedPatient) {
+          isNew = hmsIsNewPatientRecord(matchedPatient);
+          // Enrich missing fields if found
+          if ((!p.age || p.age === 'N/A') && matchedPatient.age) p.age = patientAge(matchedPatient);
+          if ((!p.gender || p.gender === '—') && matchedPatient.gender) p.gender = patientGender(matchedPatient);
+          if ((!p.contact || p.contact === '—') && matchedPatient.contact) p.contact = patientContact(matchedPatient);
+          if (!p.created_on) p.created_on = hmsPatientCreatedOn(matchedPatient);
         }
       }
 
@@ -311,6 +381,26 @@ function setOpdDimension(dim) {
 }
 
 /* --- Filter OPD Records --- */
+function _parseOpdRecordTime(p) {
+  if (!p) return NaN;
+  var raw = p.timestamp || p.createdAt || p.appointment_date || p.date || '';
+  if (!raw) return NaN;
+  if (raw instanceof Date) return raw.getTime();
+  var s = String(raw).trim();
+  if (!s) return NaN;
+  // Date-only or date-first strings: anchor to LOCAL midnight, not UTC
+  var dateOnly = s.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/);
+  if (dateOnly) {
+    return new Date(+dateOnly[1], +dateOnly[2] - 1, +dateOnly[3], 0, 0, 0, 0).getTime();
+  }
+  var dmy = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
+  if (dmy) {
+    return new Date(+dmy[3], +dmy[2] - 1, +dmy[1], 0, 0, 0, 0).getTime();
+  }
+  var t = new Date(s).getTime();
+  return isNaN(t) ? NaN : t;
+}
+
 function filterOpdQueue() {
   const startDate = document.getElementById('opdStartDate')?.value;
   const startTime = document.getElementById('opdStartTime')?.value || '00:00';
@@ -328,8 +418,8 @@ function filterOpdQueue() {
     : new Date(`${startDate}T23:59:59`).getTime();
 
   filteredOpdRecords = OPD_RECORDS.filter(p => {
-    if (!p.timestamp) return false;
-    const pTime = new Date(p.timestamp).getTime();
+    const pTime = _parseOpdRecordTime(p);
+    if (isNaN(pTime)) return false;
     return pTime >= startTimestamp && pTime <= endTimestamp;
   });
 
@@ -464,7 +554,9 @@ function submitOpdAssign() {
     department: isSkin ? 'Skin' : isOrtho ? 'Ortho' : 'General',
     complaint: '—',
     time: timeStr,
-    timestamp: now.toISOString()
+    timestamp: now.toISOString(),
+    created_on: window.localDateStr(),
+    _isNew: hmsIsNewPatientRecord(hmsFindPatientById(patient.id || patient.op))
   };
 
   if (isDuplicateOpdEntry(record.patient_id, record.department, record.name, record.contact)) {
@@ -483,7 +575,7 @@ function submitOpdAssign() {
     name: patient.name,
     doctor_id: doctor,
     doctor_name: doctor,
-    appointment_date: now.toISOString().split('T')[0],
+    appointment_date: window.localDateStr(),
     appointment_time: timeStr,
     type: isSkin ? 'Skin OPD' : isOrtho ? 'Ortho OPD' : 'OPD',
     status: 'waiting',
@@ -529,7 +621,7 @@ async function bookAppointment(e) {
     await window.API.createAppointment({
       patient_id: patient,
       doctor_id: doctor,
-      appointment_date: date || new Date().toISOString().split('T')[0],
+      appointment_date: date || window.localDateStr(),
       appointment_time: time || '—',
       type: type || 'Check-up',
       status: 'scheduled',
@@ -544,7 +636,7 @@ async function bookAppointment(e) {
   document.getElementById('apptForm')?.reset();
 
   const dateEl = document.getElementById('apptDate');
-  if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
+  if (dateEl) dateEl.value = window.localDateStr();
 
   updateStats();
 }
@@ -554,49 +646,38 @@ async function loadOpdRecords() {
   try {
     const response = await window.API.getAppointments({ limit: 50 });
     const appointments = (response && response.success) ? (response.data || []) : [];
-    var patientLookup = window.allPatients || [];
     OPD_RECORDS = appointments
       .filter(a => a.type === 'OPD' || a.type === 'OPD Consultation' || a.type === 'Skin OPD' || a.type === 'Ortho OPD')
       .map((a, i) => {
-        var name = a.patient_name || a.patientName || '';
+        var name = a.patient_name || a.patientName || a.name || '';
         var age = a.patient_age || a.patientAge || a.age || '';
-        var doctor = a.doctor || a.doctor_name || a.doctor_id || '';
-        if ((!name || !doctor) && a.patient_id) {
-          var match = patientLookup.find(function (p) { return String(p.id) === String(a.patient_id); });
-          if (!match) {
-            match = patientLookup.find(function (p) { return patientFullName(p).toLowerCase() === String(a.patient_id).toLowerCase(); });
-          }
-          if (!match) {
-            match = patientLookup.find(function (p) { return (p.contact || '').replace(/\s/g, '') === String(a.patient_id).replace(/\s/g, ''); });
-          }
-          if (match) {
-            if (!name) name = patientFullName(match);
-            if (!age) age = patientAge(match);
-            if (!doctor) doctor = match.doctor || match.doctor_name || '';
-          }
+        var doctor = a.doctor || a.doctor_name || a.doctor_id || a.doctor_id || '';
+        var match2Id = hmsFindPatientById(a.patient_id);
+        var match2 = match2Id || hmsFindPatientByName(name);
+        if (match2) {
+          if (!name) name = patientFullName(match2);
+          if (!age) age = patientAge(match2);
+          if (!doctor) doctor = match2.doctor || match2.doctor_name || match2.assigned_doctor || '';
         }
         if (!name) name = 'Unknown Patient';
         if (!age) age = 'N/A';
         if (!doctor) doctor = 'Unassigned';
-        var match2Id = patientLookup.find(function (p) {
-          return a.patient_id && (String(p.id) === String(a.patient_id) || (p.contact || '').replace(/\s/g, '') === String(a.patient_id).replace(/\s/g, ''));
-        });
-        var match2 = match2Id || patientLookup.find(function (p) { return patientFullName(p) === name; });
+        var createdOn = match2 ? hmsPatientCreatedOn(match2) : (a.created_on || a['Created On'] || '');
         return {
           id: a.id || 'OPD-' + i,
-          patient_id: a.patient_id || (match2 ? (match2.id || match2.op_no || match2['Hosp. OP No'] || match2['OP No'] || '') : ''),
+          patient_id: a.patient_id || (match2 ? (match2.op_no || match2.id || match2.skin_id || match2.ortho_id || '') : ''),
           name: name,
           age: age,
           gender: (match2 ? patientGender(match2) : a.gender || a.sex || ''),
           contact: (match2 ? patientContact(match2) : a.phone || a.contact || ''),
-          op_no: (match2 ? (match2.op_no || match2['Hosp. OP No'] || match2['OP No'] || '') : ''),
+          op_no: (match2 ? (match2.op_no || match2.skin_id || match2.ortho_id || match2.id || '') : (a.patient_id || '')),
           doctor: doctor,
           department: a.type === 'Skin OPD' ? 'Skin' : a.type === 'Ortho OPD' ? 'Ortho' : (a.type === 'OPD Consultation' ? 'Consultation' : 'General'),
           complaint: a.reason || a.complaint || '—',
           time: a.appointment_time || a.time || '—',
           timestamp: a.createdAt || a.appointment_date || new Date().toISOString(),
-          _isNew: Boolean(match2Id && (match2Id._isNew || isToday(match2Id.created_on || match2Id['Created On']))),
-          created_on: (match2Id ? (match2Id.created_on || match2Id['Created On']) : (a.created_on || a['Created On'])) || ''
+          _isNew: hmsIsNewPatientRecord(match2),
+          created_on: createdOn || ''
         };
       });
     var seen = {};
@@ -634,7 +715,19 @@ function isToday(dateVal) {
   var s = String(dateVal).trim();
   if (!s || s.length < 8) return false;
 
-  // YYYY-MM-DD or YYYY/MM/DD or YYYY-MM-DDTHH:mm:ss
+  // Full timestamps with timezone (ISO Z / +HH:MM / space time part):
+  // parse as absolute instants and compare LOCAL calendar day.
+  // (Prevents UTC ISO strings near midnight IST from landing on the wrong day.)
+  if (/[zZ]|[+\-]\d{2}:?\d{2}$/.test(s) || /\d{4}[\/\-\.]\d{1,2}[\/\-\.]\d{1,2}[T ].*\d/.test(s)) {
+    var parsedTs = new Date(s);
+    if (!isNaN(parsedTs.getTime())) {
+      return parsedTs.getFullYear() === currentYear &&
+             parsedTs.getMonth() === currentMonth &&
+             parsedTs.getDate() === currentDate;
+    }
+  }
+
+  // Date-only YYYY-MM-DD or YYYY/MM/DD — compare calendar parts as-is
   var matchYmd = s.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/);
   if (matchYmd) {
     var y = parseInt(matchYmd[1], 10);
@@ -646,10 +739,10 @@ function isToday(dateVal) {
   // DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
   var matchDmy = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/);
   if (matchDmy) {
-    var d = parseInt(matchDmy[1], 10);
-    var m = parseInt(matchDmy[2], 10) - 1;
-    var y = parseInt(matchDmy[3], 10);
-    return y === currentYear && m === currentMonth && d === currentDate;
+    var d2 = parseInt(matchDmy[1], 10);
+    var m2 = parseInt(matchDmy[2], 10) - 1;
+    var y2 = parseInt(matchDmy[3], 10);
+    return y2 === currentYear && m2 === currentMonth && d2 === currentDate;
   }
 
   var parsed = new Date(s);
@@ -710,7 +803,7 @@ function setDailyCounts(counts) {
 function getYesterdayStr() {
   var d = new Date();
   d.setDate(d.getDate() - 1);
-  return d.toISOString().split('T')[0];
+  return window.localDateStr(d);
 }
 function getRegDailyCounts() {
   try {
@@ -721,14 +814,81 @@ function setRegDailyCounts(counts) {
   localStorage.setItem('hms_reg_daily_counts', JSON.stringify(counts));
 }
 
+/* --- Server "today" count helpers --- */
+function applyServerTodayCountResponse(r) {
+  if (!r || !r.success) return false;
+  if (typeof r.totalToday === 'number' && r.totalToday >= 0) {
+    window._serverTodayCount = r.totalToday;
+    return true;
+  }
+  if (r.generalToday !== undefined || r.skinToday !== undefined || r.orthoToday !== undefined) {
+    var gen = (typeof r.generalToday === 'number') ? r.generalToday : 0;
+    var skin = (typeof r.skinToday === 'number') ? r.skinToday : 0;
+    var ortho = (typeof r.orthoToday === 'number') ? r.orthoToday : 0;
+    window._serverTodayCount = gen + skin + ortho;
+    return true;
+  }
+  return false;
+}
+
+/* Call after any patient registration (general / skin / ortho) so the KPI stays in sync */
+function bumpServerTodayCountThenRefresh() {
+  if (typeof window._serverTodayCount === 'number') {
+    window._serverTodayCount++;
+  }
+  if (window.API && window.API.getTodayCount) {
+    window.API.getTodayCount().then(function (r) {
+      if (applyServerTodayCountResponse(r) && typeof updateStats === 'function') {
+        updateStats();
+      }
+    }).catch(function () {});
+  }
+}
+window.bumpServerTodayCountThenRefresh = bumpServerTodayCountThenRefresh;
+
+/* Re-resolve OPD "new patient" flags after the registries finish loading */
+function refreshOpdNewFlags() {
+  if (!OPD_RECORDS || !OPD_RECORDS.length) return;
+  OPD_RECORDS.forEach(function (r) {
+    if (r._isNew === true && r.created_on && isToday(r.created_on)) return;
+    if (r.created_on && isToday(r.created_on)) {
+      r._isNew = true;
+      return;
+    }
+    var matched = hmsFindPatientById(r.op_no || r.patient_id || r.id);
+    if (!matched && r.name) matched = hmsFindPatientByName(r.name);
+    if (!matched) return;
+    var createdOn = hmsPatientCreatedOn(matched);
+    if (hmsIsNewPatientRecord(matched)) r._isNew = true;
+    if (!r.created_on || isToday(createdOn)) r.created_on = createdOn || r.created_on || '';
+    if ((!r.age || r.age === 'N/A') && matched.age) r.age = patientAge(matched);
+    if ((!r.gender || r.gender === '—') && matched.gender) r.gender = patientGender(matched);
+    if ((!r.contact || r.contact === '—') && matched.contact) r.contact = patientContact(matched);
+    if (!r.op_no) {
+      r.op_no = matched.op_no || matched.skin_id || matched.ortho_id || matched.id || '';
+    }
+  });
+}
+window.refreshOpdNewFlags = refreshOpdNewFlags;
+
+/* Called whenever patient registries finish loading so NEW tags re-sync */
+window.hmsOnPatientsLoaded = function () {
+  hmsOnPatientsLoaded._build = (hmsOnPatientsLoaded._build || 0) + 1;
+  hmsFindPatientByName._idx = null;
+  try { refreshOpdNewFlags(); } catch (e) {}
+  try { renderOpdRecords(); } catch (e) {}
+  try { updateStats(); } catch (e) {}
+};
+hmsOnPatientsLoaded._build = 1;
+
 /* --- Update KPI Stat Cards --- */
 function updateStats() {
   var now = new Date();
-  var todayLocalStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+  var todayLocalStr = window.localDateStr(now);
 
   // OPD records for today
   var todayOPD = OPD_RECORDS.filter(function (p) {
-    return isToday(p.timestamp || p.appointment_date || p.date);
+    return isToday(p.timestamp || p.createdAt || p.appointment_date || p.date);
   });
 
   var opdTotalEl = document.getElementById('kpiOpdToday') || document.querySelector('.stat-card[style*="--accent:#00685f"] .stat-value');
@@ -765,15 +925,14 @@ function updateStats() {
   if (typeof window._serverTodayCount === 'number' && window._serverTodayCount >= 0) {
     todayRegs = window._serverTodayCount;
   } else {
-    // 2. Also check local/cached patient registry for any registered today
+    // 2. Local fallback: single deduped ID space across registries + today's OPD
     var seenIds = {};
     var localRegCount = 0;
     var patientLookup = (window.allPatients || []).concat(window.allSkinPatients || []).concat(window.allOrthoPatients || []);
 
     patientLookup.forEach(function (pt) {
-      var createdOn = pt.created_on || pt['Created On'] || '';
-      if (isToday(createdOn) || pt._isNew === true) {
-        var id = String(pt.op_no || pt.id || pt.skin_id || pt.ortho_id || patientFullName(pt)).trim().toLowerCase();
+      if (hmsIsNewPatientRecord(pt)) {
+        var id = String(pt.op_no || pt.skin_id || pt.ortho_id || pt.id || patientFullName(pt)).trim().toLowerCase();
         if (id && !seenIds[id]) {
           seenIds[id] = true;
           localRegCount++;
@@ -781,22 +940,14 @@ function updateStats() {
       }
     });
 
-    // 3. Count newly registered patients in today's OPD consults
+    // 3. Count newly registered patients in today's OPD consults (same seenIds — no double count)
     var opdNewCount = 0;
     (todayOPD || []).forEach(function (r) {
-      var isNew = (r._isNew === true);
+      var isNew = hmsIsNewPatientRecord(r) || (r._isNew === true);
+      if (!isNew && r.created_on && isToday(r.created_on)) isNew = true;
       if (!isNew) {
-        var recId = String(r.op_no || r.patient_id || r.id || '').trim().toLowerCase();
-
-        var matchedPatient = patientLookup.find(function(pt) {
-          var ptId = String(pt.op_no || pt.skin_id || pt.ortho_id || pt.id || '').trim().toLowerCase();
-          return ptId && recId && ptId === recId;
-        });
-
-        if (matchedPatient) {
-          var createdOn = matchedPatient.created_on || matchedPatient['Created On'] || '';
-          isNew = isToday(createdOn);
-        }
+        var matchedPatient = hmsFindPatientById(r.op_no || r.patient_id || r.id) || hmsFindPatientByName(r.name);
+        if (matchedPatient) isNew = hmsIsNewPatientRecord(matchedPatient);
       }
 
       if (isNew) {
@@ -808,18 +959,13 @@ function updateStats() {
       }
     });
 
-    // Use the highest reliable figure
     todayRegs = localRegCount + opdNewCount;
   }
 
   // If server count wasn't fetched yet, asynchronously fetch it and update counter
   if (window._serverTodayCount === undefined && window.API && window.API.getTodayCount) {
     window.API.getTodayCount().then(function(r) {
-      if (r && r.success && (r.generalToday !== undefined || r.skinToday !== undefined || r.orthoToday !== undefined)) {
-        var gen = (typeof r.generalToday === 'number') ? r.generalToday : 0;
-        var skin = (typeof r.skinToday === 'number') ? r.skinToday : 0;
-        var ortho = (typeof r.orthoToday === 'number') ? r.orthoToday : 0;
-        window._serverTodayCount = gen + skin + ortho;
+      if (applyServerTodayCountResponse(r)) {
         updateStats();
       }
     }).catch(function() {});
@@ -937,7 +1083,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     var dateEl = document.getElementById('apptDate');
-    if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
+  if (dateEl) dateEl.value = window.localDateStr();
 
     // Real Step 1: Initializing
     if (typeof window.setLoaderPct === 'function') {
@@ -949,12 +1095,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       window.API && window.API.getDoctors ? window.API.getDoctors() : Promise.resolve(),
       window.API && window.API.getDepartments ? window.API.getDepartments() : Promise.resolve(),
       window.API && window.API.getTodayCount ? window.API.getTodayCount().then(function(r) {
-        if (r && r.success && (r.generalToday !== undefined || r.skinToday !== undefined || r.orthoToday !== undefined)) {
-          var gen = (typeof r.generalToday === 'number') ? r.generalToday : 0;
-          var skin = (typeof r.skinToday === 'number') ? r.skinToday : 0;
-          var ortho = (typeof r.orthoToday === 'number') ? r.orthoToday : 0;
-          window._serverTodayCount = gen + skin + ortho;
-        }
+        applyServerTodayCountResponse(r);
       }).catch(function() {}) : Promise.resolve()
     ]).then(function() {
       if (typeof window.populateAllDropdowns === 'function') window.populateAllDropdowns();
@@ -973,6 +1114,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       .then(function() {
         if (typeof applyFilters === 'function') applyFilters();
         if (typeof updateExportBadge === 'function') updateExportBadge();
+        // Re-sync NEW tags once the registry is in memory (load order race)
+        if (typeof window.hmsOnPatientsLoaded === 'function') window.hmsOnPatientsLoaded();
         if (typeof window.setLoaderPct === 'function') {
           window.setLoaderPct(60, 'Patient registry synchronized...');
         }
@@ -999,6 +1142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       window._orthoLoadPromise || (typeof loadOrthoPatients === 'function' ? loadOrthoPatients() : Promise.resolve())
     ]).then(function() {
       if (typeof window.populateSkinDropdowns === 'function') window.populateSkinDropdowns();
+      if (typeof window.hmsOnPatientsLoaded === 'function') window.hmsOnPatientsLoaded();
       if (typeof window.setLoaderPct === 'function') {
         window.setLoaderPct(92, 'Skin & Orthopedic registries synced...');
       }
@@ -1013,6 +1157,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       withTimeout(pOpd, 16000),
       withTimeout(pSpecialties, 15000)
     ]);
+
+    // Re-resolve OPD "NEW" flags now that registries are in memory
+    // (loadOpdRecords runs in parallel and often misses these when allPatients was empty)
+    refreshOpdNewFlags();
 
     // Real Step 6: Final UI Rendering & Dashboard Setup
     if (typeof window.setLoaderPct === 'function') {

@@ -729,7 +729,7 @@ window.API = {
           patient_type: data.patient_type || 'outpatient',
           status: data.status || 'stable',
           assigned_doctor: data.assigned_doctor || '',
-          last_visit: now.toISOString().split('T')[0],
+          last_visit: window.localDateStr ? window.localDateStr() : now.toISOString().split('T')[0],
           notes: notes
         });
         local.push(newPatient);
@@ -845,7 +845,7 @@ window.API = {
           patient_age: data.patientAge || data.age || '',
           doctor_id: data.doctor_id || '',
           doctor_name: data.doctor || data.doctor_name || '',
-          appointment_date: data.appointment_date || now.toISOString().split('T')[0],
+          appointment_date: data.appointment_date || (window.localDateStr ? window.localDateStr() : now.toISOString().split('T')[0]),
           appointment_time: data.appointment_time || now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
           type: data.type || 'OPD',
           status: data.status || 'waiting',
@@ -1109,8 +1109,8 @@ window.API = {
         'Contact': data.contact || '',
         'Place': data.place || '',
         'Notes': data.notes || '',
-        'Last Visit': data.last_visit || now.toISOString().split('T')[0],
-        'Created On': now.toISOString().split('T')[0]
+        'Last Visit': data.last_visit || (window.localDateStr ? window.localDateStr() : now.toISOString().split('T')[0]),
+        'Created On': window.localDateStr ? window.localDateStr() : now.toISOString().split('T')[0]
       });
       local.push(newPatient);
       setLocalData('skinPatients', local);
@@ -1254,7 +1254,7 @@ window.API = {
         'Severity': data.severity || 'Mild',
         'Treatment': data.treatment || '',
         'Notes': data.notes || '',
-        'Created On': now.toISOString().split('T')[0]
+        'Created On': window.localDateStr ? window.localDateStr() : now.toISOString().split('T')[0]
       });
       local.push(newPatient);
       setLocalData('orthopedicPatients', local);

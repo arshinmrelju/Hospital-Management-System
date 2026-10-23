@@ -531,8 +531,8 @@ async function submitAddSkin(e) {
       contact: raw.contact || '',
       place: raw.place || '',
       notes: raw.notes || '',
-      last_visit: new Date().toISOString().slice(0,10),
-      created_on: new Date().toISOString().slice(0,10),
+      last_visit: window.localDateStr(),
+      created_on: window.localDateStr(),
     };
     allSkinPatients.unshift(newP);
     window.allSkinPatients = allSkinPatients;
@@ -557,6 +557,7 @@ async function submitAddSkin(e) {
       complaint: '—',
       time: timeStr,
       timestamp: now.toISOString(),
+      created_on: window.localDateStr(),
       _isNew: true
     };
     if (window.OPD_RECORDS && (!isDuplicateOpdEntry || !isDuplicateOpdEntry(returnedId, 'Skin', raw.patient_name, raw.contact))) {
@@ -567,7 +568,7 @@ async function submitAddSkin(e) {
       patient_id: returnedId,
       patient_name: raw.patient_name,
       name: raw.patient_name,
-      appointment_date: now.toISOString().split('T')[0],
+      appointment_date: window.localDateStr(),
       appointment_time: timeStr,
       type: 'Skin OPD',
       status: 'waiting',
@@ -583,6 +584,11 @@ async function submitAddSkin(e) {
     }).catch(function() {});
 
     toast('Skin patient ' + raw.patient_name + ' registered! ID: ' + returnedId + ' — added to Skin OPD', 'success');
+    if (typeof window.bumpServerTodayCountThenRefresh === 'function') {
+      window.bumpServerTodayCountThenRefresh();
+    } else if (typeof updateStats === 'function') {
+      updateStats();
+    }
   } catch (err) {
     toast('Failed to register: ' + err.message, 'error');
   }
@@ -594,5 +600,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   window._skinLoadPromise = loadSkinPatients();
   await window._skinLoadPromise;
   if (typeof window.populateSkinDropdowns === 'function') window.populateSkinDropdowns();
+  if (typeof window.hmsOnPatientsLoaded === 'function') window.hmsOnPatientsLoaded();
 });
 

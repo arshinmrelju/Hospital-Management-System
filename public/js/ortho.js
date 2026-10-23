@@ -562,8 +562,8 @@ async function submitAddOrtho(e) {
       severity: raw.severity || 'Mild',
       treatment: raw.treatment || '',
       notes: raw.notes || '',
-      last_visit: new Date().toISOString().slice(0,10),
-      created_on: new Date().toISOString().slice(0,10),
+      last_visit: window.localDateStr(),
+      created_on: window.localDateStr(),
     };
     allOrthoPatients.unshift(newP);
     window.allOrthoPatients = allOrthoPatients;
@@ -573,6 +573,11 @@ async function submitAddOrtho(e) {
     closeModal(null, 'addOrthoModal');
     document.getElementById('addOrthoForm').reset();
     toast('Orthopedic patient ' + raw.patient_name + ' registered! ID: ' + raw.ortho_id, 'success');
+    if (typeof window.bumpServerTodayCountThenRefresh === 'function') {
+      window.bumpServerTodayCountThenRefresh();
+    } else if (typeof updateStats === 'function') {
+      updateStats();
+    }
   } catch (err) {
     toast('Failed to register: ' + err.message, 'error');
   }
@@ -583,5 +588,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   _orthoInitialized = true;
   window._orthoLoadPromise = loadOrthoPatients();
   await window._orthoLoadPromise;
+  if (typeof window.hmsOnPatientsLoaded === 'function') window.hmsOnPatientsLoaded();
 });
 

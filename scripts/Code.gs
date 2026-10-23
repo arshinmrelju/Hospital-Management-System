@@ -248,7 +248,8 @@ function handleGetPatientsCount(e) {
   };
 }
 
-/* Count patients registered today (IST) — fast server-side check */
+/* Count patients registered today (script timezone) — full Created On column scan.
+   The old last-200-row window could miss today's rows after bulk imports. */
 function handleGetTodayCount(e) {
   var ss = SpreadsheetApp.openById(SHEET_ID);
   var tz = Session.getScriptTimeZone();
@@ -262,10 +263,9 @@ function handleGetTodayCount(e) {
     var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     var colCreated = headers.indexOf('Created On');
     if (colCreated < 0) return 0;
+    // Read ONLY the Created On column (cheap even at 17k+ rows)
     var totalRows = lastRow - 1;
-    var scanRows = Math.min(200, totalRows);
-    var startRow = totalRows - scanRows + 2; // 1-indexed, skip header
-    var rawData = sheet.getRange(startRow, colCreated + 1, scanRows, 1).getValues();
+    var rawData = sheet.getRange(2, colCreated + 1, totalRows, 1).getValues();
     var c = 0;
     for (var i = 0; i < rawData.length; i++) {
       var val = rawData[i][0];

@@ -459,12 +459,16 @@
 
     var pTodayCount = api.getTodayCount ? withTimeout(api.getTodayCount()).then(function (r) {
       if (r && r.success) {
-        // Sum all clinic new registrations: General + Skin + Ortho
-        var gen = (typeof r.generalToday === 'number') ? r.generalToday : 0;
-        var skin = (typeof r.skinToday === 'number') ? r.skinToday : 0;
-        var ortho = (typeof r.orthoToday === 'number') ? r.orthoToday : 0;
-        if (r.generalToday !== undefined || r.skinToday !== undefined || r.orthoToday !== undefined) {
-          _data.serverTodayCount = gen + skin + ortho;
+        // Prefer authoritative total; otherwise sum General + Skin + Ortho
+        if (typeof r.totalToday === 'number' && r.totalToday >= 0) {
+          _data.serverTodayCount = r.totalToday;
+        } else {
+          var gen = (typeof r.generalToday === 'number') ? r.generalToday : 0;
+          var skin = (typeof r.skinToday === 'number') ? r.skinToday : 0;
+          var ortho = (typeof r.orthoToday === 'number') ? r.orthoToday : 0;
+          if (r.generalToday !== undefined || r.skinToday !== undefined || r.orthoToday !== undefined) {
+            _data.serverTodayCount = gen + skin + ortho;
+          }
         }
       }
       setLoaderPct(50, 'Today\'s count synced...');

@@ -793,21 +793,21 @@
 
   function loadTodayPatients() {
     _todayPatientsLoaded = false;
+    var todayStr = window.localDateStr ? window.localDateStr() : new Date().toISOString().slice(0, 10);
 
     // 1. Try to read from local cache immediately
     try {
       var cachedData = localStorage.getItem('hms_local_patients');
       if (cachedData) {
         var list = JSON.parse(cachedData) || [];
-        var today = new Date();
-        var todayStr = today.toISOString().slice(0, 10);
         _todayPatientsList = list.filter(function(p) {
           var d = p.created_on || p['Created On'] || '';
           if (!d) return false;
           d = String(d).trim();
           if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.slice(0, 10) === todayStr;
+          if (typeof window.isToday === 'function') return window.isToday(d);
           var dt = new Date(d);
-          if (!isNaN(dt.getTime())) return dt.toISOString().slice(0, 10) === todayStr;
+          if (!isNaN(dt.getTime())) return window.localDateStr(dt) === todayStr;
           return false;
         });
         _todayPatientsLoaded = true;
@@ -820,15 +820,15 @@
 
     _todayPatientsPromise = window.API.getPatients().then(function(resp) {
       var list = (resp && resp.data) || [];
-      var today = new Date();
-      var todayStr = today.toISOString().slice(0, 10);
+      var todayStr2 = window.localDateStr ? window.localDateStr() : new Date().toISOString().slice(0, 10);
       _todayPatientsList = list.filter(function(p) {
         var d = p.created_on || p['Created On'] || '';
         if (!d) return false;
         d = String(d).trim();
-        if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.slice(0, 10) === todayStr;
+        if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.slice(0, 10) === todayStr2;
+        if (typeof window.isToday === 'function') return window.isToday(d);
         var dt = new Date(d);
-        if (!isNaN(dt.getTime())) return dt.toISOString().slice(0, 10) === todayStr;
+        if (!isNaN(dt.getTime())) return window.localDateStr(dt) === todayStr2;
         return false;
       });
       _todayPatientsLoaded = true;
@@ -846,18 +846,18 @@
 
   function loadTodayOPD() {
     _todayOPDLoaded = false;
+    var todayStr = window.localDateStr ? window.localDateStr() : new Date().toISOString().slice(0, 10);
 
     // 1. Try to read from local cache immediately
     try {
       var cachedData = localStorage.getItem('hms_local_appointments');
       if (cachedData) {
         var list = JSON.parse(cachedData) || [];
-        var today = new Date();
-        var todayStr = today.toISOString().slice(0, 10);
         _todayOPDList = list.filter(function(a) {
           var date = a.appointment_date || a['Appointment Date'] || a.createdAt || a['Created At'] || '';
-          date = String(date);
-          return date.slice(0, 10) === todayStr;
+          if (!date) return false;
+          date = String(date).slice(0, 10);
+          return date === todayStr || (typeof window.isToday === 'function' && window.isToday(a.appointment_date || a.createdAt || a.date));
         });
         _todayOPDLoaded = true;
         var el = document.getElementById('statOPDToday');
@@ -869,12 +869,12 @@
 
     _todayOPDPromise = window.API.getAppointments().then(function(resp) {
       var list = (resp && resp.data) || [];
-      var today = new Date();
-      var todayStr = today.toISOString().slice(0, 10);
+      var todayStr2 = window.localDateStr ? window.localDateStr() : new Date().toISOString().slice(0, 10);
       _todayOPDList = list.filter(function(a) {
         var date = a.appointment_date || a['Appointment Date'] || a.createdAt || a['Created At'] || '';
-        date = String(date);
-        return date.slice(0, 10) === todayStr;
+        if (!date) return false;
+        date = String(date).slice(0, 10);
+        return date === todayStr2 || (typeof window.isToday === 'function' && window.isToday(a.appointment_date || a.createdAt || a.date));
       });
       _todayOPDLoaded = true;
       animateValue(document.getElementById('statOPDToday'), _todayOPDList.length);
