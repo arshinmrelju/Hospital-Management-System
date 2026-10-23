@@ -561,6 +561,11 @@ function submitOpdAssign() {
   var timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
   var isSkin = patient.source === 'skin';
   var isOrtho = patient.source === 'ortho';
+  // The NEW tag must reflect the PATIENT's registration date (registry "Created On"),
+  // NOT the moment they were added to the OPD queue. Old patients added to OPD today
+  // would otherwise be wrongly flagged NEW.
+  var matchedReg = hmsFindPatientById(patient.id || patient.op) ||
+    (patient.name ? hmsFindPatientByName(patient.name) : null);
   var record = {
     id: isSkin ? 'SKIN-OPD-' + Date.now() : isOrtho ? 'ORTHO-OPD-' + Date.now() : 'OPD-' + Date.now(),
     patient_id: patient.id || patient.op || '',
@@ -574,8 +579,10 @@ function submitOpdAssign() {
     complaint: '—',
     time: timeStr,
     timestamp: now.toISOString(),
-    created_on: window.localDateStr(),
-    _isNew: hmsIsNewPatientRecord(hmsFindPatientById(patient.id || patient.op))
+    // Only carry a created_on that came from the patient registry; blank if unknown
+    // so it never falsely triggers the "registered today" NEW check.
+    created_on: matchedReg ? hmsPatientCreatedOn(matchedReg) : '',
+    _isNew: hmsIsNewPatientRecord(matchedReg)
   };
 
   if (isDuplicateOpdEntry(record.patient_id, record.department, record.name, record.contact)) {
@@ -681,7 +688,9 @@ async function loadOpdRecords() {
         if (!name) name = 'Unknown Patient';
         if (!age) age = 'N/A';
         if (!doctor) doctor = 'Unassigned';
-        var createdOn = match2 ? hmsPatientCreatedOn(match2) : (a.created_on || a['Created On'] || '');
+        // Only the matched registry patient's registration date. The appointment's
+        // own created/createdAt is when they were queued — not a "new patient" signal.
+        var createdOn = match2 ? hmsPatientCreatedOn(match2) : '';
         return {
           id: a.id || 'OPD-' + i,
           patient_id: a.patient_id || (match2 ? (match2.op_no || match2.id || match2.skin_id || match2.ortho_id || '') : ''),

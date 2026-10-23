@@ -10,7 +10,7 @@
    - All app shell pages are pre-cached on install
    ================================================================ */
 
-const CACHE = 'wellness-v37-opd-perf';
+const CACHE = 'wellness-v38-opd-new-tag';
 
 const STATIC_ASSETS = [
   /* ─── App Shell Pages ─── */
