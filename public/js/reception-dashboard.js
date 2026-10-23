@@ -232,41 +232,60 @@ function _hmsPatientIds(pt) {
   return Object.keys(out);
 }
 
-function hmsFindPatientById(id, lookup) {
-  var nid = _hmsNormId(id);
-  if (!nid) return null;
-  var list = lookup || (window.allPatients || [])
+/* Combined normalized-ID + normalized-NAME index over all registries.
+   Built ONCE per registry load (invalidated via hmsOnPatientsLoaded._build)
+   so per-record lookups are O(1) instead of O(registrySize). The previous
+   implementation re-concatenated and re-scanned every patient on EVERY call,
+   which blocked the UI thread for tens of seconds on large registries. */
+function _hmsBuildPatientIndex() {
+  var build = (typeof hmsOnPatientsLoaded === 'function' && hmsOnPatientsLoaded._build) || 0;
+  var cached = hmsFindPatientById._idx;
+  if (cached && cached.build === build) return cached;
+
+  var byId = {};
+  var byName = {};
+  var list = (window.allPatients || [])
     .concat(window.allSkinPatients || [])
     .concat(window.allOrthoPatients || [])
     .concat(window.latestPatients || []);
   for (var i = 0; i < list.length; i++) {
-    var ids = _hmsPatientIds(list[i]);
-    if (ids.indexOf(nid) !== -1) return list[i];
+    var pt = list[i];
+    if (!pt) continue;
+    var ids = _hmsPatientIds(pt);
+    for (var j = 0; j < ids.length; j++) {
+      if (!byId[ids[j]]) byId[ids[j]] = pt;
+    }
+    var key = window.hmsNormalizeWs ? window.hmsNormalizeWs(patientFullName(pt)) : String(patientFullName(pt) || '').toLowerCase().trim();
+    if (key && !byName[key]) byName[key] = pt;
   }
-  return null;
+  var idx = { build: build, byId: byId, byName: byName };
+  hmsFindPatientById._idx = idx;
+  return idx;
+}
+
+function hmsFindPatientById(id, lookup) {
+  var nid = _hmsNormId(id);
+  if (!nid) return null;
+  if (lookup) {
+    // Explicit small candidate list: scan it directly (no registry-wide work)
+    for (var i = 0; i < lookup.length; i++) {
+      if (_hmsPatientIds(lookup[i]).indexOf(nid) !== -1) return lookup[i];
+    }
+    return null;
+  }
+  return _hmsBuildPatientIndex().byId[nid] || null;
 }
 
 function hmsFindPatientByName(name, lookup) {
   var nname = window.hmsNormalizeWs ? window.hmsNormalizeWs(name) : String(name || '').toLowerCase().trim();
   if (!nname) return null;
-  if (!hmsFindPatientByName._idx || hmsFindPatientByName._idxAt !== hmsOnPatientsLoaded._build) {
-    var idx = {};
-    var list = (window.allPatients || [])
-      .concat(window.allSkinPatients || [])
-      .concat(window.allOrthoPatients || []);
-    for (var i = 0; i < list.length; i++) {
-      var key = window.hmsNormalizeWs(patientFullName(list[i]));
-      if (key && !idx[key]) idx[key] = list[i];
-    }
-    hmsFindPatientByName._idx = idx;
-    hmsFindPatientByName._idxAt = hmsOnPatientsLoaded._build;
-  }
+  var idx = _hmsBuildPatientIndex();
   if (lookup) {
     for (var j = 0; j < lookup.length; j++) {
       if ((window.hmsNormalizeWs(patientFullName(lookup[j])) === nname)) return lookup[j];
     }
   }
-  return hmsFindPatientByName._idx[nname] || null;
+  return idx.byName[nname] || null;
 }
 
 function hmsPatientCreatedOn(pt) {
@@ -874,7 +893,7 @@ window.refreshOpdNewFlags = refreshOpdNewFlags;
 /* Called whenever patient registries finish loading so NEW tags re-sync */
 window.hmsOnPatientsLoaded = function () {
   hmsOnPatientsLoaded._build = (hmsOnPatientsLoaded._build || 0) + 1;
-  hmsFindPatientByName._idx = null;
+  hmsFindPatientById._idx = null;   // invalidate combined ID+name index
   try { refreshOpdNewFlags(); } catch (e) {}
   try { renderOpdRecords(); } catch (e) {}
   try { updateStats(); } catch (e) {}
