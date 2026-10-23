@@ -41,11 +41,11 @@
     rel="stylesheet" media="print" onload="this.media='all';this.onload=null" />
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" media="print"
     onload="this.media='all';this.onload=null" />
-  <link rel="stylesheet" href="css/main.css?v=27" />
+  <link rel="stylesheet" href="css/main.css?v=28" />
   <link rel="stylesheet" href="css/layout.css?v=29" />
   <link rel="stylesheet" href="css/portals.css" />
   <link rel="stylesheet" href="css/staff-theme.css" />
-  <link rel="stylesheet" href="css/patients.css" />
+  <link rel="stylesheet" href="css/patients.css?v=2" />
   <style>
     /* --- Export Badge on Button --- */
     .export-badge-onbtn {
@@ -628,14 +628,20 @@
       .header-actions .btn-primary { width: auto; white-space: nowrap; }
       /* ── Compact filter bar for mobile ── */
       .filter-bar {
-        padding: 10px 12px;
-        gap: 8px;
+        padding: 12px 12px 14px;
+        gap: 10px;
         margin-bottom: 12px;
         margin-left: 0;
         margin-right: 0;
         max-width: 100%;
         overflow: hidden;
         box-sizing: border-box;
+        border-radius: 16px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.88));
+        border: 1px solid rgba(15, 118, 110, 0.08);
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 28px -16px rgba(15, 23, 42, 0.12);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
       }
       .filter-bar .filter-bar-row {
         flex-direction: column;
@@ -644,13 +650,31 @@
         max-width: 100%;
         overflow: hidden;
       }
-      /* Main search + Patient ID: compact, center-aligned text */
-      .filter-search-row { padding: 7px 12px; max-width: 100%; box-sizing: border-box; }
-      .filter-search-input { font-size: 0.88rem; text-align: center; min-width: 0; }
-      /* Chips row: centered, scrollable, contained */
+      /* Main search + Patient ID: elevated white field, left-aligned */
+      .filter-search-row {
+        padding: 0 14px;
+        min-height: 44px;
+        max-width: 100%;
+        box-sizing: border-box;
+        border-radius: 13px;
+        background: #fff;
+        border: 1.5px solid transparent;
+        box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.1), 0 1px 2px rgba(15, 23, 42, 0.04);
+      }
+      .filter-search-input {
+        font-size: 0.88rem;
+        font-weight: 500;
+        text-align: left;
+        min-width: 0;
+      }
+      .filter-search-row .material-icons-round {
+        font-size: 18px;
+        color: #0D9488;
+      }
+      /* Chips row: soft segmented pills */
       .filter-chips {
         display: flex;
-        justify-content: center;
+        justify-content: flex-start;
         overflow-x: auto;
         flex-wrap: nowrap;
         -webkit-overflow-scrolling: touch;
@@ -658,27 +682,45 @@
         padding-right: 0;
         margin-right: 0;
         border-right: none;
-        gap: 5px;
+        gap: 6px;
         max-width: 100%;
         min-width: 0;
         width: 100%;
         box-sizing: border-box;
       }
       .filter-chips::-webkit-scrollbar { display: none; }
-      .chip { flex: 0 0 auto; padding: 6px 12px; font-size: 0.78rem; }
-      /* Patient ID search: inline compact, contained */
+      .chip {
+        flex: 0 0 auto;
+        padding: 7px 13px;
+        font-size: 0.76rem;
+        font-weight: 600;
+        border-radius: 999px;
+        border: 1.5px solid rgba(15, 118, 110, 0.12);
+        background: #fff;
+        color: #64748b;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        transition: all 0.18s ease;
+      }
+      .chip.active {
+        background: linear-gradient(135deg, #0D9488, #0f766e);
+        border-color: transparent;
+        color: #fff;
+        font-weight: 700;
+        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+      }
+      /* Patient ID search: matching elevated field */
       .filter-bar-row > .filter-search-row {
         flex: 0 0 auto !important;
         width: 100%;
         min-width: 0;
-        min-height: 0;
+        min-height: 40px;
         height: auto;
         max-height: none;
         max-width: 100%;
         box-sizing: border-box;
-        padding: 6px 12px;
+        padding: 0 12px;
       }
-      /* Dropdowns: 2-col grid, contained */
+      /* Dropdowns: 2-col grid, white pill selects */
       .filter-bar .filter-bar-row .filter-selects {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -689,20 +731,51 @@
         box-sizing: border-box;
       }
       .filter-select {
-        padding: 8px 10px;
-        font-size: 0.82rem;
+        width: 100%;
+        min-height: 40px;
+        padding: 9px 32px 9px 12px;
+        font-size: 0.8rem;
+        font-weight: 500;
         max-width: 100%;
         min-width: 0;
         box-sizing: border-box;
+        border-radius: 12px;
+        border: 1.5px solid rgba(15, 118, 110, 0.1);
+        background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        appearance: none;
+        -webkit-appearance: none;
+        color: #0f172a;
+      }
+      .filter-select:focus {
+        border-color: #0D9488;
+        box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.14);
+        outline: none;
       }
       .filter-selects .adv-search-btn {
         grid-column: 1 / -1;
         width: 100%;
         max-width: 100%;
+        min-height: 40px;
         justify-content: center;
-        padding: 8px 12px;
+        gap: 6px;
+        padding: 9px 12px;
         font-size: 0.82rem;
+        font-weight: 700;
         box-sizing: border-box;
+        border-radius: 12px;
+        border: 1.5px solid rgba(13, 148, 136, 0.2);
+        background: linear-gradient(180deg, rgba(13, 148, 136, 0.1), rgba(13, 148, 136, 0.04));
+        color: #0D9488;
+        box-shadow: 0 1px 2px rgba(13, 148, 136, 0.08);
+        transition: all 0.18s ease;
+      }
+      .filter-selects .adv-search-btn:hover,
+      .filter-selects .adv-search-btn:active {
+        background: linear-gradient(135deg, #0D9488, #0f766e);
+        border-color: transparent;
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.28);
       }
       /* ── Smart filter: label + badge on line 1, chip rows below ── */
       .smart-filter-top {

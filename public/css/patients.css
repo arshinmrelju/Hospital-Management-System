@@ -45,30 +45,36 @@
   box-sizing: border-box;
 }
 
-/* Redesign the Advanced Search Button to look like a sibling dropdown rather than a heavy secondary button */
+/* Advanced Search Button — soft teal pill matching selects */
 .filter-selects .adv-search-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   height: 38px;
   padding: 8px 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--outline-var); /* Matches dropdown border */
-  background: var(--surface-low);
-  color: var(--on-surface-var);
-  font-size: 0.85rem;
+  border-radius: 12px;
+  border: 1.5px solid rgba(13, 148, 136, 0.18);
+  background: linear-gradient(180deg, rgba(13, 148, 136, 0.08), rgba(13, 148, 136, 0.04));
+  color: var(--primary-light, #0D9488);
+  font-size: 0.84rem;
   font-family: var(--font-body);
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s ease;
-  box-shadow: none;
+  transition: all 0.18s ease;
+  box-shadow: 0 1px 2px rgba(13, 148, 136, 0.08);
   box-sizing: border-box;
 }
 
 .filter-selects .adv-search-btn:hover {
-  border-color: var(--primary-light);
-  color: var(--primary-light);
-  background: var(--surface-mid);
+  border-color: var(--primary-light, #0D9488);
+  color: #fff;
+  background: linear-gradient(135deg, #0D9488, #0f766e);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.28);
+  transform: translateY(-1px);
+}
+
+.filter-selects .adv-search-btn:active {
+  transform: translateY(0);
 }
 
 .filter-selects .adv-search-btn .material-icons-round {
