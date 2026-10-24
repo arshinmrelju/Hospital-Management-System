@@ -586,51 +586,125 @@
   .topbar { padding: 0 8px; gap: 4px; }
 }
 
-/* ================== TECHSIAH BRANDING ================== */
-.techsiah-badge {
+/* ================== TECHSIAH BRANDING ==================
+   The "Powered by Techsiah" card in the sidebar, directly above the user
+   chip. It is assembled and mounted by mountPoweredByBadge() in
+   js/app.js, so all five sidebar pages get it from one place - this file
+   only dresses it.
+
+   It deliberately reuses the user chip's visual language (#fffdf9 fill,
+   dashed #dbc9b5 border, 10px radius, same soft shadow) so the two read as
+   a matched pair of tappable objects rather than as a chip with a stray
+   image glued above it. Same palette as the Techsiah ledger app, so the
+   credit looks the same in both products.
+
+   The logo is the dark-text wordmark and it is used unconditionally: the
+   sidebar is always white, so there is no dark surface to swap it for and
+   no prefers-color-scheme branch to write.
+
+   The image's size is ALSO set inline on the <img> in js/app.js. HTML and
+   CSS are cached separately, so a browser holding a stale stylesheet
+   alongside fresh markup would otherwise fall back to the PNG's intrinsic
+   height and blow the row out. Two copies of the same number, one of them
+   un-cacheable, is the fix. */
+.powered-by {
+  position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 10px 16px;
-  border-top: 1.5px dashed var(--outline-var);
-  background: var(--surface-low);
-  text-decoration: none;
+  gap: 0.4rem;
+  margin: 12px 12px 10px;
+  padding: 0.55rem 0.7rem 0.6rem;
+  background: #fffdf9;
+  border: 1px dashed #dbc9b5;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(110, 75, 30, 0.04);
   font-family: var(--font-body);
-  font-size: 0.72rem;
-  font-weight: 500;
-  color: var(--on-surface-var);
-  transition: all 0.2s ease;
-  overflow: hidden;
+  text-decoration: none;
+  color: #8c765c;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
 }
 
-.techsiah-badge:hover {
-  background: var(--surface-mid);
+/* Going from dashed to solid on hover is the whole affordance: it says the
+   card just became "live" without moving anything under the pointer. */
+.powered-by:hover {
+  background: #ffffff;
+  border-color: #c8b79b;
+  border-style: solid;
+  color: #5c4a30;
   text-decoration: none;
 }
 
-.techsiah-badge .techsiah-label {
-  color: var(--outline);
-  font-size: 0.68rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-  flex-shrink: 0;
+.powered-by:focus-visible {
+  outline: 2px solid var(--primary-light);
+  outline-offset: 2px;
 }
 
-.techsiah-badge .techsiah-logo-img {
-  height: 26px;
+.powered-by:active {
+  transform: translateY(1px);
+}
+
+.powered-by-label {
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #8c765c;
+  white-space: nowrap;
+  flex: none;
+}
+
+/* Clips the "IDEAS TO REAL SOLUTIONS" tagline off the wordmark PNG so the
+   name itself can be large enough to read - see the comment on
+   mountPoweredByBadge in js/app.js.
+
+   Measured on the shipped 842x278 asset: the mark + "Techsiah" wordmark
+   ends at row 194, the tagline starts at row 245, and everything between
+   them is blank. 34px of a 42px-tall image reveals rows 0-223 - the whole
+   name, the tagline clipped off, and the cut sitting in the middle of the
+   blank gap so it cannot shave the letters or let the tagline through. */
+.powered-by-logo-crop {
+  display: block;
+  height: 34px;
+  max-width: 100%;
+  overflow: hidden;
+  line-height: 0;
+}
+
+.powered-by-logo {
+  /* 42px, not 24px: at 24 the wordmark read as a smudge. 42px puts the
+     name at ~118px wide inside the ~214px the card actually has, so it
+     stays legible and still has slack for a longer label or a narrower
+     sidebar.
+
+     object-fit: contain plus the max-width above is the guard for the row
+     ever running short: the box narrows and the logo letterboxes instead
+     of being squished flat. */
+  height: 42px;
   width: auto;
   max-width: 100%;
   min-width: 0;
-  flex-shrink: 1;
   display: block;
+  object-fit: contain;
+  object-position: top center;
 }
 
-/* NOTE: the sidebar footer is always light, so the dark-text logo is used
-   unconditionally. techsiah-full-logo-white.png is kept in assets for
-   future dark surfaces — do NOT key off prefers-color-scheme here. */
+/* The new-tab arrow. Hidden until hover/focus so the resting card is just
+   label + logo, and only shown once the user is actually on it. */
+.powered-by-arrow {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.5rem;
+  opacity: 0;
+  color: #8c765c;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.powered-by:hover .powered-by-arrow,
+.powered-by:focus-visible .powered-by-arrow {
+  opacity: 0.85;
+}
 
 /* ================== FILTER BAR ================== */
 .list-filter-bar {

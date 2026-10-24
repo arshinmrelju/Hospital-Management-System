@@ -536,8 +536,87 @@ function checkApiReady() {
   return true;
 }
 
+/* ------------------------------------------------------------------
+   Techsiah attribution
+   ------------------------------------------------------------------
+   BUILT HERE, NOT WRITTEN INTO EACH PAGE
+   The sidebar is duplicated across five pages (dashboard, patients,
+   admin, developer, tech report), and the credit strip inside it would be
+   duplicated too. Writing the badge into each page's HTML means five
+   copies to keep in sync, and the one that drifts is the one nobody
+   notices. So it is assembled here and mounted into whichever sidebar
+   the page happens to have, directly above the user chip - the same
+   place the Techsiah ledger app puts it.
+
+   WHY IT IS A CARD AND NOT A FLOATING LOGO
+   The wordmark PNG is 842x278 and carries an "IDEAS TO REAL SOLUTIONS"
+   tagline under the name. At the size a 260px sidebar allows, that tagline
+   is a row of unreadable specks, and a small logo with a smudge under it
+   reads as an accident rather than as credit. So the badge is a proper
+   card - the same #fffdf9-on-dashed-border treatment as the user chip
+   below it - which says "this is a deliberate, tappable thing".
+
+   THE TAGLINE IS CLIPPED, NOT SHRUNK
+   `.powered-by-logo-crop` is a fixed-height box with overflow:hidden and
+   the <img> inside it is taller than the box, so the top ~81% of the PNG -
+   the mark and the "Techsiah" wordmark - is what shows and the tagline is
+   clipped off. That lets the name be big enough to actually read without
+   spending 70px of vertical space on a line of text nobody can parse.
+   The exact px live in css/layout.css, next to the measurement they were
+   derived from.
+   Degrade path: if the crop class ever fails to load, the wrapper is
+   height:auto and the whole logo shows, just taller.
+
+   The logo's size is written inline on the <img> as well as in the
+   stylesheet, because HTML and CSS are cached separately. A browser
+   holding a stale stylesheet next to fresh markup would otherwise fall
+   back to the PNG's intrinsic height and blow the row out.
+   ------------------------------------------------------------------ */
+
+const TECHSIAH_URL = 'https://techsiah.web.app';
+
+function mountPoweredByBadge() {
+  if (typeof document === 'undefined') return;
+  const userChip = document.querySelector('.sidebar-user');
+  /* No sidebar, no footer band - owner console, op-finder and download
+     are full-bleed pages and simply have nowhere to hang the credit. */
+  if (!userChip) return;
+  const band = userChip.parentElement;
+  if (!band) return;
+  /* Mounting twice would put two badges in the sidebar. The legacy class
+     covers a page still serving the old hand-written markup from cache. */
+  if (band.querySelector('.powered-by, .techsiah-badge')) return;
+
+  const link = document.createElement('a');
+  link.className = 'powered-by';
+  link.href = TECHSIAH_URL;
+  link.target = '_blank';
+  /* target="_blank" without this hands the opened tab a live window.opener
+     handle back to this page. */
+  link.rel = 'noopener noreferrer';
+  /* Spelled out for anyone using a screen reader, and for a sighted user
+     hovering the card: this leaves the app. */
+  link.title = 'Powered by Techsiah - opens techsiah.web.app in a new tab';
+  link.setAttribute('aria-label', 'Powered by Techsiah - opens in a new tab');
+  link.innerHTML =
+    '<span class="powered-by-label">Powered by</span>' +
+    '<span class="powered-by-logo-crop">' +
+    '<img class="powered-by-logo" src="assets/techsiah-full-logo.png" alt="Techsiah" ' +
+    'style="height:42px;width:auto;display:block;" />' +
+    '</span>' +
+    '<svg class="powered-by-arrow" width="11" height="11" viewBox="0 0 24 24" fill="none" ' +
+    'stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" ' +
+    'aria-hidden="true"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>';
+
+  band.insertBefore(link, userChip);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initLoginOverlay();
+  /* Before the auth guard on purpose: the sidebar is in the DOM on the
+     login screen too, and the credit for who built the app does not depend
+     on who is signed in. */
+  mountPoweredByBadge();
   if (!HMS.isAuthenticated()) return;
   if (!checkApiReady()) return;
   initSidebar();
